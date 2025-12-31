@@ -22,7 +22,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                 className="mb-6 inline-flex items-center justify-between rounded-full bg-gray-100 px-1 py-1 pr-4 text-sm text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
                 role="alert"
               >
-                <span className="bg-primary-600 mr-3 rounded-full px-3 py-1 text-xs text-white">
+                <span className="mr-3 rounded-full bg-primary-600 px-3 py-1 text-xs text-white">
                   Info
                 </span>{' '}
                 <span className="text-sm font-medium">
@@ -60,13 +60,13 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                   <input
                     type="search"
                     id="default-search"
-                    className="focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-500 dark:focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
                     placeholder="Cari Hasil Lab, Pasien, Sampel..."
                     required
                   />
                   <button
                     type="submit"
-                    className="bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 absolute bottom-2.5 right-2.5 inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-4"
+                    className="absolute bottom-2.5 right-2.5 inline-flex items-center rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                   >
                     <svg
                       className="-ml-1 mr-2 h-4 w-4"
@@ -101,7 +101,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
           <div className="grid gap-8 sm:gap-12 md:grid-cols-3">
             <div className="flex justify-center">
               <svg
-                className="text-primary-600 dark:text-primary-500 mr-3 h-6 w-6 shrink-0"
+                className="mr-3 h-6 w-6 shrink-0 text-primary-600 dark:text-primary-500"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +124,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             </div>
             <div className="flex justify-center">
               <svg
-                className="text-primary-600 dark:text-primary-500 mr-3 h-6 w-6 shrink-0"
+                className="mr-3 h-6 w-6 shrink-0 text-primary-600 dark:text-primary-500"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"
@@ -147,7 +147,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
             </div>
             <div className="flex justify-center">
               <svg
-                className="text-primary-600 dark:text-primary-500 mr-3 h-6 w-6 shrink-0"
+                className="mr-3 h-6 w-6 shrink-0 text-primary-600 dark:text-primary-500"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"

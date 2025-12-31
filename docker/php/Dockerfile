@@ -1,39 +1,38 @@
 FROM php:8.4-fpm
 
-# OS deps
+# System deps
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     curl \
+    gnupg \
+    libzip-dev \
     libpng-dev \
     libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    nano
-
-# PHP extensions
-RUN docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mbstring \
-    zip \
-    exif \
-    pcntl \
-    bcmath \
-    gd
+    && docker-php-ext-install pdo pdo_mysql zip gd
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Node (for build if needed)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
-
-RUN chown -R www-data:www-data /var/www
-
 WORKDIR /var/www
 
-EXPOSE 9000
+# Copy app source
+COPY . .
 
-CMD ["php-fpm"]
+# Permission
+RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chmod -R 777 storage bootstrap/cache
+
+# Copy deps first
+# COPY composer.json composer.lock ./
+RUN composer install
+
+# Install Node.js LTS (24)
+# RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+#     && apt-get install -y nodejs
+
+# COPY package.json package-lock.json ./
+# RUN npm install
+
+
+EXPOSE 9000
