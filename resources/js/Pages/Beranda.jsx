@@ -1,8 +1,11 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
+import { Head } from '@inertiajs/react';
 
 export default function Beranda() {
   return (
     <LabkesdaLayout>
+      <Head title="Dashboard" />
+      <section className='space-y-4 p-4'>
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-3 lg:gap-4">
         <div className="col-span-1 mb-4 grid gap-4 lg:mb-0">
           {/* Total Pasien Hari Ini */}
@@ -168,6 +171,7 @@ export default function Beranda() {
           </div>
         </div>
       </div>
+      </section>
     </LabkesdaLayout>
   );
 }
