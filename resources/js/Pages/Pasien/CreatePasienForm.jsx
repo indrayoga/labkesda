@@ -27,7 +27,7 @@ export default function CreatePasienForm({
                         className="mt-1"
                         value={data.no_rm}
                         onChange={(e) => setData('no_rm', e.target.value)}
-                        required
+                        disabled={true}
                         autoFocus
                         autoComplete="no_rm"
                         color={errors.no_rm ? 'failure' : 'gray'}
@@ -47,6 +47,7 @@ export default function CreatePasienForm({
                         value={data.nama}
                         onChange={(e) => setData('nama', e.target.value)}
                         required
+                        disabled={processing}
                         autoComplete="nama"
                         color={errors.nama ? 'failure' : 'gray'}
                     />
@@ -67,6 +68,7 @@ export default function CreatePasienForm({
                             setData('jenis_kelamin', e.target.value)
                         }
                         color={errors.jenis_kelamin ? 'failure' : 'gray'}
+                        disabled={processing}
                     >
                         <option value="">Pilih Jenis Kelamin</option>
                         <option value="Laki-laki">Laki-laki</option>
@@ -91,6 +93,7 @@ export default function CreatePasienForm({
                         onChange={(e) =>
                             setData('tempat_lahir', e.target.value)
                         }
+                        disabled={processing}
                         autoComplete="tempat_lahir"
                         color={errors.tempat_lahir ? 'failure' : 'gray'}
                     />
@@ -114,6 +117,7 @@ export default function CreatePasienForm({
                         onChange={(e) =>
                             setData('tanggal_lahir', e.target.value)
                         }
+                        disabled={processing}
                         color={errors.tanggal_lahir ? 'failure' : 'gray'}
                     />
                     <InputError
@@ -135,6 +139,7 @@ export default function CreatePasienForm({
                         onChange={(e) => setData('no_telepon', e.target.value)}
                         autoComplete="no_telepon"
                         color={errors.no_telepon ? 'failure' : 'gray'}
+                        disabled={processing}
                     />
                     <InputError className="mt-2" message={errors.no_telepon} />
                 </div>
@@ -149,6 +154,7 @@ export default function CreatePasienForm({
                         id="kecamatan_id"
                         className="mt-1"
                         value={data.kecamatan_id}
+                        disabled={processing}
                         onChange={(e) => {
                             setData({
                                 ...data,
@@ -184,7 +190,7 @@ export default function CreatePasienForm({
                         onChange={(e) =>
                             setData('kelurahan_id', e.target.value)
                         }
-                        disabled={!data.kecamatan_id}
+                        disabled={!data.kecamatan_id || processing}
                         color={errors.kelurahan_id ? 'failure' : 'gray'}
                     >
                         <option value="">Pilih Kelurahan</option>
@@ -192,8 +198,11 @@ export default function CreatePasienForm({
                             kelurahans
                                 .filter(
                                     (kelurahan) =>
-                                        kelurahan.kecamatan_id ==
-                                        data.kecamatan_id,
+                                        kelurahan.no_kec ==
+                                        kecamatans.find(
+                                            (kec) =>
+                                                kec.id == data.kecamatan_id,
+                                        ).no_kec,
                                 )
                                 .map((kelurahan) => (
                                     <option
@@ -223,6 +232,7 @@ export default function CreatePasienForm({
                         onChange={(e) => setData('alamat', e.target.value)}
                         autoComplete="alamat"
                         color={errors.alamat ? 'failure' : 'gray'}
+                        disabled={processing}
                     />
                     <InputError className="mt-2" message={errors.alamat} />
                 </div>
@@ -239,6 +249,7 @@ export default function CreatePasienForm({
                         value={data.pekerjaan}
                         onChange={(e) => setData('pekerjaan', e.target.value)}
                         autoComplete="pekerjaan"
+                        disabled={processing}
                         color={errors.pekerjaan ? 'failure' : 'gray'}
                     />
                     <InputError className="mt-2" message={errors.pekerjaan} />

@@ -1,6 +1,6 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Transition } from '@headlessui/react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     Button,
     Label,
@@ -13,9 +13,21 @@ import {
 import { useState } from 'react';
 import CreatePasienForm from './CreatePasienForm';
 
-export default function Index({ kecamatans, kelurahans }) {
+export default function Index({ pasien, kecamatans, kelurahans }) {
     const [openModalFilter, setOpenModalFilter] = useState(false);
     const [openModalTambah, setOpenModalTambah] = useState(false);
+    const [cariNama, setCariNama] = useState('');
+    const [cariTanggalLahir, setCariTanggalLahir] = useState('');
+    const handleFilter = () => {
+        router.visit(route('pasien.index'), {
+            method: 'get',
+            data: {
+                nama: cariNama,
+                tanggal_lahir: cariTanggalLahir,
+            },
+            preserveState: true,
+        });
+    };
 
     const {
         data,
@@ -55,18 +67,7 @@ export default function Index({ kecamatans, kelurahans }) {
                 <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800">
                     <div className="flex flex-col space-y-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:space-x-4 lg:space-y-0">
                         <div className="flex flex-1 items-center space-x-4">
-                            <h5>
-                                <span className="text-gray-500">
-                                    Jumlah Pencarian:
-                                </span>
-                                <span className="dark:text-white">146</span>
-                            </h5>
-                            <h5>
-                                <span className="text-gray-500">
-                                    Total Pasien:
-                                </span>
-                                <span className="dark:text-white">88.4k</span>
-                            </h5>
+                            <h2>Daftar Pasien ({pasien.total} entri)</h2>
                         </div>
                         <div className="flex flex-shrink-0 flex-col space-y-3 md:flex-row md:items-center md:space-x-3 md:space-y-0 lg:justify-end">
                             <button
@@ -172,12 +173,6 @@ export default function Index({ kecamatans, kelurahans }) {
                                         No Telp
                                     </th>
                                     <th scope="col" className="px-4 py-3">
-                                        Kecamatan
-                                    </th>
-                                    <th scope="col" className="px-4 py-3">
-                                        Kelurahan
-                                    </th>
-                                    <th scope="col" className="px-4 py-3">
                                         Alamat
                                     </th>
                                     <th scope="col" className="px-4 py-3">
@@ -189,94 +184,97 @@ export default function Index({ kecamatans, kelurahans }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700">
-                                    <td className="w-4 px-4 py-2">
-                                        <div className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary-600 focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
-                                        RM001234
-                                    </td>
-                                    <td className="px-4 py-2">Budi Santoso</td>
-                                    <td className="px-4 py-2">L</td>
-                                    <td className="px-4 py-2">
-                                        Jakarta, 15/03/1985
-                                    </td>
-                                    <td className="px-4 py-2">081234567890</td>
-                                    <td className="px-4 py-2">
-                                        Kebayoran Baru
-                                    </td>
-                                    <td className="px-4 py-2">Senayan</td>
-                                    <td className="px-4 py-2">
-                                        Jl. Sudirman No. 123
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        Karyawan Swasta
-                                    </td>
-                                    <td className="px-4 py-2">20/01/2024</td>
-                                </tr>
-                                <tr className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700">
-                                    <td className="w-4 px-4 py-2">
-                                        <div className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary-600 focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
-                                        RM001235
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        Siti Nurhaliza
-                                    </td>
-                                    <td className="px-4 py-2">P</td>
-                                    <td className="px-4 py-2">
-                                        Bandung, 22/07/1990
-                                    </td>
-                                    <td className="px-4 py-2">082345678901</td>
-                                    <td className="px-4 py-2">Ciputat</td>
-                                    <td className="px-4 py-2">Ciputat Timur</td>
-                                    <td className="px-4 py-2">
-                                        Jl. Raya Ciputat No. 45
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        Ibu Rumah Tangga
-                                    </td>
-                                    <td className="px-4 py-2">18/01/2024</td>
-                                </tr>
-                                <tr className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700">
-                                    <td className="w-4 px-4 py-2">
-                                        <div className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary-600 focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
-                                            />
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
-                                        RM001236
-                                    </td>
-                                    <td className="px-4 py-2">Ahmad Fauzi</td>
-                                    <td className="px-4 py-2">L</td>
-                                    <td className="px-4 py-2">
-                                        Surabaya, 10/11/1978
-                                    </td>
-                                    <td className="px-4 py-2">083456789012</td>
-                                    <td className="px-4 py-2">Tanah Abang</td>
-                                    <td className="px-4 py-2">Petamburan</td>
-                                    <td className="px-4 py-2">
-                                        Jl. KH Mas Mansyur No. 78
-                                    </td>
-                                    <td className="px-4 py-2">Wiraswasta</td>
-                                    <td className="px-4 py-2">15/01/2024</td>
-                                </tr>
+                                {pasien.data.length === 0 ? (
+                                    <tr>
+                                        <td
+                                            colSpan="11"
+                                            className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
+                                        >
+                                            Tidak ada data pasien.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    pasien.data.map((p) => (
+                                        <tr
+                                            key={p.id}
+                                            className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
+                                        >
+                                            <td className="w-4 px-4 py-2">
+                                                <div className="flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded border-gray-300 bg-gray-100 text-primary-600 focus:ring-2 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
+                                                {p.no_rm}
+                                            </td>
+                                            <td className="text-nowrap px-4 py-2">
+                                                {p.nama}
+                                            </td>
+                                            <td className="text-nowrap px-4 py-2">
+                                                {p.jenis_kelamin}
+                                            </td>
+                                            <td className="text-nowrap px-4 py-2">
+                                                {p.tempat_lahir},{' '}
+                                                {new Date(
+                                                    p.tanggal_lahir,
+                                                ).toLocaleDateString('id-ID')}
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                {p.no_telepon}
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                {p.alamat}, {p.kelurahan.nama},{' '}
+                                                {p.kecamatan.nama}
+                                            </td>
+                                            <td className="text-nowrap px-4 py-2">
+                                                {p.pekerjaan}
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                {new Date(
+                                                    p.created_at,
+                                                ).toLocaleDateString('id-ID')}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
+                    </div>
+                    {/* tampilkan navigasi pagination */}
+                    <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
+                        <span className="text-sm text-gray-700 dark:text-gray-400">
+                            Menampilkan{' '}
+                            <span className="font-semibold">{pasien.from}</span>{' '}
+                            sampai{' '}
+                            <span className="font-semibold">{pasien.to}</span>{' '}
+                            dari total{' '}
+                            <span className="font-semibold">
+                                {pasien.total}
+                            </span>{' '}
+                            entri
+                        </span>
+                        <div className="xs:mt-0 mt-2 inline-flex">
+                            {pasien.links.map((link, index) => (
+                                <Link
+                                    href={link.url || '#'}
+                                    key={index}
+                                    className={`mx-1 rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 ${
+                                        link.active
+                                            ? 'bg-primary-600 text-gray-700 hover:bg-primary-700 hover:text-white'
+                                            : ''
+                                    }`}
+                                >
+                                    <span
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    ></span>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -297,17 +295,29 @@ export default function Index({ kecamatans, kelurahans }) {
                                 type="text"
                                 id="nama"
                                 placeholder="Nama Pasien"
+                                value={cariNama}
+                                onChange={(e) => setCariNama(e.target.value)}
                             />
                         </div>
                         <div className="col-span-2 md:col-span-1">
                             <Label htmlFor="tanggal_lahir">Tgl Lahir</Label>
-                            <TextInput type="date" id="tanggal_lahir" />
+                            <TextInput
+                                type="date"
+                                id="tanggal_lahir"
+                                value={cariTanggalLahir}
+                                onChange={(e) =>
+                                    setCariTanggalLahir(e.target.value)
+                                }
+                            />
                         </div>
                     </div>
                 </ModalBody>
                 <ModalFooter>
-                    <Button>Terapkan</Button>
+                    <Button type="button" onClick={handleFilter}>
+                        Terapkan
+                    </Button>
                     <Button
+                        type="button"
                         color="light"
                         onClick={() => setOpenModalFilter(false)}
                     >
@@ -346,7 +356,7 @@ export default function Index({ kecamatans, kelurahans }) {
                     </button>
 
                     <Button
-                        className="ms-3"
+                        className={`ml-3 ${processing ? 'cursor-not-allowed opacity-50' : ''}`}
                         onClick={submit}
                         disabled={processing}
                     >

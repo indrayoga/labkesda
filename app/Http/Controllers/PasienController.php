@@ -13,11 +13,22 @@ class PasienController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $nama = $request->nama;
+        $tanggal_lahir = $request->tanggal_lahir;
+
         return Inertia::render('Pasien/Index', [
             'kecamatans' => Kecamatan::all(),
             'kelurahans' => Kelurahan::all(),
+            'pasien' => Pasien::with(['kecamatan', 'kelurahan'])
+                ->when($nama, function ($query, $nama) {
+                    $query->where('nama', 'like', '%' . $nama . '%');
+                })
+                ->when($tanggal_lahir, function ($query, $tanggal_lahir) {
+                    $query->where('tanggal_lahir', $tanggal_lahir);
+                })
+                ->orderBy('no_rm')->paginate(10),
         ]);
     }
 
@@ -35,14 +46,13 @@ class PasienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'no_rm' => 'required|string|unique:pasien,no_rm',
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|string',
             'tempat_lahir' => 'required|string',
             'tanggal_lahir' => 'required|date',
             'no_telepon' => 'required|string',
-            'kecamatan_id' => 'required|exists:kecamatans,id',
-            'kelurahan_id' => 'required|exists:kelurahans,id',
+            'kecamatan_id' => 'required|exists:kecamatan,id',
+            'kelurahan_id' => 'required|exists:kelurahan,id',
             'alamat' => 'required|string',
             'pekerjaan' => 'required|string',
         ]);
