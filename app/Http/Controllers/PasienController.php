@@ -83,7 +83,21 @@ class PasienController extends Controller
      */
     public function update(Request $request, Pasien $pasien)
     {
-        //
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'jenis_kelamin' => 'required|string',
+            'tempat_lahir' => 'required|string',
+            'tanggal_lahir' => 'required|date',
+            'no_telepon' => 'required|string',
+            'kecamatan_id' => 'required|exists:kecamatan,id',
+            'kelurahan_id' => 'required|exists:kelurahan,id',
+            'alamat' => 'required|string',
+            'pekerjaan' => 'required|string',
+        ]);
+
+        $pasien->update($request->all());
+
+        return redirect()->route('pasien.index');
     }
 
     /**
@@ -91,6 +105,8 @@ class PasienController extends Controller
      */
     public function destroy(Pasien $pasien)
     {
-        //
+        $pasien->delete();
+
+        return redirect()->route('pasien.index');
     }
 }

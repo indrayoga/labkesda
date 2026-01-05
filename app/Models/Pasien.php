@@ -4,17 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Pasien extends Model
 {
     /** @use HasFactory<\Database\Factories\PasienFactory> */
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'pasien';
     protected $keyType = 'string';
     public $incrementing = false;
-    public $fillable = ['no_rm', 'nama', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'no_telepon', 'kecamatan_id', 'kelurahan_id', 'alamat', 'pekerjaan'];
+    public $fillable = ['nama', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'no_telepon', 'kecamatan_id', 'kelurahan_id', 'alamat', 'pekerjaan'];
+
 
     protected static function boot()
     {
