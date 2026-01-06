@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PasienController;
+use App\Http\Controllers\PemeriksaanController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -24,7 +25,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('/pasien',PasienController::class);
+    Route::resource('/pasien', PasienController::class);
+    Route::resource('/pemeriksaan', PemeriksaanController::class);
+    Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

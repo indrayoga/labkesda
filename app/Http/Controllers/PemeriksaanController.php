@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JenisLayanan;
 use App\Models\Pemeriksaan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PemeriksaanController extends Controller
 {
@@ -13,6 +18,9 @@ class PemeriksaanController extends Controller
     public function index()
     {
         //
+        return Inertia::render('Pemeriksaan/Index', [
+            'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])->get(),
+        ]);
     }
 
     /**
@@ -28,7 +36,54 @@ class PemeriksaanController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'id_spesimen' => 'required|string',
+            'pasien_id' => 'required|exists:pasien,id',
+            'dokter_id' => 'required|exists:dokter,id',
+            'email' => 'nullable|email',
+            'jenis_bayar' => 'required|string',
+            'tanggal_pendaftaran' => 'required|date',
+            'jam_pendaftaran' => 'required',
+            'diagnosa' => 'required|string',
+            'layanan_ids' => 'required|array',
+            'layanan_ids.*' => 'exists:jenis_layanan,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $pemeriksaan = Pemeriksaan::create([
+                'id_spesimen' => $request->id_spesimen,
+                'pasien_id' => $request->pasien_id,
+                'dokter_id' => $request->dokter_id,
+                'email' => $request->email,
+                'jenis_bayar' => $request->jenis_bayar,
+                'tanggal_pendaftaran' => $request->tanggal_pendaftaran,
+                'jam_pendaftaran' => $request->jam_pendaftaran,
+                'diagnosa' => $request->diagnosa,
+                'hasil_dikirim_ke_pasien' => $request->hasil_dikirim_ke_pasien ?? false,
+                'hasil_dikirim_ke_dokter' => $request->hasil_dikirim_ke_dokter ?? false,
+                'pasien_tidak_puasa' => $request->pasien_tidak_puasa ?? false,
+                'pasien_puasa_jam' => $request->pasien_puasa_jam ?? 0,
+                'persiapan_pasien' => $request->persiapan_pasien ?? '',
+                'petugas_pendaftaran_id' => Auth::user()->id,
+            ]);
+
+            $layanans = JenisLayanan::whereIn('id', $request->layanan_ids)->get();
+            foreach ($layanans as $layanan) {
+                $pemeriksaan->detailPemeriksaan()->create([
+                    'jenis_layanan_id' => $layanan->id,
+                    'harga' => $layanan->harga,
+                ]);
+            }
+
+            DB::commit();
+
+            return \redirect()->route('pasien.index');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error saat mendaftarkan pemeriksaan: ' . $e->getMessage());
+            return back()->withErrors('Terjadi kesalahan saat menyimpan pendaftaran pemeriksaan.');
+        }
     }
 
     /**

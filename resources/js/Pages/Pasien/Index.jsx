@@ -286,6 +286,12 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
                       </td>
                       <td className="text-nowrap px-4 py-2">{p.pekerjaan}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
+                        <Link
+                          href={route('pendaftaran-laboratorium', p.id)}
+                          className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700"
+                        >
+                          Daftarkan
+                        </Link>
                         <button
                           onClick={() => handleEdit(p)}
                           className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"

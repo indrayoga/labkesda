@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dokter;
+use App\Models\JenisLayanan;
 use App\Models\Kecamatan;
 use App\Models\Kelurahan;
 use App\Models\Pasien;
@@ -68,6 +70,24 @@ class PasienController extends Controller
     public function show(Pasien $pasien)
     {
         //
+    }
+
+    public function pendaftaranLaboratorium(Pasien $pasien)
+    {
+        //
+
+        $jenisLayanan = JenisLayanan::with('kategoriLayanan')->get();
+        // grouping jenis layanan by kategori layanan
+        $kategoriLayanan = [];
+        foreach ($jenisLayanan as $layanan) {
+            $kategoriLayanan[$layanan->kategoriLayanan->nama][] = $layanan;
+        }
+
+        return Inertia::render('Pasien/PendaftaranLaboratorium', [
+            'pasien' => $pasien,
+            'dokter' => Dokter::all(),
+            'kategoriLayanans' => $kategoriLayanan,
+        ]);
     }
 
     /**

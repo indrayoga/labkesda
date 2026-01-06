@@ -1,0 +1,207 @@
+[
+  {
+    "kategori_layanan_id": "a98283be-e02f-488b-9082-a7ea59857bd1",
+    "nama": "Darah Lengkap",
+    "harga": 97000.0
+  },
+  {
+    "kategori_layanan_id": "a98283be-e02f-488b-9082-a7ea59857bd1",
+    "nama": "Golongan Darah",
+    "harga": 42000.0
+  },
+  {
+    "kategori_layanan_id": "a98283be-e02f-488b-9082-a7ea59857bd1",
+    "nama": "LED",
+    "harga": 72000.0
+  },
+  {
+    "kategori_layanan_id": "a98283be-e02f-488b-9082-a7ea59857bd1",
+    "nama": "Difcount",
+    "harga": 24000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "Widal",
+    "harga": 70000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "Asto/ Aso",
+    "harga": 93000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "Rematoid Factor",
+    "harga": 76000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "CRP",
+    "harga": 74000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "HBS Ag Kualitatif",
+    "harga": 79000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "Anti HBS Kualitatif",
+    "harga": 89000.0
+  },
+  {
+    "kategori_layanan_id": "cc8ac91f-a6e3-42d1-b104-1e5d1f705b29",
+    "nama": "VDRL",
+    "harga": 88000.0
+  },
+  {
+    "kategori_layanan_id": "4e226662-10d2-4454-9286-bdb1bab510d1",
+    "nama": "Urine Lengkap",
+    "harga": 63000.0
+  },
+  {
+    "kategori_layanan_id": "4e226662-10d2-4454-9286-bdb1bab510d1",
+    "nama": "HCG ",
+    "harga": 44000.0
+  },
+  {
+    "kategori_layanan_id": "4e226662-10d2-4454-9286-bdb1bab510d1",
+    "nama": "Narkoba 5 Parameter",
+    "harga": 223000.0
+  },
+  {
+    "kategori_layanan_id": "4e226662-10d2-4454-9286-bdb1bab510d1",
+    "nama": "Narkoba 7 Parameter",
+    "harga": 303000.0
+  },
+  {
+    "kategori_layanan_id": "14ad1b36-75b0-435e-8dba-4464abab0da5",
+    "nama": "Gram",
+    "harga": 34000.0
+  },
+  {
+    "kategori_layanan_id": "14ad1b36-75b0-435e-8dba-4464abab0da5",
+    "nama": "BTA",
+    "harga": 70000.0
+  },
+  {
+    "kategori_layanan_id": "14ad1b36-75b0-435e-8dba-4464abab0da5",
+    "nama": "Malaria",
+    "harga": 61000.0
+  },
+  {
+    "kategori_layanan_id": "14ad1b36-75b0-435e-8dba-4464abab0da5",
+    "nama": "Feaces Rutin ",
+    "harga": 65000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "HBA 1C",
+    "harga": 301000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Mikro Albumin/ ACR",
+    "harga": 258000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Asam Urat",
+    "harga": 41000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Glukosa",
+    "harga": 36000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Kholesterol",
+    "harga": 35000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "HDL Kholesterol",
+    "harga": 46000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "LDL Kholesterol",
+    "harga": 43000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Trigleserida",
+    "harga": 53000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Bilirubin Total",
+    "harga": 93000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Bilirubin Direct",
+    "harga": 93000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Bilirubin Indirect",
+    "harga": 31000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Alkali Fosfatase",
+    "harga": 93000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "SGOT",
+    "harga": 38000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "SGPT",
+    "harga": 38000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Gemma GT",
+    "harga": 60000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Ureum ",
+    "harga": 34000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Kreatinin",
+    "harga": 36000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Total Protein",
+    "harga": 38000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Albumin",
+    "harga": 41000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "Globulin",
+    "harga": 38000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "LDL Direct",
+    "harga": 70000.0
+  },
+  {
+    "kategori_layanan_id": "6064ca44-89ad-4884-9f29-e5cd0a38a74a",
+    "nama": "eGFR",
+    "harga": 50000.0
+  }
+]

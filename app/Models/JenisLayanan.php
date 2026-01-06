@@ -24,4 +24,9 @@ class JenisLayanan extends Model
             $model->id = (string) \Illuminate\Support\Str::uuid();
         });
     }
+
+    public function kategoriLayanan()
+    {
+        return $this->belongsTo(KategoriLayanan::class, 'kategori_layanan_id');
+    }
 }
