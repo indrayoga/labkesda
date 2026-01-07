@@ -7,7 +7,10 @@ use App\Models\JenisLayanan;
 use App\Models\Kecamatan;
 use App\Models\Kelurahan;
 use App\Models\Pasien;
+use App\Models\Pemeriksaan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PasienController extends Controller
@@ -90,6 +93,78 @@ class PasienController extends Controller
         ]);
     }
 
+    public function editPendaftaranLaboratorium(Pasien $pasien, Pemeriksaan $pemeriksaan)
+    {
+        //
+
+        $jenisLayanan = JenisLayanan::with('kategoriLayanan')->get();
+        // grouping jenis layanan by kategori layanan
+        $kategoriLayanan = [];
+        foreach ($jenisLayanan as $layanan) {
+            $kategoriLayanan[$layanan->kategoriLayanan->nama][] = $layanan;
+        }
+
+        return Inertia::render('Pasien/PendaftaranLaboratorium', [
+            'pasien' => $pasien,
+            'dokter' => Dokter::all(),
+            'pemeriksaan' => $pemeriksaan->load('detailPemeriksaan'),
+            'kategoriLayanans' => $kategoriLayanan,
+        ]);
+    }
+
+    public function updatePendaftaranLaboratorium(Request $request, Pasien $pasien, Pemeriksaan $pemeriksaan)
+    {
+        $request->validate([
+            'id_spesimen' => 'required|string',
+            'pasien_id' => 'required|exists:pasien,id',
+            'dokter_id' => 'required|exists:dokter,id',
+            'email' => 'nullable|email',
+            'jenis_bayar' => 'required|string',
+            'tanggal_pendaftaran' => 'required|date',
+            'jam_pendaftaran' => 'required',
+            'diagnosa' => 'required|string',
+            'layanan_ids' => 'required|array',
+            'layanan_ids.*' => 'exists:jenis_layanan,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $pemeriksaan->update([
+                'id_spesimen' => $request->id_spesimen,
+                'pasien_id' => $request->pasien_id,
+                'dokter_id' => $request->dokter_id,
+                'email' => $request->email,
+                'jenis_bayar' => $request->jenis_bayar,
+                'tanggal_pendaftaran' => $request->tanggal_pendaftaran,
+                'jam_pendaftaran' => $request->jam_pendaftaran,
+                'diagnosa' => $request->diagnosa,
+                'hasil_dikirim_ke_pasien' => $request->hasil_dikirim_ke_pasien ?? false,
+                'hasil_dikirim_ke_dokter' => $request->hasil_dikirim_ke_dokter ?? false,
+                'pasien_tidak_puasa' => $request->pasien_tidak_puasa ?? false,
+                'pasien_puasa_jam' => $request->pasien_puasa_jam ?? 0,
+                'persiapan_pasien' => $request->persiapan_pasien ?? '',
+            ]);
+
+            $pemeriksaan->detailPemeriksaan()->delete();
+
+            $layanans = JenisLayanan::whereIn('id', $request->layanan_ids)->get();
+            foreach ($layanans as $layanan) {
+                $pemeriksaan->detailPemeriksaan()->create([
+                    'jenis_layanan_id' => $layanan->id,
+                    'harga' => $layanan->harga,
+                ]);
+            }
+
+            DB::commit();
+
+            return \redirect()->route('pemeriksaan.index');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error saat perbaharui mendaftarkan pemeriksaan: ' . $e->getMessage());
+            return back()->withErrors('Terjadi kesalahan saat menyimpan.');
+        }
+        //
+    }
     /**
      * Show the form for editing the specified resource.
      */

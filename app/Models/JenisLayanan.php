@@ -29,4 +29,9 @@ class JenisLayanan extends Model
     {
         return $this->belongsTo(KategoriLayanan::class, 'kategori_layanan_id');
     }
+
+    public function detailPemeriksaan()
+    {
+        return $this->hasMany(DetailPemeriksaan::class, 'jenis_layanan_id');
+    }
 }

@@ -2,33 +2,41 @@ import InputError from '@/Components/InputError';
 import TextInput from '@/Components/TextInput';
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, useForm } from '@inertiajs/react';
-import { Checkbox, Label, Select, Textarea } from 'flowbite-react';
+import { Button, Checkbox, Label, Select, Textarea } from 'flowbite-react';
 import { useState } from 'react';
 
 export default function PendaftaranLaboratorium({
   pasien,
   dokter,
   kategoriLayanans,
+  pemeriksaan,
   auth,
 }) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedLayanans, setSelectedLayanans] = useState([]);
+  const [selectedLayanans, setSelectedLayanans] = useState(
+    pemeriksaan?.detail_pemeriksaan?.map((dp) => dp.jenis_layanan_id) || [],
+  );
 
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, put, processing, errors } = useForm({
     pasien_id: pasien?.id || '',
-    dokter_id: '',
-    email: '',
-    jenis_bayar: '',
-    tanggal_pendaftaran: new Date().toISOString().split('T')[0],
-    jam_pendaftaran: new Date().toTimeString().split(' ')[0].substring(0, 5),
-    diagnosa: '',
-    hasil_dikirim_ke_pasien: false,
-    hasil_dikirim_ke_dokter: false,
-    pasien_tidak_puasa: false,
-    pasien_puasa_jam: 0,
-    persiapan_pasien: '',
-    id_spesimen: '',
-    layanan_ids: [],
+    dokter_id: pemeriksaan?.dokter_id || '',
+    email: pemeriksaan?.email || '',
+    jenis_bayar: pemeriksaan?.jenis_bayar || '',
+    tanggal_pendaftaran:
+      pemeriksaan?.tanggal_pendaftaran ||
+      new Date().toISOString().split('T')[0],
+    jam_pendaftaran:
+      pemeriksaan?.jam_pendaftaran ||
+      new Date().toTimeString().split(' ')[0].substring(0, 5),
+    diagnosa: pemeriksaan?.diagnosa || '',
+    hasil_dikirim_ke_pasien: pemeriksaan?.hasil_dikirim_ke_pasien || false,
+    hasil_dikirim_ke_dokter: pemeriksaan?.hasil_dikirim_ke_dokter || false,
+    pasien_tidak_puasa: pemeriksaan?.pasien_tidak_puasa || false,
+    pasien_puasa_jam: pemeriksaan?.pasien_puasa_jam || 0,
+    persiapan_pasien: pemeriksaan?.persiapan_pasien || '',
+    id_spesimen: pemeriksaan?.id_spesimen || '',
+    layanan_ids:
+      pemeriksaan?.detail_pemeriksaan?.map((dp) => dp.jenis_layanan_id) || [],
   });
 
   const handleNextStep = () => {
@@ -48,29 +56,44 @@ export default function PendaftaranLaboratorium({
 
   const handleLayananToggle = (layananId) => {
     setSelectedLayanans((prev) => {
-      if (prev.includes(layananId)) {
-        return prev.filter((id) => id !== layananId);
-      } else {
-        return [...prev, layananId];
-      }
+      const newSelected = prev.includes(layananId)
+        ? prev.filter((id) => id !== layananId)
+        : [...prev, layananId];
+
+      // Sync with form data
+      setData('layanan_ids', newSelected);
+
+      return newSelected;
     });
-    setData('layanan_ids', selectedLayanans);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const submitData = {
-      ...data,
-      layanan_ids: selectedLayanans,
-    };
+
+    // Validate layanan selection
+    if (selectedLayanans.length === 0) {
+      alert('Mohon pilih minimal satu layanan');
+      return;
+    }
+
+    if (pemeriksaan) {
+      put(route('pemeriksaan.update', pemeriksaan.id), {
+        onSuccess: () => {
+          alert('Pendaftaran berhasil diperbarui!');
+        },
+        onError: (errors) => {
+          alert('Terjadi kesalahan saat memperbarui pendaftaran.');
+        },
+      });
+      return;
+    }
+
     post(route('pemeriksaan.store'), {
-      data: submitData,
       onSuccess: () => {
         alert('Pendaftaran berhasil!');
       },
       onError: (errors) => {
         alert('Terjadi kesalahan saat menyimpan pendaftaran.');
-        console.log(errors);
       },
     });
   };
@@ -567,13 +590,13 @@ export default function PendaftaranLaboratorium({
                     >
                       Kembali
                     </button>
-                    <button
+                    <Button
                       type="submit"
                       disabled={processing || selectedLayanans.length === 0}
-                      className="rounded-lg bg-green-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+                      className="rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4 focus:ring-green-300 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
                     >
                       {processing ? 'Menyimpan...' : 'Simpan Pendaftaran'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

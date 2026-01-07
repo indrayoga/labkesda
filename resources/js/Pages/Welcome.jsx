@@ -1,3 +1,4 @@
+import LabDashboardMockup from '@/Components/LabDashboardMockup';
 import Navbar from '@/Layouts/Navbar';
 import { Head } from '@inertiajs/react';
 
@@ -86,16 +87,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
               </form>
             </div>
             <div className="col-span-6">
-              <img
-                src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/hero/search-mockup.png"
-                className="dark:hidden"
-                alt="Lab Kesehatan Dashboard"
-              />
-              <img
-                src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/hero/search-mockup-dark.png"
-                className="hidden dark:block"
-                alt="Lab Kesehatan Dashboard Dark"
-              />
+              <LabDashboardMockup />
             </div>
           </div>
           <div className="grid gap-8 sm:gap-12 md:grid-cols-3">

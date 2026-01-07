@@ -19,4 +19,14 @@ class DetailPemeriksaan extends Model
             $model->id = (string) \Illuminate\Support\Str::uuid();
         });
     }
+
+    public function pemeriksaan()
+    {
+        return $this->belongsTo(Pemeriksaan::class, 'pemeriksaan_id');
+    }
+
+    public function jenisLayanan()
+    {
+        return $this->belongsTo(JenisLayanan::class, 'jenis_layanan_id');
+    }
 }

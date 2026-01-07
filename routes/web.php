@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('/pasien', PasienController::class);
     Route::resource('/pemeriksaan', PemeriksaanController::class);
     Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
+    Route::get('pendaftaran-laboratorium/{pasien}/{pemeriksaan}', [PasienController::class, 'editPendaftaranLaboratorium'])->name('edit-pendaftaran-laboratorium');
 });
 
 require __DIR__ . '/auth.php';

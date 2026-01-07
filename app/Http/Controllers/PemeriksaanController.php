@@ -15,11 +15,16 @@ class PemeriksaanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
+        $tanggal = $request->tanggal ?? date('Y-m-d');
         return Inertia::render('Pemeriksaan/Index', [
-            'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])->get(),
+            'tanggal' => $tanggal,
+            'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])
+                ->whereDate('tanggal_pendaftaran', $tanggal)
+                ->orderBy('created_at', 'asc')
+                ->paginate(10),
         ]);
     }
 
@@ -116,5 +121,9 @@ class PemeriksaanController extends Controller
     public function destroy(Pemeriksaan $pemeriksaan)
     {
         //
+        $pemeriksaan->detailPemeriksaan()->delete();
+        $pemeriksaan->delete();
+
+        return redirect()->route('pemeriksaan.index');
     }
 }
