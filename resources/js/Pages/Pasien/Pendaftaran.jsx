@@ -1,10 +1,32 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Button, TextInput } from 'flowbite-react';
+import { Button, Modal, ModalBody, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Index({ tanggal, pemeriksaan }) {
+export default function Pendaftaran({ tanggal, pemeriksaan }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
+  const [openModalDelete, setOpenModalDelete] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [prosesDelete, setProsesDelete] = useState(false);
+
+  const confirmHapus = (id) => {
+    setOpenModalDelete(true);
+    setSelectedId(id);
+  };
+
+  const hapusPemeriksaan = () => {
+    setProsesDelete(true);
+    router.delete(route('pemeriksaan.destroy', selectedId), {
+      onSuccess: () => {
+        setProsesDelete(false);
+        setOpenModalDelete(false);
+      },
+      onError: (errors) => {
+        setProsesDelete(false);
+        console.error('Error deleting pemeriksaan:', errors);
+      },
+    });
+  };
 
   /*
     Fungsi untuk menghitung umur berdasarkan tanggal lahir
@@ -175,16 +197,21 @@ export default function Index({ tanggal, pemeriksaan }) {
                       </td>
                       <td className="px-4 py-2">{p.jenis_bayar}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
-                        <a
-                          href={route('pemeriksaan.form-consent', p.id)}
-                          target="_blank"
+                        <Link
+                          href={route('edit-pendaftaran-laboratorium', {
+                            pasien: p.pasien.id,
+                            pemeriksaan: p.id,
+                          })}
                           className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
                         >
-                          Form Consent
-                        </a>
-                        <Link className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700">
-                          Hasil Pemeriksaan
+                          Ubah
                         </Link>
+                        <button
+                          onClick={() => confirmHapus(p.id)}
+                          className="rounded bg-red-500 px-3 py-1 text-white hover:bg-red-600"
+                        >
+                          Hapus
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -222,6 +249,50 @@ export default function Index({ tanggal, pemeriksaan }) {
           </div>
         </div>
       </div>
+
+      <Modal
+        size="md"
+        show={openModalDelete}
+        onClose={() => setOpenModalDelete(false)}
+      >
+        <ModalBody>
+          <div className="max-w-md text-center">
+            <div className="flex items-center">
+              <svg
+                className="-ml-1 mr-2 h-14 w-14 text-red-500 dark:text-white"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                Apakah anda yakin ingin menghapus data pendaftaran ini?
+              </h3>
+            </div>
+            <div className="flex justify-center gap-4">
+              <Button onClick={hapusPemeriksaan} disabled={prosesDelete}>
+                {prosesDelete ? 'Menghapus...' : 'Ya, Saya yakin'}
+              </Button>
+              <Button
+                color="alternative"
+                onClick={() => setOpenModalDelete(false)}
+              >
+                Tidak, batal
+              </Button>
+            </div>
+          </div>
+        </ModalBody>
+      </Modal>
     </LabkesdaLayout>
   );
 }

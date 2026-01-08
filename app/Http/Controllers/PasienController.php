@@ -37,6 +37,19 @@ class PasienController extends Controller
         ]);
     }
 
+    public function pendaftaran(Request $request)
+    {
+        //
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        return Inertia::render('Pasien/Pendaftaran', [
+            'tanggal' => $tanggal,
+            'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])
+                ->whereDate('tanggal_pendaftaran', $tanggal)
+                ->orderBy('created_at', 'asc')
+                ->paginate(10),
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JenisLayanan;
 use App\Models\Pemeriksaan;
+use App\Services\InformedConsentPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -121,9 +122,25 @@ class PemeriksaanController extends Controller
     public function destroy(Pemeriksaan $pemeriksaan)
     {
         //
+        if (!empty($pemeriksaan->status_bayar) || !empty($pemeriksaan->pembayaran)) {
+            return redirect()->back()->with('error', 'Pemeriksaan ini tidak dapat dihapus karena sudah memiliki status pembayaran.');
+        }
+
         $pemeriksaan->detailPemeriksaan()->delete();
         $pemeriksaan->delete();
 
         return redirect()->route('pemeriksaan.index');
+    }
+
+    public function printInformedConsent(Pemeriksaan $pemeriksaan)
+    {
+        $pdf = new InformedConsentPdf($pemeriksaan);
+        $pdf->AddPage();
+        $pdf->sectionPenjelasan();
+        $pdf->sectionPersetujuan();
+        $pdf->signatureSection();
+
+        return response($pdf->Output('S'))
+            ->header('Content-Type', 'application/pdf');
     }
 }

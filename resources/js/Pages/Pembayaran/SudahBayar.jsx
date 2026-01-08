@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Button, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Index({ tanggal, pemeriksaan }) {
+export default function SudahBayar({ tanggal, pembayaran }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
 
   /*
@@ -26,7 +26,7 @@ export default function Index({ tanggal, pemeriksaan }) {
 
   return (
     <LabkesdaLayout>
-      <Head title="Pemeriksaan Pasien" />
+      <Head title="Kwitansi" />
       <div className="max-w-screen">
         <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800">
           <div className="flex flex-col space-y-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:space-x-4 lg:space-y-0">
@@ -40,7 +40,9 @@ export default function Index({ tanggal, pemeriksaan }) {
               <Button
                 onClick={() =>
                   router.get(
-                    route('pemeriksaan.index', { tanggal: cariTanggalDaftar }),
+                    route('pembayaran.kwitansi', {
+                      tanggal: cariTanggalDaftar,
+                    }),
                   )
                 }
               >
@@ -90,7 +92,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                     </div>
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Tanggal Daftar
+                    Tanggal Bayar
                   </th>
                   <th scope="col" className="px-4 py-3">
                     No Register
@@ -125,17 +127,17 @@ export default function Index({ tanggal, pemeriksaan }) {
                 </tr>
               </thead>
               <tbody>
-                {pemeriksaan.data.length === 0 ? (
+                {pembayaran.data.length === 0 ? (
                   <tr>
                     <td
                       colSpan="11"
                       className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
                     >
-                      Tidak ada data pemeriksaan.
+                      Tidak ada data.
                     </td>
                   </tr>
                 ) : (
-                  pemeriksaan.data.map((p) => (
+                  pembayaran.data.map((p) => (
                     <tr
                       key={p.id}
                       className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -149,14 +151,18 @@ export default function Index({ tanggal, pemeriksaan }) {
                         </div>
                       </td>
                       <td className="text-nowrap px-4 py-2 font-medium text-gray-900 dark:text-white">
-                        {new Date(p.tanggal_pendaftaran).toLocaleDateString() +
-                          ' ' +
-                          p.jam_pendaftaran}
+                        {new Date(p.tanggal_bayar).toLocaleDateString('id-ID', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.no_registrasi}
+                        {p.pemeriksaan.no_registrasi}
                       </td>
-                      <td className="text-nowrap px-4 py-2">{p.id_spesimen}</td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.pemeriksaan.id_spesimen}
+                      </td>
                       <td className="text-nowrap px-4 py-2">{p.pasien.nama}</td>
                       <td className="text-nowrap px-4 py-2">
                         {p.pasien.jenis_kelamin}
@@ -169,22 +175,25 @@ export default function Index({ tanggal, pemeriksaan }) {
                       </td>
                       <td className="px-4 py-2">{p.dokter.nama}</td>
                       <td className="px-4 py-2">
-                        {p.detail_pemeriksaan
+                        {p.pemeriksaan.detail_pemeriksaan
                           .map((dp) => dp.jenis_layanan.nama)
                           .join(', ')}
                       </td>
-                      <td className="px-4 py-2">{p.jenis_bayar}</td>
+                      <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-white">
+                        {p.jumlah_bayar.toLocaleString('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                        })}
+                      </td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
                         <a
-                          href={route('pemeriksaan.form-consent', p.id)}
+                          href={route('pembayaran.kwitansi.cetak', p.id)}
+                          className="text-primary-600 no-underline hover:underline dark:text-primary-500"
                           target="_blank"
-                          className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
+                          rel="noopener noreferrer"
                         >
-                          Form Consent
+                          Cetak
                         </a>
-                        <Link className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700">
-                          Hasil Pemeriksaan
-                        </Link>
                       </td>
                     </tr>
                   ))
@@ -196,12 +205,12 @@ export default function Index({ tanggal, pemeriksaan }) {
           <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
             <span className="text-sm text-gray-700 dark:text-gray-400">
               Menampilkan{' '}
-              <span className="font-semibold">{pemeriksaan.from}</span> sampai{' '}
-              <span className="font-semibold">{pemeriksaan.to}</span> dari total{' '}
-              <span className="font-semibold">{pemeriksaan.total}</span> entri
+              <span className="font-semibold">{pembayaran.from}</span> sampai{' '}
+              <span className="font-semibold">{pembayaran.to}</span> dari total{' '}
+              <span className="font-semibold">{pembayaran.total}</span> entri
             </span>
             <div className="xs:mt-0 mt-2 inline-flex">
-              {pemeriksaan.links.map((link, index) => (
+              {pembayaran.links.map((link, index) => (
                 <Link
                   href={link.url || '#'}
                   key={index}

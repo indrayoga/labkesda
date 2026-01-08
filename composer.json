@@ -14,6 +14,8 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "ngekoding/terbilang": "^1.0",
+        "setasign/fpdf": "^1.8",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {

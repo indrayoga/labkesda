@@ -1,10 +1,45 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Button, TextInput } from 'flowbite-react';
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  TextInput,
+} from 'flowbite-react';
 import { useState } from 'react';
 
 export default function Index({ tanggal, pemeriksaan }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
+  const [openModalBayar, setOpenModalBayar] = useState(false);
+  const [selectedPemeriksaan, setSelectedPemeriksaan] = useState(null);
+  const [prosesBayar, setProsesBayar] = useState(false);
+
+  const confirmBayar = (pemeriksaan) => {
+    setOpenModalBayar(true);
+    setSelectedPemeriksaan(pemeriksaan);
+  };
+
+  const handleBayar = () => {
+    setProsesBayar(true);
+    router.post(
+      route('pembayaran.store'),
+      {
+        pemeriksaan_id: selectedPemeriksaan.id,
+      },
+      {
+        onSuccess: () => {
+          alert('Pembayaran berhasil.');
+          setOpenModalBayar(false);
+          setProsesBayar(false);
+        },
+        onError: (errors) => {
+          alert('Terjadi kesalahan saat memproses pembayaran.');
+          setProsesBayar(false);
+        },
+      },
+    );
+  };
 
   /*
     Fungsi untuk menghitung umur berdasarkan tanggal lahir
@@ -40,7 +75,7 @@ export default function Index({ tanggal, pemeriksaan }) {
               <Button
                 onClick={() =>
                   router.get(
-                    route('pemeriksaan.index', { tanggal: cariTanggalDaftar }),
+                    route('pembayaran.index', { tanggal: cariTanggalDaftar }),
                   )
                 }
               >
@@ -175,16 +210,9 @@ export default function Index({ tanggal, pemeriksaan }) {
                       </td>
                       <td className="px-4 py-2">{p.jenis_bayar}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
-                        <a
-                          href={route('pemeriksaan.form-consent', p.id)}
-                          target="_blank"
-                          className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
-                        >
-                          Form Consent
-                        </a>
-                        <Link className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700">
-                          Hasil Pemeriksaan
-                        </Link>
+                        <Button size="sm" onClick={() => confirmBayar(p)}>
+                          Bayar
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -222,6 +250,119 @@ export default function Index({ tanggal, pemeriksaan }) {
           </div>
         </div>
       </div>
+
+      <Modal
+        size="lg"
+        show={openModalBayar}
+        onClose={() => setOpenModalBayar(false)}
+      >
+        <ModalHeader>Ringkasan Pemeriksaan</ModalHeader>
+        <ModalBody>
+          <div className="flow-root">
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <dl className="pb-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <dt className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
+                  Tanggal Daftar
+                </dt>
+                <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
+                  {selectedPemeriksaan?.tanggal_pendaftaran}
+                </dd>
+              </dl>
+
+              <dl className="py-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <dt className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
+                  Nama
+                </dt>
+                <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
+                  {selectedPemeriksaan?.pasien.nama}
+                </dd>
+              </dl>
+
+              <dl className="py-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <dt className="whitespace-nowrap text-base font-semibold text-gray-900 dark:text-white">
+                  Telp
+                </dt>
+                <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
+                  {selectedPemeriksaan?.pasien.no_telepon}
+                </dd>
+              </dl>
+
+              <dl className="py-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <dt className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
+                  Jenis Pembayaran
+                </dt>
+                <dd className="mt-2 flex items-center gap-2 sm:mt-0 sm:justify-end">
+                  {selectedPemeriksaan?.jenis_bayar}
+                </dd>
+              </dl>
+
+              <dl className="pt-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <dt className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
+                  Alamat
+                </dt>
+                <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
+                  {selectedPemeriksaan?.pasien.alamat}
+                </dd>
+              </dl>
+            </div>
+          </div>
+          <h4 className="mb-4 mt-5 text-lg font-semibold text-gray-900 dark:text-white">
+            Jenis Layanan
+          </h4>
+          <div className="mb-5 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-gray-50 dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
+            {selectedPemeriksaan?.detail_pemeriksaan.map((dp) => (
+              <div className="items-center space-y-4 p-4 sm:flex sm:gap-6 sm:space-y-0">
+                <div className="w-full items-center space-y-4 sm:flex sm:space-x-6 sm:space-y-0 md:max-w-md lg:max-w-lg">
+                  <div className="w-full md:max-w-sm lg:max-w-md">
+                    {dp.jenis_layanan.nama}
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="w-8 shrink-0">
+                    <p className="text-base font-normal text-gray-900 dark:text-white">
+                      x1
+                    </p>
+                  </div>
+
+                  <div className="md:w-24 md:text-right">
+                    <p className="text-base font-bold text-gray-900 dark:text-white">
+                      {`Rp${dp.harga.toLocaleString('id-ID')}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 space-y-4">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Ringkasan Pembayaran
+            </h4>
+            <div className="space-y-4">
+              <dl className="flex items-center justify-between gap-4">
+                <dt className="text-lg font-bold text-gray-900 dark:text-white">
+                  Total
+                </dt>
+                <dd className="text-lg font-bold text-gray-900 dark:text-white">
+                  {`Rp${selectedPemeriksaan?.total?.toLocaleString('id-ID')}`}
+                </dd>
+              </dl>
+            </div>
+          </div>
+          <div className="mt-4 items-center justify-end space-x-0 space-y-4 border-t border-gray-200 pt-4 sm:flex sm:space-x-4 sm:space-y-0 md:mt-5 md:pt-5 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => setOpenModalBayar(false)}
+              className="w-full rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-100 sm:w-auto dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+            >
+              Batal
+            </button>
+            <Button onClick={handleBayar} disabled={prosesBayar}>
+              {prosesBayar ? 'Memproses...' : 'Bayar'}
+            </Button>
+          </div>
+        </ModalBody>
+      </Modal>
     </LabkesdaLayout>
   );
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PasienController;
+use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PemeriksaanController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -26,7 +27,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('/pasien', PasienController::class);
+    Route::get('pendaftaran-laboratorium', [PasienController::class, 'pendaftaran'])->name('pendaftaran-laboratorium');
+
     Route::resource('/pemeriksaan', PemeriksaanController::class);
+    Route::get('pemeriksaan/form-consent/{pemeriksaan}', [PemeriksaanController::class, 'printInformedConsent'])->name('pemeriksaan.form-consent');
+    Route::get('pembayaran/kwitansi', [PembayaranController::class, 'kwitansi'])->name('pembayaran.kwitansi');
+    Route::get('pembayaran/cetak-kwitansi/{pembayaran}', [PembayaranController::class, 'printKwitansi'])->name('pembayaran.kwitansi.cetak');
+    Route::resource('/pembayaran', PembayaranController::class);
     Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
     Route::get('pendaftaran-laboratorium/{pasien}/{pemeriksaan}', [PasienController::class, 'editPendaftaranLaboratorium'])->name('edit-pendaftaran-laboratorium');
 });

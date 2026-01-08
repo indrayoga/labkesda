@@ -37,4 +37,33 @@ class Pembayaran extends Model
 
         return $datePart . '.' . $newNumber;
     }
+
+    public function pemeriksaan()
+    {
+        return $this->belongsTo(Pemeriksaan::class, 'pemeriksaan_id');
+    }
+
+    public function pasien()
+    {
+        return $this->hasOneThrough(
+            Pasien::class,
+            Pemeriksaan::class,
+            'id', // Foreign key on Pemeriksaan table...
+            'id', // Foreign key on Pasien table...
+            'pemeriksaan_id', // Local key on Pembayaran table...
+            'pasien_id' // Local key on Pemeriksaan table...
+        );
+    }
+
+    public function dokter()
+    {
+        return $this->hasOneThrough(
+            Dokter::class,
+            Pemeriksaan::class,
+            'id', // Foreign key on Pemeriksaan table...
+            'id', // Foreign key on Dokter table...
+            'pemeriksaan_id', // Local key on Pembayaran table...
+            'dokter_id' // Local key on Pemeriksaan table...
+        );
+    }
 }

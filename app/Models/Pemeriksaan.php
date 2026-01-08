@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,6 +15,8 @@ class Pemeriksaan extends Model
     protected $guarded = ['id', 'no_registrasi'];
     protected $keyType = 'string';
     public $incrementing = false;
+    protected $appends = ['total'];
+    protected $with = ['detailPemeriksaan'];
 
     protected static function boot()
     {
@@ -44,6 +47,13 @@ class Pemeriksaan extends Model
         return $datePart . '.' . $newNumber;
     }
 
+    protected function total(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->detailPemeriksaan->sum('harga'),
+        );
+    }
+
     public function pasien()
     {
         return $this->belongsTo(Pasien::class, 'pasien_id');
@@ -57,5 +67,10 @@ class Pemeriksaan extends Model
     public function detailPemeriksaan()
     {
         return $this->hasMany(DetailPemeriksaan::class, 'pemeriksaan_id');
+    }
+
+    public function pembayaran()
+    {
+        return $this->hasOne(Pembayaran::class, 'pemeriksaan_id');
     }
 }
