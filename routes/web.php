@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BerandaController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PemeriksaanController;
@@ -17,11 +18,17 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Beranda');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Beranda');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [BerandaController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/pasien-terbaru', [BerandaController::class, 'pasienTerbaru'])->name('beranda.pasien-terbaru');
+    Route::get('/dashboard/pemeriksaan-terbanyak', [BerandaController::class, 'pemeriksaanTerbanyakBulanIni'])->name('beranda.pemeriksaan-terbanyak');
+    Route::get('/dashboard/kunjungan-pasien-mingguan', [BerandaController::class, 'kunjunganPasien7hariTerakhir'])->name('beranda.kunjungan-pasien-mingguan');
+    Route::get('/dashboard/statistik-bulan-ini', [BerandaController::class, 'statistikBulanIni'])->name('beranda.statistik-bulan-ini');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

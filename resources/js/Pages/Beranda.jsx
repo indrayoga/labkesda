@@ -1,176 +1,412 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head } from '@inertiajs/react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
-export default function Beranda() {
+export default function Beranda({
+  pasien_hari_ini,
+  menunggu_pemeriksaan,
+  selesai_pemeriksaan,
+}) {
+  const [pasienTerbaru, setPasienTerbaru] = useState([]);
+  const [pemeriksaanTerbanyak, setPemeriksaanTerbanyak] = useState([]);
+  const [kunjunganMingguan, setKunjunganMingguan] = useState([]);
+  const [statistikBulanan, setStatistikBulanan] = useState({});
+  const [isLoadingPasienTerbaru, setIsLoadingPasienTerbaru] = useState(true);
+  const [isLoadingPemeriksaanTerbanyak, setIsLoadingPemeriksaanTerbanyak] =
+    useState(true);
+  const [isLoadingKunjunganMingguan, setIsLoadingKunjunganMingguan] =
+    useState(true);
+  const [isLoadingStatistikBulanan, setIsLoadingStatistikBulanan] =
+    useState(true);
+
+  useEffect(() => {
+    const fetchPasienTerbaru = async () => {
+      try {
+        const response = await axios.get(route('beranda.pasien-terbaru'));
+        setPasienTerbaru(response.data.data);
+      } catch (error) {
+        console.error('Error fetching pasien terbaru');
+      } finally {
+        setIsLoadingPasienTerbaru(false);
+      }
+    };
+
+    const fetchPemeriksaanTerbanyak = async () => {
+      try {
+        const response = await axios.get(
+          route('beranda.pemeriksaan-terbanyak'),
+        );
+        setPemeriksaanTerbanyak(response.data.data);
+      } catch (error) {
+        console.error('Error fetching pemeriksaan terbanyak');
+      } finally {
+        setIsLoadingPemeriksaanTerbanyak(false);
+      }
+    };
+
+    const fetchKunjunganMingguan = async () => {
+      try {
+        const response = await axios.get(
+          route('beranda.kunjungan-pasien-mingguan'),
+        );
+        setKunjunganMingguan(response.data.data);
+      } catch (error) {
+        console.error('Error fetching kunjungan mingguan');
+      } finally {
+        setIsLoadingKunjunganMingguan(false);
+      }
+    };
+
+    const fetchStatistikBulanan = async () => {
+      try {
+        const response = await axios.get(route('beranda.statistik-bulan-ini'));
+        setStatistikBulanan(response.data.data);
+      } catch (error) {
+        console.error('Error fetching statistik bulanan');
+      } finally {
+        setIsLoadingStatistikBulanan(false);
+      }
+    };
+
+    fetchPasienTerbaru();
+    fetchPemeriksaanTerbanyak();
+    fetchKunjunganMingguan();
+    fetchStatistikBulanan();
+
+    const intervalId = setInterval(() => {
+      fetchPasienTerbaru();
+      fetchPemeriksaanTerbanyak();
+      fetchKunjunganMingguan();
+      fetchStatistikBulanan();
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const getInitials = (name = '') => {
+    const cleaned = String(name).trim();
+    if (!cleaned) return '-';
+    return cleaned
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0))
+      .join('')
+      .toUpperCase();
+  };
+
+  const maxTotalLayanan = Math.max(
+    0,
+    ...pemeriksaanTerbanyak.map((item) => Number(item?.total) || 0),
+  );
+  const maxKunjungan = Math.max(
+    0,
+    ...kunjunganMingguan.map((k) => Number(k?.jumlah_kunjungan) || 0),
+  );
+  const totalKunjungan7Hari = kunjunganMingguan.reduce(
+    (acc, k) => acc + (Number(k?.jumlah_kunjungan) || 0),
+    0,
+  );
+
   return (
     <LabkesdaLayout>
       <Head title="Dashboard" />
-      <section className='space-y-4 p-4'>
-      <div className="grid grid-cols-1 gap-0 lg:grid-cols-3 lg:gap-4">
-        <div className="col-span-1 mb-4 grid gap-4 lg:mb-0">
-          {/* Total Pasien Hari Ini */}
-          <div className="flex h-32 flex-col items-center justify-center rounded-xl border-2 border-blue-200 bg-blue-50 lg:h-48 dark:border-blue-600 dark:bg-blue-900">
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Pasien Hari Ini
-            </h3>
-            <p className="text-4xl font-bold text-blue-600 dark:text-blue-400">
-              47
+      <section className="mx-auto max-w-7xl space-y-6 p-6">
+        {/* Header */}
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              Dashboard
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Labkesda Kota Balikpapan
             </p>
           </div>
-
-          {/* Pemeriksaan Menunggu */}
-          <div className="flex h-32 flex-col items-center justify-center rounded-xl border-2 border-yellow-200 bg-yellow-50 lg:h-48 dark:border-yellow-600 dark:bg-yellow-900">
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Menunggu Pemeriksaan
-            </h3>
-            <p className="text-4xl font-bold text-yellow-600 dark:text-yellow-400">
-              12
-            </p>
-          </div>
-
-          {/* Hasil Siap */}
-          <div className="flex h-32 flex-col items-center justify-center rounded-xl border-2 border-green-200 bg-green-50 lg:h-48 dark:border-green-600 dark:bg-green-900">
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Hasil Siap Diambil
-            </h3>
-            <p className="text-4xl font-bold text-green-600 dark:text-green-400">
-              8
-            </p>
-          </div>
-
-          {/* Total Lab Aktif */}
-          <div className="flex h-32 flex-col items-center justify-center rounded-xl border-2 border-purple-200 bg-purple-50 lg:h-48 dark:border-purple-600 dark:bg-purple-900">
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-              Laboratorium Aktif
-            </h3>
-            <p className="text-4xl font-bold text-purple-600 dark:text-purple-400">
-              3
-            </p>
-          </div>
-        </div>
-
-        <div className="col-span-2 flex flex-col gap-4">
-          {/* Daftar Pasien Terbaru */}
-          <div className="flex h-32 flex-col rounded-xl border-2 border-gray-200 bg-white p-4 lg:h-64 dark:border-gray-600 dark:bg-gray-800">
-            <h3 className="mb-3 text-lg font-bold text-gray-800 dark:text-gray-200">
-              Pasien Terbaru
-            </h3>
-            <div className="space-y-2 overflow-auto">
-              <div className="flex items-center justify-between rounded bg-gray-50 p-2 dark:bg-gray-700">
-                <div>
-                  <span className="font-semibold">Budi Santoso</span> -
-                  Hematologi
-                </div>
-                <span className="text-sm text-gray-500">08:30</span>
-              </div>
-              <div className="flex items-center justify-between rounded bg-gray-50 p-2 dark:bg-gray-700">
-                <div>
-                  <span className="font-semibold">Siti Aminah</span> - Kimia
-                  Darah
-                </div>
-                <span className="text-sm text-gray-500">09:15</span>
-              </div>
-              <div className="flex items-center justify-between rounded bg-gray-50 p-2 dark:bg-gray-700">
-                <div>
-                  <span className="font-semibold">Ahmad Yani</span> - Urinalisis
-                </div>
-                <span className="text-sm text-gray-500">10:00</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Pemeriksaan Populer */}
-          <div className="flex h-32 flex-col rounded-xl border-2 border-gray-200 bg-white p-4 lg:h-64 dark:border-gray-600 dark:bg-gray-800">
-            <h3 className="mb-3 text-lg font-bold text-gray-800 dark:text-gray-200">
-              Pemeriksaan Populer Bulan Ini
-            </h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span>Hematologi Lengkap</span>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">
-                  156
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Kimia Darah</span>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">
-                  132
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Urinalisis</span>
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">
-                  98
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Jadwal Laboratorium */}
-          <div className="flex h-32 flex-col rounded-xl border-2 border-gray-200 bg-white p-4 lg:h-64 dark:border-gray-600 dark:bg-gray-800">
-            <h3 className="mb-3 text-lg font-bold text-gray-800 dark:text-gray-200">
-              Jadwal Operasional
-            </h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span>Lab Hematologi</span>
-                <span className="text-sm text-green-600">
-                  ● Buka - 07:00-15:00
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Lab Kimia Klinik</span>
-                <span className="text-sm text-green-600">
-                  ● Buka - 07:00-15:00
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Lab Mikrobiologi</span>
-                <span className="text-sm text-green-600">
-                  ● Buka - 08:00-14:00
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {/* Grafik Kunjungan Mingguan */}
-        <div className="flex h-32 w-full flex-1 flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-4 lg:h-64 dark:border-gray-600 dark:bg-gray-800">
-          <h3 className="mb-2 text-lg font-bold text-gray-800 dark:text-gray-200">
-            Grafik Kunjungan Pasien (7 Hari Terakhir)
-          </h3>
-          <p className="text-sm text-gray-500">
-            Sen: 45 | Sel: 52 | Rab: 48 | Kam: 61 | Jum: 47 | Sab: 38 | Min: 12
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Auto refresh setiap 1 menit
           </p>
         </div>
 
+        {/* Ringkasan Hari Ini */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Pasien hari ini
+              </p>
+              <span className="h-2 w-2 rounded-full bg-blue-600/80 dark:bg-blue-400/80" />
+            </div>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">
+              {pasien_hari_ini}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Total registrasi hari ini
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Menunggu pemeriksaan
+              </p>
+              <span className="h-2 w-2 rounded-full bg-blue-600/80 dark:bg-blue-400/80" />
+            </div>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">
+              {menunggu_pemeriksaan}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Antrian yang belum diproses
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Hasil siap diambil
+              </p>
+              <span className="h-2 w-2 rounded-full bg-blue-600/80 dark:bg-blue-400/80" />
+            </div>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">
+              {selesai_pemeriksaan}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Pemeriksaan selesai hari ini
+            </p>
+          </div>
+        </div>
+
         {/* Statistik Bulanan */}
-        <div className="flex h-32 w-full flex-1 flex-col rounded-xl border-2 border-gray-200 bg-white p-4 lg:h-64 dark:border-gray-600 dark:bg-gray-800">
-          <h3 className="mb-3 text-lg font-bold text-gray-800 dark:text-gray-200">
-            Statistik Bulan Ini - Labkesda Kota Balikpapan
-          </h3>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">1,247</p>
-              <p className="text-sm text-gray-600">Total Pasien</p>
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Statistik bulan ini
+            </h2>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              Ringkasan
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900/20">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Pasien baru terdaftar
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                {isLoadingStatistikBulanan
+                  ? '—'
+                  : statistikBulanan.total_pasien_baru || 0}
+              </p>
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">2,154</p>
-              <p className="text-sm text-gray-600">Total Pemeriksaan</p>
+            <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900/20">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Total registrasi
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                {isLoadingStatistikBulanan
+                  ? '—'
+                  : statistikBulanan.total_registrasi || 0}
+              </p>
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-600">1,892</p>
-              <p className="text-sm text-gray-600">Hasil Selesai</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">95%</p>
-              <p className="text-sm text-gray-600">Tingkat Kepuasan</p>
+            <div className="rounded-md bg-gray-50 p-4 dark:bg-gray-900/20">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Total pemeriksaan
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                {isLoadingStatistikBulanan
+                  ? '—'
+                  : statistikBulanan.total_pemeriksaan || 0}
+              </p>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Pasien Terbaru & Layanan Populer */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Pasien terbaru
+              </h2>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {isLoadingPasienTerbaru
+                  ? 'Memuat…'
+                  : `${pasienTerbaru.length} data`}
+              </span>
+            </div>
+
+            <div className="mt-4 max-h-80 space-y-2 overflow-auto">
+              {isLoadingPasienTerbaru ? (
+                <div className="flex h-40 items-center justify-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Memuat data…
+                  </p>
+                </div>
+              ) : pasienTerbaru.length === 0 ? (
+                <div className="flex h-40 items-center justify-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Belum ada data.
+                  </p>
+                </div>
+              ) : (
+                pasienTerbaru.map((p) => {
+                  const layanan =
+                    p?.detail_pemeriksaan
+                      ?.map((dp) => dp?.jenis_layanan?.nama)
+                      ?.filter(Boolean)
+                      ?.join(', ') || '-';
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                          {getInitials(p?.pasien?.nama)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {p?.pasien?.nama || '-'}
+                          </p>
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                            {layanan}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                          {p?.jam_pendaftaran || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Layanan populer
+              </h2>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {isLoadingPemeriksaanTerbanyak
+                  ? 'Memuat…'
+                  : `${pemeriksaanTerbanyak.length} layanan`}
+              </span>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {isLoadingPemeriksaanTerbanyak ? (
+                <div className="flex h-40 items-center justify-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Memuat data…
+                  </p>
+                </div>
+              ) : pemeriksaanTerbanyak.length === 0 ? (
+                <div className="flex h-40 items-center justify-center">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                    Belum ada data.
+                  </p>
+                </div>
+              ) : (
+                pemeriksaanTerbanyak.map((item, index) => {
+                  const total = Number(item?.total) || 0;
+                  const percentage =
+                    maxTotalLayanan > 0 ? (total / maxTotalLayanan) * 100 : 0;
+
+                  return (
+                    <div
+                      key={index}
+                      className="rounded-md border border-gray-200 p-3 dark:border-gray-700"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="w-6 text-xs font-semibold text-gray-400 dark:text-gray-500">
+                            {index + 1}
+                          </span>
+                          <span className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {item?.nama || '-'}
+                          </span>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {total}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-700">
+                        <div
+                          className="h-1.5 rounded-full bg-blue-600 dark:bg-blue-500"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Kunjungan Mingguan */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              Kunjungan 7 hari terakhir
+            </h2>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              {isLoadingKunjunganMingguan
+                ? 'Memuat…'
+                : `Total: ${totalKunjungan7Hari}`}
+            </span>
+          </div>
+
+          <div className="mt-4">
+            {isLoadingKunjunganMingguan ? (
+              <div className="flex h-32 items-center justify-center">
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  Memuat data…
+                </p>
+              </div>
+            ) : kunjunganMingguan.length === 0 ? (
+              <div className="flex h-32 items-center justify-center">
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  Belum ada data.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {kunjunganMingguan.map((item, index) => {
+                  const value = Number(item?.jumlah_kunjungan) || 0;
+                  const percentage =
+                    maxKunjungan > 0 ? (value / maxKunjungan) * 100 : 0;
+
+                  return (
+                    <div
+                      key={index}
+                      className="grid grid-cols-12 items-center gap-3"
+                    >
+                      <span className="col-span-3 text-xs text-gray-600 sm:col-span-2 dark:text-gray-400">
+                        {item?.tanggal || '-'}
+                      </span>
+                      <div className="col-span-7 sm:col-span-9">
+                        <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700">
+                          <div
+                            className="h-2 rounded-full bg-blue-600 dark:bg-blue-500"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="col-span-2 text-right text-xs font-semibold text-gray-900 sm:col-span-1 dark:text-gray-100">
+                        {value}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </section>
     </LabkesdaLayout>
   );
