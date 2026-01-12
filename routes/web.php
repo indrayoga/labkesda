@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('/pasien', PasienController::class);
     Route::get('pendaftaran', [PasienController::class, 'pendaftaran'])->name('pendaftaran');
-    Route::get('pendaftaran-laboratorium', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
+    Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
 
     Route::resource('/pemeriksaan', PemeriksaanController::class);
     Route::get('pemeriksaan/form-consent/{pemeriksaan}', [PemeriksaanController::class, 'printInformedConsent'])->name('pemeriksaan.form-consent');
