@@ -17,20 +17,19 @@ export default function CreatePasienForm({
     <form onSubmit={onSubmit}>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
-          <Label htmlFor="no_rm" color={errors.no_rm ? 'failure' : 'gray'}>
-            No. RM
+          <Label htmlFor="nik" color={errors.nik ? 'failure' : 'gray'}>
+            NIK
           </Label>
           <TextInput
-            id="no_rm"
+            id="nik"
             className="mt-1"
-            value={data.no_rm}
-            onChange={(e) => setData('no_rm', e.target.value)}
-            disabled={true}
+            value={data.nik}
+            onChange={(e) => setData('nik', e.target.value)}
             autoFocus
-            autoComplete="no_rm"
-            color={errors.no_rm ? 'failure' : 'gray'}
+            autoComplete="nik"
+            color={errors.nik ? 'failure' : 'gray'}
           />
-          <InputError className="mt-2" message={errors.no_rm} />
+          <InputError className="mt-2" message={errors.nik} />
         </div>
         <div>
           <Label htmlFor="nama" color={errors.nama ? 'failure' : 'gray'}>

@@ -39,7 +39,7 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
 
   const handleEdit = (p) => {
     setData({
-      no_rm: p.no_rm,
+      nik: p.nik,
       nama: p.nama,
       jenis_kelamin: p.jenis_kelamin,
       tempat_lahir: p.tempat_lahir,
@@ -61,7 +61,7 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
 
   const resetData = () => {
     setData({
-      no_rm: '',
+      nik: '',
       nama: '',
       jenis_kelamin: '',
       tempat_lahir: '',
@@ -85,7 +85,7 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
     reset,
     recentlySuccessful,
   } = useForm({
-    no_rm: '',
+    nik: '',
     nama: '',
     jenis_kelamin: '',
     tempat_lahir: '',
@@ -223,6 +223,9 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
                     No RM
                   </th>
                   <th scope="col" className="px-4 py-3">
+                    NIK
+                  </th>
+                  <th scope="col" className="px-4 py-3">
                     Nama
                   </th>
                   <th scope="col" className="px-4 py-3">
@@ -249,7 +252,7 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
                 {pasien.data.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="11"
+                      colSpan="12"
                       className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
                     >
                       Tidak ada data pasien.
@@ -271,6 +274,9 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
                       </td>
                       <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
                         {p.no_rm}
+                      </td>
+                      <td className="px-4 py-2 font-medium text-gray-900 dark:text-white">
+                        {p.nik}
                       </td>
                       <td className="text-nowrap px-4 py-2">{p.nama}</td>
                       <td className="text-nowrap px-4 py-2">

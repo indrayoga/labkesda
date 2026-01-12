@@ -98,8 +98,8 @@ export default function LabkesdaLayout({ header, children }) {
                 </li>
                 <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
                   <Link
-                    href={route('pendaftaran-laboratorium')}
-                    className={`block px-4 py-3 ${route().current('pendaftaran-laboratorium') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
+                    href={route('pendaftaran')}
+                    className={`block px-4 py-3 ${route().current('pendaftaran') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
                   >
                     Pendaftaran
                   </Link>

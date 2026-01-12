@@ -64,6 +64,7 @@ class PasienController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'nik' => 'required|string|max:16|unique:pasien,nik',
             'nama' => 'required|string|max:255',
             'jenis_kelamin' => 'required|string',
             'tempat_lahir' => 'required|string',

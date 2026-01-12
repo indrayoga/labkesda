@@ -1,0 +1,252 @@
+[
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Bau",
+    "harga": 12000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Zat Padat Terlarut (TDS)",
+    "harga": 12000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Kekeruhan",
+    "harga": 12000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Rasa",
+    "harga": 12000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Suhu",
+    "harga": 12000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Warna",
+    "harga": 12000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Alumunium",
+    "harga": 48000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Besi",
+    "harga": 26000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Flourida",
+    "harga": 65000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Kesadahan",
+    "harga": 109000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Khlorida",
+    "harga": 77000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Mangan",
+    "harga": 46000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Nirat",
+    "harga": 65000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Nitrit",
+    "harga": 26000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "ph",
+    "harga": 36000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Seng",
+    "harga": 190000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Sulfat",
+    "harga": 96000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Tembaga",
+    "harga": 58000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Amonia",
+    "harga": 36000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Cyanida",
+    "harga": 106000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Calsium",
+    "harga": 156000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Khlorine free",
+    "harga": 26000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Zat Organik",
+    "harga": 50000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Crom Valensi 6",
+    "harga": 77000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Phenol",
+    "harga": 74000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Zat Padat Tersuspensi (TSS)",
+    "harga": 33000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Phospat",
+    "harga": 103000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "BOD",
+    "harga": 103000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "COD",
+    "harga": 252000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Oksigen Terlarut (DO)",
+    "harga": 34000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Benda Terapung",
+    "harga": 41000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Sulfida",
+    "harga": 89000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Minyak Lemak",
+    "harga": 199000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Salinity",
+    "harga": 33000
+  },
+  {
+    "kategori_layanan_id": "1d1c334a-08ce-4cf9-9e1c-d1cd4881b817",
+    "nama": "Conductifity",
+    "harga": 33000
+  },
+  {
+    "kategori_layanan_id": "69a1a20d-6141-4e6a-a1ff-38b52013f55f",
+    "nama": "Boraks",
+    "harga": 62000
+  },
+  {
+    "kategori_layanan_id": "69a1a20d-6141-4e6a-a1ff-38b52013f55f",
+    "nama": "Forrmalin",
+    "harga": 62000
+  },
+  {
+    "kategori_layanan_id": "69a1a20d-6141-4e6a-a1ff-38b52013f55f",
+    "nama": "Methanil Yellow",
+    "harga": 84000
+  },
+  {
+    "kategori_layanan_id": "69a1a20d-6141-4e6a-a1ff-38b52013f55f",
+    "nama": "Rhodamin B",
+    "harga": 77000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "MPN Coliform",
+    "harga": 132000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "MPN E.Coli",
+    "harga": 132000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "MPN Fecal Coli",
+    "harga": 134000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Total Coliform (Membran Filter)",
+    "harga": 139000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Escherichia Coli (Membran Filter)",
+    "harga": 139000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Angka Kuman (ALT) Udara",
+    "harga": 294000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Salmonella",
+    "harga": 139000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Shigella",
+    "harga": 139000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Escherichia Coli (Pangan)",
+    "harga": 134000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Escherichia Coli (Swab)",
+    "harga": 134000
+  },
+  {
+    "kategori_layanan_id": "6026aba5-1272-4a28-9f63-d4935d5dc149",
+    "nama": "Angka Lempeng Total (Swab)",
+    "harga": 237000
+  }
+]
