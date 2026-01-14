@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class PemeriksaanLingkungan extends Model
 {
@@ -41,6 +42,13 @@ class PemeriksaanLingkungan extends Model
         }
 
         return $datePart . '.K.' . $newNumber;
+    }
+
+    protected function total(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->detailPemeriksaanLingkungan->sum('harga'),
+        );
     }
 
     public function customer()

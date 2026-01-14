@@ -43,6 +43,11 @@ class Pembayaran extends Model
         return $this->belongsTo(Pemeriksaan::class, 'pemeriksaan_id');
     }
 
+    public function pemeriksaanLingkungan()
+    {
+        return $this->belongsTo(PemeriksaanLingkungan::class, 'pemeriksaan_id');
+    }
+
     public function pasien()
     {
         return $this->hasOneThrough(
@@ -52,6 +57,18 @@ class Pembayaran extends Model
             'id', // Foreign key on Pasien table...
             'pemeriksaan_id', // Local key on Pembayaran table...
             'pasien_id' // Local key on Pemeriksaan table...
+        );
+    }
+
+    public function customer()
+    {
+        return $this->hasOneThrough(
+            Customer::class,
+            PemeriksaanLingkungan::class,
+            'id', // Foreign key on Pemeriksaan table...
+            'id', // Foreign key on Pasien table...
+            'pemeriksaan_id', // Local key on Pembayaran table...
+            'customer_id' // Local key on Pemeriksaan table...
         );
     }
 

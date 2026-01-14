@@ -1,32 +1,36 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Button, TextInput } from 'flowbite-react';
+import { Button, Modal, ModalBody, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function SudahBayar({ tanggal, pembayaran }) {
+export default function ListRegister({ tanggal, items }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
+  const [openModalDelete, setOpenModalDelete] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [prosesDelete, setProsesDelete] = useState(false);
 
-  /*
-    Fungsi untuk menghitung umur berdasarkan tanggal lahir
-    Input: tanggalLahir (string dalam format 'YYYY-MM-DD')
-    Output: umur dan bulan dalam format "X tahun Y bulan"
-  */
-  const hitungUmur = (tanggalLahir) => {
-    const today = new Date();
-    const birthDate = new Date(tanggalLahir);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    let month = today.getMonth() - birthDate.getMonth();
+  const confirmHapus = (id) => {
+    setOpenModalDelete(true);
+    setSelectedId(id);
+  };
 
-    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-      month += 12;
-    }
-    return `${age} tahun ${month} bulan`;
+  const hapusPemeriksaan = () => {
+    setProsesDelete(true);
+    router.delete(route('lab.lingkungan.delete-pendaftaran', selectedId), {
+      onSuccess: () => {
+        setProsesDelete(false);
+        setOpenModalDelete(false);
+      },
+      onError: (errors) => {
+        setProsesDelete(false);
+        console.error('Error deleting pemeriksaan:', errors);
+      },
+    });
   };
 
   return (
     <LabkesdaLayout>
-      <Head title="Kwitansi" />
+      <Head title="Daftar Pemeriksaan Lingkungan" />
       <div className="max-w-screen">
         <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800">
           <div className="flex flex-col space-y-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:space-x-4 lg:space-y-0">
@@ -40,9 +44,7 @@ export default function SudahBayar({ tanggal, pembayaran }) {
               <Button
                 onClick={() =>
                   router.get(
-                    route('pembayaran.kwitansi', {
-                      tanggal: cariTanggalDaftar,
-                    }),
+                    route('pemeriksaan.index', { tanggal: cariTanggalDaftar }),
                   )
                 }
               >
@@ -50,6 +52,12 @@ export default function SudahBayar({ tanggal, pembayaran }) {
               </Button>
             </div>
             <div className="flex flex-shrink-0 flex-col space-y-3 md:flex-row md:items-center md:space-x-3 md:space-y-0 lg:justify-end">
+              <Link
+                href={route('lab.lingkungan.pendaftaran')}
+                className="flex flex-shrink-0 items-center justify-center rounded-lg border border-primary-200 bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+              >
+                Registrasi
+              </Link>
               <button
                 type="button"
                 className="flex flex-shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
@@ -92,22 +100,40 @@ export default function SudahBayar({ tanggal, pembayaran }) {
                     </div>
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Tanggal Bayar
+                    Tanggal Daftar
                   </th>
                   <th scope="col" className="px-4 py-3">
                     No Register
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Nama
+                    Perusahaan/Customer
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Telepon
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Pemeriksaan
+                    Tanggal Diambil
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Pembayaran
+                    Tanggal Diterima
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Jumlah Contoh Uji
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Pengambil Contoh Uji
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Wadah
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Layanan
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Biaya
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Jenis Bayar
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Pilihan
@@ -115,7 +141,7 @@ export default function SudahBayar({ tanggal, pembayaran }) {
                 </tr>
               </thead>
               <tbody>
-                {pembayaran.data.length === 0 ? (
+                {items.data.length === 0 ? (
                   <tr>
                     <td
                       colSpan="11"
@@ -125,7 +151,7 @@ export default function SudahBayar({ tanggal, pembayaran }) {
                     </td>
                   </tr>
                 ) : (
-                  pembayaran.data.map((p) => (
+                  items.data.map((p) => (
                     <tr
                       key={p.id}
                       className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -139,49 +165,59 @@ export default function SudahBayar({ tanggal, pembayaran }) {
                         </div>
                       </td>
                       <td className="text-nowrap px-4 py-2 font-medium text-gray-900 dark:text-white">
-                        {new Date(p.tanggal_bayar).toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
+                        {new Date(p.tanggal_pendaftaran).toLocaleDateString()}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.pemeriksaan == null
-                          ? p.pemeriksaan_lingkungan.no_registrasi
-                          : p.pemeriksaan.no_registrasi}
+                        {p.no_registrasi}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.pasien == null ? p.customer.nama : p.pasien.nama}
+                        {p.customer.nama}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.pasien == null
-                          ? p.customer.no_telepon
-                          : p.pasien.no_telepon}
+                        {p.customer.no_telepon}
                       </td>
-                      <td className="px-4 py-2">
-                        {p.pemeriksaan == null
-                          ? p.pemeriksaan_lingkungan.detail_pemeriksaan_lingkungan
-                              .map((dp) => dp.jenis_layanan.nama)
-                              .join(', ')
-                          : p.pemeriksaan.detail_pemeriksaan
-                              .map((dp) => dp.jenis_layanan.nama)
-                              .join(', ')}
+                      <td className="text-nowrap px-4 py-2">
+                        {new Date(p.tanggal_diambil).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-white">
-                        {p.jumlah_bayar.toLocaleString('id-ID', {
-                          style: 'currency',
-                          currency: 'IDR',
-                        })}
+                      <td className="text-nowrap px-4 py-2">
+                        {new Date(p.tanggal_diterima).toLocaleDateString()}
                       </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.jumlah_contoh_uji}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.pengambil_contoh_uji}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.wadah_contoh_uji}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.detail_pemeriksaan_lingkungan
+                          .map((dp) => dp.jenis_layanan.nama)
+                          .join(', ')}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.detail_pemeriksaan_lingkungan
+                          .reduce((total, dp) => total + dp.harga, 0)
+                          .toLocaleString('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                          })}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">{p.jenis_bayar}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
-                        <a
-                          href={route('pembayaran.kwitansi.cetak', p.id)}
-                          className="text-primary-600 no-underline hover:underline dark:text-primary-500"
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Link
+                          href={route('lab.lingkungan.edit-pendaftaran', p.id)}
+                          className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
                         >
-                          Cetak
-                        </a>
+                          Ubah
+                        </Link>
+                        <button
+                          onClick={() => confirmHapus(p.id)}
+                          className="rounded bg-red-500 px-3 py-1 text-white hover:bg-red-600"
+                        >
+                          Hapus
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -192,13 +228,12 @@ export default function SudahBayar({ tanggal, pembayaran }) {
           {/* tampilkan navigasi pagination */}
           <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
             <span className="text-sm text-gray-700 dark:text-gray-400">
-              Menampilkan{' '}
-              <span className="font-semibold">{pembayaran.from}</span> sampai{' '}
-              <span className="font-semibold">{pembayaran.to}</span> dari total{' '}
-              <span className="font-semibold">{pembayaran.total}</span> entri
+              Menampilkan <span className="font-semibold">{items.from}</span>{' '}
+              sampai <span className="font-semibold">{items.to}</span> dari
+              total <span className="font-semibold">{items.total}</span> entri
             </span>
             <div className="xs:mt-0 mt-2 inline-flex">
-              {pembayaran.links.map((link, index) => (
+              {items.links.map((link, index) => (
                 <Link
                   href={link.url || '#'}
                   key={index}
@@ -219,6 +254,50 @@ export default function SudahBayar({ tanggal, pembayaran }) {
           </div>
         </div>
       </div>
+
+      <Modal
+        size="md"
+        show={openModalDelete}
+        onClose={() => setOpenModalDelete(false)}
+      >
+        <ModalBody>
+          <div className="max-w-md text-center">
+            <div className="flex items-center">
+              <svg
+                className="-ml-1 mr-2 h-14 w-14 text-red-500 dark:text-white"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 13V8m0 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+              <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                Apakah anda yakin ingin menghapus data pendaftaran ini?
+              </h3>
+            </div>
+            <div className="flex justify-center gap-4">
+              <Button onClick={hapusPemeriksaan} disabled={prosesDelete}>
+                {prosesDelete ? 'Menghapus...' : 'Ya, Saya yakin'}
+              </Button>
+              <Button
+                color="alternative"
+                onClick={() => setOpenModalDelete(false)}
+              >
+                Tidak, batal
+              </Button>
+            </div>
+          </div>
+        </ModalBody>
+      </Modal>
     </LabkesdaLayout>
   );
 }

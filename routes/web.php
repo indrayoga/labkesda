@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BerandaController;
+use App\Http\Controllers\PemeriksaanLingkunganController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PemeriksaanController;
@@ -40,10 +41,20 @@ Route::middleware('auth')->group(function () {
     Route::resource('/pemeriksaan', PemeriksaanController::class);
     Route::get('pemeriksaan/form-consent/{pemeriksaan}', [PemeriksaanController::class, 'printInformedConsent'])->name('pemeriksaan.form-consent');
     Route::get('pembayaran/kwitansi', [PembayaranController::class, 'kwitansi'])->name('pembayaran.kwitansi');
+    Route::get('pembayaran/lingkungan', [PembayaranController::class, 'lingkungan'])->name('pembayaran.lingkungan');
     Route::get('pembayaran/cetak-kwitansi/{pembayaran}', [PembayaranController::class, 'printKwitansi'])->name('pembayaran.kwitansi.cetak');
     Route::resource('/pembayaran', PembayaranController::class);
     Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
     Route::get('pendaftaran-laboratorium/{pasien}/{pemeriksaan}', [PasienController::class, 'editPendaftaranLaboratorium'])->name('edit-pendaftaran-laboratorium');
+
+    Route::prefix('lab-lingkungan')->group(function () {
+        Route::get('list-register', [PemeriksaanLingkunganController::class, 'daftarregister'])->name('lab.lingkungan.list-register');
+        Route::get('pendaftaran', [PemeriksaanLingkunganController::class, 'pendaftaran'])->name('lab.lingkungan.pendaftaran');
+        Route::get('edit-pendaftaran/{pemeriksaanLingkungan}', [PemeriksaanLingkunganController::class, 'editPendaftaran'])->name('lab.lingkungan.edit-pendaftaran');
+        Route::put('update-pendaftaran/{pemeriksaanLingkungan}', [PemeriksaanLingkunganController::class, 'updatePendaftaran'])->name('lab.lingkungan.update-pendaftaran');
+        Route::delete('delete-pendaftaran/{pemeriksaanLingkungan}', [PemeriksaanLingkunganController::class, 'deletePendaftran'])->name('lab.lingkungan.delete-pendaftaran');
+        Route::post('simpan-pendaftaran', [PemeriksaanLingkunganController::class, 'store'])->name('lab.lingkungan.pendaftaran.store');
+    });
 });
 
 require __DIR__ . '/auth.php';

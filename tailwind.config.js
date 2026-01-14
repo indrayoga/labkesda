@@ -8,7 +8,8 @@ export default {
     './storage/framework/views/*.php',
     './resources/views/**/*.blade.php',
     './resources/js/**/*.jsx',
-    'node_modules/flowbite-react/lib/esm/**/*.js',
+    './node_modules/flowbite/**/*.js',
+    './node_modules/flowbite-react/dist/**/*.js',
   ],
 
   theme: {

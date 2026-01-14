@@ -9,7 +9,7 @@ import {
 } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Index({ tanggal, pemeriksaan }) {
+export default function Lingkungan({ tanggal, pemeriksaan }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
   const [openModalBayar, setOpenModalBayar] = useState(false);
   const [selectedPemeriksaan, setSelectedPemeriksaan] = useState(null);
@@ -25,7 +25,7 @@ export default function Index({ tanggal, pemeriksaan }) {
     router.post(
       route('pembayaran.store'),
       {
-        pemeriksaan_id: selectedPemeriksaan.id,
+        pemeriksaan_lingkungan_id: selectedPemeriksaan.id,
       },
       {
         onSuccess: () => {
@@ -75,7 +75,9 @@ export default function Index({ tanggal, pemeriksaan }) {
               <Button
                 onClick={() =>
                   router.get(
-                    route('pembayaran.index', { tanggal: cariTanggalDaftar }),
+                    route('pembayaran.lingkungan', {
+                      tanggal: cariTanggalDaftar,
+                    }),
                   )
                 }
               >
@@ -85,13 +87,13 @@ export default function Index({ tanggal, pemeriksaan }) {
             <div className="flex flex-shrink-0 flex-col space-y-3 md:flex-row md:items-center md:space-x-3 md:space-y-0 lg:justify-end">
               <Link
                 href={route('pembayaran.lingkungan')}
-                className="flex flex-shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+                className="flex flex-shrink-0 items-center justify-center rounded-lg bg-primary-700 px-3 py-2 text-center text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
               >
                 Lab Lingkungan
               </Link>
               <Link
                 href={route('pembayaran.index')}
-                className="flex flex-shrink-0 items-center justify-center rounded-lg bg-primary-700 px-3 py-2 text-center text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                className="flex flex-shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
               >
                 Lab Klinis
               </Link>
@@ -143,28 +145,34 @@ export default function Index({ tanggal, pemeriksaan }) {
                     No Register
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    ID Spesimen
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Nama
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    L/P
-                  </th>
-                  <th scope="col" className="px-4 py-3">
-                    Umur
+                    Perusahaan/Customer
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Telepon
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Dokter
+                    Tanggal Diambil
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Pemeriksaan
+                    Tanggal Diterima
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Pembayaran
+                    Jumlah Contoh Uji
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Pengambil Contoh Uji
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Wadah
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Layanan
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Biaya
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Jenis Bayar
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Pilihan
@@ -196,31 +204,46 @@ export default function Index({ tanggal, pemeriksaan }) {
                         </div>
                       </td>
                       <td className="text-nowrap px-4 py-2 font-medium text-gray-900 dark:text-white">
-                        {new Date(p.tanggal_pendaftaran).toLocaleDateString() +
-                          ' ' +
-                          p.jam_pendaftaran}
+                        {new Date(p.tanggal_pendaftaran).toLocaleDateString()}
                       </td>
                       <td className="text-nowrap px-4 py-2">
                         {p.no_registrasi}
                       </td>
-                      <td className="text-nowrap px-4 py-2">{p.id_spesimen}</td>
-                      <td className="text-nowrap px-4 py-2">{p.pasien.nama}</td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.pasien.jenis_kelamin}
+                        {p.customer.nama}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {hitungUmur(p.pasien.tanggal_lahir)}
+                        {p.customer.no_telepon}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.pasien.no_telepon}
+                        {new Date(p.tanggal_diambil).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-2">{p.dokter.nama}</td>
-                      <td className="px-4 py-2">
-                        {p.detail_pemeriksaan
+                      <td className="text-nowrap px-4 py-2">
+                        {new Date(p.tanggal_diterima).toLocaleDateString()}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.jumlah_contoh_uji}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.pengambil_contoh_uji}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.wadah_contoh_uji}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.detail_pemeriksaan_lingkungan
                           .map((dp) => dp.jenis_layanan.nama)
                           .join(', ')}
                       </td>
-                      <td className="px-4 py-2">{p.jenis_bayar}</td>
+                      <td className="text-nowrap px-4 py-2">
+                        {p.detail_pemeriksaan_lingkungan
+                          .reduce((total, dp) => total + dp.harga, 0)
+                          .toLocaleString('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                          })}
+                      </td>
+                      <td className="text-nowrap px-4 py-2">{p.jenis_bayar}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
                         <Button size="sm" onClick={() => confirmBayar(p)}>
                           Bayar
@@ -286,7 +309,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                   Nama
                 </dt>
                 <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
-                  {selectedPemeriksaan?.pasien.nama}
+                  {selectedPemeriksaan?.customer.nama}
                 </dd>
               </dl>
 
@@ -295,7 +318,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                   Telp
                 </dt>
                 <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
-                  {selectedPemeriksaan?.pasien.no_telepon}
+                  {selectedPemeriksaan?.customer.no_telepon}
                 </dd>
               </dl>
 
@@ -313,7 +336,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                   Alamat
                 </dt>
                 <dd className="mt-2 text-gray-500 sm:mt-0 sm:text-right dark:text-gray-400">
-                  {selectedPemeriksaan?.pasien.alamat}
+                  {selectedPemeriksaan?.customer.alamat}
                 </dd>
               </dl>
             </div>
@@ -322,7 +345,7 @@ export default function Index({ tanggal, pemeriksaan }) {
             Jenis Layanan
           </h4>
           <div className="mb-5 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-gray-50 dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
-            {selectedPemeriksaan?.detail_pemeriksaan.map((dp) => (
+            {selectedPemeriksaan?.detail_pemeriksaan_lingkungan.map((dp) => (
               <div className="items-center space-y-4 p-4 sm:flex sm:gap-6 sm:space-y-0">
                 <div className="w-full items-center space-y-4 sm:flex sm:space-x-6 sm:space-y-0 md:max-w-md lg:max-w-lg">
                   <div className="w-full md:max-w-sm lg:max-w-md">

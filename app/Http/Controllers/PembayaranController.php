@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pembayaran;
 use App\Models\Pemeriksaan;
+use App\Models\PemeriksaanLingkungan;
 use App\Services\KwitansiPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,13 +31,27 @@ class PembayaranController extends Controller
         ]);
     }
 
+    public function lingkungan(Request $request)
+    {
+        //
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+        return Inertia::render('Pembayaran/Lingkungan', [
+            'tanggal' => $tanggal,
+            'pemeriksaan' => PemeriksaanLingkungan::with(['customer', 'detailPemeriksaanLingkungan.jenisLayanan'])
+                ->whereDate('tanggal_pendaftaran', $tanggal)
+                ->whereNull('status_bayar')
+                ->orderBy('created_at', 'asc')
+                ->paginate(10),
+        ]);
+    }
+
     public function kwitansi(Request $request)
     {
         //
         $tanggal = $request->tanggal ?? date('Y-m-d');
         return Inertia::render('Pembayaran/SudahBayar', [
             'tanggal' => $tanggal,
-            'pembayaran' => Pembayaran::with(['pasien', 'dokter', 'pemeriksaan.detailPemeriksaan.jenisLayanan'])
+            'pembayaran' => Pembayaran::with(['pasien', 'customer', 'dokter', 'pemeriksaan.detailPemeriksaan.jenisLayanan', 'pemeriksaanLingkungan.detailPemeriksaanLingkungan.jenisLayanan'])
                 ->whereDate('tanggal_bayar', $tanggal)
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),
@@ -58,29 +73,45 @@ class PembayaranController extends Controller
     {
         //
         $request->validate([
-            'pemeriksaan_id' => 'required|exists:pemeriksaan,id',
+            'pemeriksaan_id' => 'sometimes|exists:pemeriksaan,id',
+            'pemeriksaan_lingkungan_id' => 'sometimes|exists:pemeriksaan_lingkungan,id',
             // 'jumlah_bayar' => 'required|numeric|min:0',
             // 'metode_bayar' => 'required|string',
         ]);
 
         try {
             DB::beginTransaction();
-            $pemeriksaan = Pemeriksaan::findOrFail($request->pemeriksaan_id);
+            if ($request->pemeriksan_id) {
+                $pemeriksaan = Pemeriksaan::findOrFail($request->pemeriksaan_id);
 
-            Pembayaran::create([
-                'pemeriksaan_id' => $pemeriksaan->id,
-                'jumlah_bayar' => $pemeriksaan->total,
-                'metode_bayar' => 'CASH',
-                'user_id' => Auth::user()->id,
-                'tanggal_bayar' => date('Y-m-d'),
-            ]);
+                Pembayaran::create([
+                    'pemeriksaan_id' => $pemeriksaan->id,
+                    'jumlah_bayar' => $pemeriksaan->total,
+                    'metode_bayar' => 'CASH',
+                    'user_id' => Auth::user()->id,
+                    'tanggal_bayar' => date('Y-m-d'),
+                ]);
 
-            $pemeriksaan->status_bayar = 'LUNAS';
-            $pemeriksaan->save();
+                $pemeriksaan->status_bayar = 'LUNAS';
+                $pemeriksaan->save();
+                DB::commit();
+                return redirect()->route('pembayaran.index');
+            } else {
+                $pemeriksaan = PemeriksaanLingkungan::findOrFail($request->pemeriksaan_lingkungan_id);
 
-            DB::commit();
+                Pembayaran::create([
+                    'pemeriksaan_id' => $pemeriksaan->id,
+                    'jumlah_bayar' => $pemeriksaan->total,
+                    'metode_bayar' => 'CASH',
+                    'user_id' => Auth::user()->id,
+                    'tanggal_bayar' => date('Y-m-d'),
+                ]);
 
-            return redirect()->route('pembayaran.index');
+                $pemeriksaan->status_bayar = 'LUNAS';
+                $pemeriksaan->save();
+                DB::commit();
+                return redirect()->route('pembayaran.lingkungan');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error processing payment: ' . $e->getMessage());

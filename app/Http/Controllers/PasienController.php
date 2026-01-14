@@ -93,7 +93,9 @@ class PasienController extends Controller
     {
         //
 
-        $jenisLayanan = JenisLayanan::with('kategoriLayanan')->get();
+        $jenisLayanan = JenisLayanan::with('kategoriLayanan')->whereHas('kategoriLayanan', function ($query) {
+            $query->where('jenis_lab', 'klinis');
+        })->get();
         // grouping jenis layanan by kategori layanan
         $kategoriLayanan = [];
         foreach ($jenisLayanan as $layanan) {
