@@ -28,4 +28,14 @@ class Customer extends Model
     {
         return $this->hasMany(PemeriksaanLingkungan::class);
     }
+
+    public function kecamatan()
+    {
+        return $this->belongsTo(Kecamatan::class);
+    }
+
+    public function kelurahan()
+    {
+        return $this->belongsTo(Kelurahan::class);
+    }
 }

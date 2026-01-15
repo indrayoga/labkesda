@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\BerandaController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DokterController;
+use App\Http\Controllers\JenisLayananController;
 use App\Http\Controllers\PemeriksaanLingkunganController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PembayaranController;
@@ -54,6 +57,12 @@ Route::middleware('auth')->group(function () {
         Route::put('update-pendaftaran/{pemeriksaanLingkungan}', [PemeriksaanLingkunganController::class, 'updatePendaftaran'])->name('lab.lingkungan.update-pendaftaran');
         Route::delete('delete-pendaftaran/{pemeriksaanLingkungan}', [PemeriksaanLingkunganController::class, 'deletePendaftran'])->name('lab.lingkungan.delete-pendaftaran');
         Route::post('simpan-pendaftaran', [PemeriksaanLingkunganController::class, 'store'])->name('lab.lingkungan.pendaftaran.store');
+    });
+
+    Route::prefix('master-data')->group(function () {
+        Route::resource('/customers', CustomerController::class);
+        Route::resource('/dokter', DokterController::class);
+        Route::resource('/jenis-layanan', JenisLayananController::class);
     });
 });
 

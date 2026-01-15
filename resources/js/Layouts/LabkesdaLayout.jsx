@@ -4,7 +4,6 @@ import {
   DrawerHeader,
   DrawerItems,
   Sidebar,
-  SidebarItem,
   SidebarItemGroup,
   SidebarItems,
   TextInput,
@@ -13,7 +12,7 @@ import { useState } from 'react';
 
 export default function LabkesdaLayout({ header, children }) {
   const user = usePage().props.auth.user;
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleClose = () => setIsOpen(false);
 
@@ -151,7 +150,12 @@ export default function LabkesdaLayout({ header, children }) {
                   <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
                     <div
                       onClick={() => setIsOpen(true)}
-                      className={`block px-4 py-3 text-gray-500 hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
+                      className={`hand block cursor-pointer px-4 py-3 ${
+                        route().current('master-data.*') ||
+                        usePage().url.includes('master-data')
+                          ? 'border-b-2 border-primary-600 text-primary-600'
+                          : 'text-gray-500'
+                      } hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
                     >
                       Master Data
                     </div>
@@ -182,17 +186,37 @@ export default function LabkesdaLayout({ header, children }) {
                 </form>
                 <SidebarItems>
                   <SidebarItemGroup>
-                    <SidebarItem href="/">Dashboard</SidebarItem>
-                    <SidebarItem href="/e-commerce/products">
-                      Products
-                    </SidebarItem>
-                    <SidebarItem href="/users/list">Users list</SidebarItem>
-                    <SidebarItem href="/authentication/sign-in">
-                      Sign in
-                    </SidebarItem>
-                    <SidebarItem href="/authentication/sign-up">
-                      Sign up
-                    </SidebarItem>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('jenis-layanan.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Jenis Layanan
+                        </span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('customers.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Customer
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('dokter.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Dokter
+                        </span>
+                      </Link>
+                    </li>
                   </SidebarItemGroup>
                 </SidebarItems>
               </div>
