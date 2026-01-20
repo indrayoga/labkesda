@@ -83,4 +83,9 @@ class Pembayaran extends Model
             'dokter_id' // Local key on Pemeriksaan table...
         );
     }
+
+    public function jenisPembayaran()
+    {
+        return $this->belongsTo(JenisPembayaran::class, 'jenis_pembayaran_id');
+    }
 }

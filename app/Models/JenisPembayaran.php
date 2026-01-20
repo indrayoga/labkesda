@@ -24,4 +24,9 @@ class JenisPembayaran extends Model
             $model->id = (string) \Illuminate\Support\Str::uuid();
         });
     }
+
+    public function pembayaran()
+    {
+        return $this->hasMany(Pembayaran::class, 'jenis_pembayaran_id');
+    }
 }

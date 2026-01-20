@@ -5,15 +5,17 @@ import {
   Modal,
   ModalBody,
   ModalHeader,
+  Select,
   TextInput,
 } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Index({ tanggal, pemeriksaan }) {
+export default function Index({ tanggal, pemeriksaan, jenis_pembayaran }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
   const [openModalBayar, setOpenModalBayar] = useState(false);
   const [selectedPemeriksaan, setSelectedPemeriksaan] = useState(null);
   const [prosesBayar, setProsesBayar] = useState(false);
+  const [jenisPembayaran, setJenisPembayaran] = useState('');
 
   const confirmBayar = (pemeriksaan) => {
     setOpenModalBayar(true);
@@ -26,6 +28,7 @@ export default function Index({ tanggal, pemeriksaan }) {
       route('pembayaran.store'),
       {
         pemeriksaan_id: selectedPemeriksaan.id,
+        jenis_pembayaran_id: jenisPembayaran,
       },
       {
         onSuccess: () => {
@@ -357,6 +360,26 @@ export default function Index({ tanggal, pemeriksaan }) {
                 </dt>
                 <dd className="text-lg font-bold text-gray-900 dark:text-white">
                   {`Rp${selectedPemeriksaan?.total?.toLocaleString('id-ID')}`}
+                </dd>
+              </dl>
+              <dl className="flex items-center justify-between gap-4">
+                <dt className="text-lg font-bold text-gray-900 dark:text-white">
+                  Jenis Pembayaran
+                </dt>
+                <dd className="text-lg font-bold text-gray-900 dark:text-white">
+                  <Select
+                    onChange={(e) => setJenisPembayaran(e.target.value)}
+                    value={jenisPembayaran}
+                    name="jenis_pembayaran"
+                    id="jenis_pembayaran"
+                  >
+                    <option value="">Pilih Jenis Pembayaran</option>
+                    {jenis_pembayaran.map((jenis) => (
+                      <option key={jenis.id} value={jenis.id}>
+                        {jenis.nama}
+                      </option>
+                    ))}
+                  </Select>
                 </dd>
               </dl>
             </div>

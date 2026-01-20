@@ -107,6 +107,9 @@ export default function SudahBayar({ tanggal, pembayaran }) {
                     Pemeriksaan
                   </th>
                   <th scope="col" className="px-4 py-3">
+                    Jenis Pembayaran
+                  </th>
+                  <th scope="col" className="px-4 py-3">
                     Pembayaran
                   </th>
                   <th scope="col" className="px-4 py-3">
@@ -166,6 +169,9 @@ export default function SudahBayar({ tanggal, pembayaran }) {
                           : p.pemeriksaan.detail_pemeriksaan
                               .map((dp) => dp.jenis_layanan.nama)
                               .join(', ')}
+                      </td>
+                      <td className="px-4 py-2 text-left font-medium text-gray-900 dark:text-white">
+                        {p.jenis_pembayaran?.nama}
                       </td>
                       <td className="px-4 py-2 text-right font-medium text-gray-900 dark:text-white">
                         {p.jumlah_bayar.toLocaleString('id-ID', {

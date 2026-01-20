@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JenisPembayaran;
 use App\Models\Pembayaran;
 use App\Models\Pemeriksaan;
 use App\Models\PemeriksaanLingkungan;
@@ -23,6 +24,7 @@ class PembayaranController extends Controller
         $tanggal = $request->tanggal ?? date('Y-m-d');
         return Inertia::render('Pembayaran/Index', [
             'tanggal' => $tanggal,
+            'jenis_pembayaran' => JenisPembayaran::all(),
             'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])
                 ->whereDate('tanggal_pendaftaran', $tanggal)
                 ->whereNull('status_bayar')
@@ -51,7 +53,7 @@ class PembayaranController extends Controller
         $tanggal = $request->tanggal ?? date('Y-m-d');
         return Inertia::render('Pembayaran/SudahBayar', [
             'tanggal' => $tanggal,
-            'pembayaran' => Pembayaran::with(['pasien', 'customer', 'dokter', 'pemeriksaan.detailPemeriksaan.jenisLayanan', 'pemeriksaanLingkungan.detailPemeriksaanLingkungan.jenisLayanan'])
+            'pembayaran' => Pembayaran::with(['pasien', 'customer', 'dokter', 'jenisPembayaran', 'pemeriksaan.detailPemeriksaan.jenisLayanan', 'pemeriksaanLingkungan.detailPemeriksaanLingkungan.jenisLayanan'])
                 ->whereDate('tanggal_bayar', $tanggal)
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),
@@ -75,19 +77,21 @@ class PembayaranController extends Controller
         $request->validate([
             'pemeriksaan_id' => 'sometimes|exists:pemeriksaan,id',
             'pemeriksaan_lingkungan_id' => 'sometimes|exists:pemeriksaan_lingkungan,id',
+            'jenis_pembayaran_id' => 'sometimes|exists:jenis_pembayaran,id',
             // 'jumlah_bayar' => 'required|numeric|min:0',
             // 'metode_bayar' => 'required|string',
         ]);
 
         try {
             DB::beginTransaction();
-            if ($request->pemeriksan_id) {
+            if ($request->pemeriksaan_id) {
                 $pemeriksaan = Pemeriksaan::findOrFail($request->pemeriksaan_id);
 
                 Pembayaran::create([
                     'pemeriksaan_id' => $pemeriksaan->id,
                     'jumlah_bayar' => $pemeriksaan->total,
                     'metode_bayar' => 'CASH',
+                    'jenis_pembayaran_id' => $request->jenis_pembayaran_id,
                     'user_id' => Auth::user()->id,
                     'tanggal_bayar' => date('Y-m-d'),
                 ]);
