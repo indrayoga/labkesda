@@ -164,7 +164,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                     Pemeriksaan
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Pembayaran
+                    Jenis Pasien
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Pilihan
@@ -220,7 +220,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                           .map((dp) => dp.jenis_layanan.nama)
                           .join(', ')}
                       </td>
-                      <td className="px-4 py-2">{p.jenis_bayar}</td>
+                      <td className="px-4 py-2">{p.jenis_pasien}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
                         <Button size="sm" onClick={() => confirmBayar(p)}>
                           Bayar
@@ -301,10 +301,10 @@ export default function Index({ tanggal, pemeriksaan }) {
 
               <dl className="py-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
                 <dt className="whitespace-nowrap font-semibold text-gray-900 dark:text-white">
-                  Jenis Pembayaran
+                  Jenis Pasien
                 </dt>
                 <dd className="mt-2 flex items-center gap-2 sm:mt-0 sm:justify-end">
-                  {selectedPemeriksaan?.jenis_bayar}
+                  {selectedPemeriksaan?.jenis_pasien}
                 </dd>
               </dl>
 

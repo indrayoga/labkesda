@@ -139,7 +139,7 @@ export default function Pendaftaran({ tanggal, pemeriksaan }) {
                     Pemeriksaan
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Pembayaran
+                    Jenis Pasien
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Pilihan
@@ -195,7 +195,7 @@ export default function Pendaftaran({ tanggal, pemeriksaan }) {
                           .map((dp) => dp.jenis_layanan.nama)
                           .join(', ')}
                       </td>
-                      <td className="px-4 py-2">{p.jenis_bayar}</td>
+                      <td className="px-4 py-2">{p.jenis_pasien}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
                         <Link
                           href={route('edit-pendaftaran-laboratorium', {

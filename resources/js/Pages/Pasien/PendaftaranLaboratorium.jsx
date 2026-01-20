@@ -21,7 +21,7 @@ export default function PendaftaranLaboratorium({
     pasien_id: pasien?.id || '',
     dokter_id: pemeriksaan?.dokter_id || '',
     email: pemeriksaan?.email || '',
-    jenis_bayar: pemeriksaan?.jenis_bayar || '',
+    jenis_pasien: pemeriksaan?.jenis_pasien || '',
     tanggal_pendaftaran:
       pemeriksaan?.tanggal_pendaftaran ||
       new Date().toISOString().split('T')[0],
@@ -288,24 +288,26 @@ export default function PendaftaranLaboratorium({
                     </div>
                     <div>
                       <Label
-                        htmlFor="jenis_bayar"
-                        color={errors.jenis_bayar ? 'failure' : 'gray'}
+                        htmlFor="jenis_pasien"
+                        color={errors.jenis_pasien ? 'failure' : 'gray'}
                       >
-                        Jenis Bayar <span className="text-red-500">*</span>
+                        Jenis Pasien <span className="text-red-500">*</span>
                       </Label>
                       <Select
-                        id="jenis_bayar"
-                        value={data.jenis_bayar}
-                        onChange={(e) => setData('jenis_bayar', e.target.value)}
-                        color={errors.jenis_bayar ? 'failure' : 'gray'}
+                        id="jenis_pasien"
+                        value={data.jenis_pasien}
+                        onChange={(e) =>
+                          setData('jenis_pasien', e.target.value)
+                        }
+                        color={errors.jenis_pasien ? 'failure' : 'gray'}
                       >
-                        <option value="">Pilih Jenis Bayar</option>
+                        <option value="">Pilih Jenis Pasien</option>
                         <option value="Umum">Umum</option>
                         <option value="BPJS">BPJS</option>
                       </Select>
                       <InputError
                         className="mt-2"
-                        message={errors.jenis_bayar}
+                        message={errors.jenis_pasien}
                       />
                     </div>
 
