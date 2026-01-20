@@ -12,6 +12,8 @@ export default {
     './node_modules/flowbite-react/dist/**/*.js',
   ],
 
+  darkMode: 'class',
+
   theme: {
     extend: {
       fontFamily: {
