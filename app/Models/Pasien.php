@@ -30,7 +30,7 @@ class Pasien extends Model
 
     protected static function generateNoRm()
     {
-        $lastPasien = self::orderBy('no_rm', 'desc')->first();
+        $lastPasien = self::withTrashed()->orderBy('no_rm', 'desc')->first();
         if ($lastPasien) {
             $lastNoRm = intval($lastPasien->no_rm);
             $newNoRm = str_pad($lastNoRm + 1, 6, '0', STR_PAD_LEFT);
