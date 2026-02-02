@@ -3,6 +3,7 @@
 use App\Http\Controllers\BerandaController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DokterController;
+use App\Http\Controllers\ItemPemeriksaanController;
 use App\Http\Controllers\JenisLayananController;
 use App\Http\Controllers\PemeriksaanLingkunganController;
 use App\Http\Controllers\PasienController;
@@ -63,6 +64,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('/customers', CustomerController::class);
         Route::resource('/dokter', DokterController::class);
         Route::resource('/jenis-layanan', JenisLayananController::class);
+        Route::resource('/item-pemeriksaan', ItemPemeriksaanController::class);
     });
 });
 
