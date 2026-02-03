@@ -18,8 +18,8 @@ return new class extends Migration
             $table->enum('jenis_kelamin', ['L', 'P', 'ALL'])->default('ALL'); // L/P/ALL
             $table->double('min_value')->nullable();
             $table->double('max_value')->nullable();
-            $table->enum('operator_min', ['>', '>=', '='])->nullable();
-            $table->enum('operator_max', ['<', '<=', '='])->nullable();
+            $table->enum('operator_min', ['>', '<', '>=', '<=', '='])->nullable();
+            $table->enum('operator_max', ['<', '>', '<=', '>=', '='])->nullable();
             $table->timestamps();
         });
     }

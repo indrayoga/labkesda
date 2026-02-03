@@ -48,7 +48,7 @@ function TreeNode({
   onAdd,
   onEdit,
   onDelete,
-  onInputStandarClick,
+  onReferenceClick,
 }) {
   const hasChildren = Array.isArray(node.children) && node.children.length > 0;
   const [expanded, setExpanded] = useState(true);
@@ -88,16 +88,27 @@ function TreeNode({
         </div>
 
         <div className="w-64 shrink-0 self-center px-2 py-2 text-sm text-slate-700">
-          {node.standar ? (
-            node.standar
-          ) : (
-            <button
-              onClick={() => onInputStandarClick(true)}
-              className="text-center text-blue-600 underline hover:no-underline"
-            >
-              [input standar]
-            </button>
-          )}
+          {node.reference_ranges &&
+            (node.reference_ranges.length > 0 ? (
+              <div className="space-y-1">
+                {node.reference_ranges.map((range) => (
+                  <div
+                    key={range.id}
+                    className="rounded-md bg-slate-100 px-2 py-1"
+                  >
+                    {range.label} :{' '}
+                    {range.value_type == 'kualitatif'
+                      ? `${range.jenis_kelamin} :  ${range.kualitatif_value}`
+                      : `${range.jenis_kelamin} : ${range.operator_min} ${range.min_value} - ${range.operator_max}  ${range.max_value}`}
+                  </div>
+                ))}
+              </div>
+            ) : null)}
+          <ActionButton
+            title="[Tambah Nilai Rujukan]"
+            icon={FiEdit2}
+            onClick={() => onReferenceClick?.(node)}
+          />
         </div>
 
         <div className="w-32 shrink-0 self-center px-2 py-2 text-sm text-slate-700">
@@ -156,7 +167,7 @@ function TreeNode({
               onAdd={onAdd}
               onEdit={onEdit}
               onDelete={onDelete}
-              onInputStandarClick={onInputStandarClick}
+              onReferenceClick={onReferenceClick}
             />
           ))}
         </div>
@@ -168,7 +179,7 @@ function TreeNode({
 export default function Index({ kategoriPemeriksaan, itemPemeriksaan, items }) {
   const { props } = usePage();
   const [openModalTambah, setOpenModalTambah] = useState(false);
-  const [openModalStandar, setOpenModalStandar] = useState(false);
+  const [openModalReferenceRange, setOpenModalReferenceRange] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const itemsData = Array.isArray(items) ? items : [];
 
@@ -180,6 +191,11 @@ export default function Index({ kategoriPemeriksaan, itemPemeriksaan, items }) {
       parent_name: node.name,
     });
     setOpenModalTambah(true);
+  };
+
+  const handleReferenceClick = (node) => {
+    setSelectedNode(node);
+    setOpenModalReferenceRange(true);
   };
 
   const handleEdit = (node) => {
@@ -306,7 +322,7 @@ export default function Index({ kategoriPemeriksaan, itemPemeriksaan, items }) {
                 onAdd={handleAdd}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onInputStandarClick={setOpenModalStandar}
+                onReferenceClick={handleReferenceClick}
               />
             ))}
           </div>
@@ -362,15 +378,18 @@ export default function Index({ kategoriPemeriksaan, itemPemeriksaan, items }) {
 
       <Modal
         dismissible
-        show={openModalStandar}
-        size="2xl"
+        show={openModalReferenceRange}
+        size="6xl"
         onClose={() => {
-          setOpenModalStandar(false);
+          setOpenModalReferenceRange(false);
         }}
       >
         <ModalHeader>Input Standar Satuan Nilai Normal</ModalHeader>
-        <ModalBody className="max-w-2xl">
-          <FormReferenceRange />
+        <ModalBody className="max-w-6xl">
+          <FormReferenceRange
+            item={selectedNode}
+            setOpenModalReferenceRange={setOpenModalReferenceRange}
+          />
         </ModalBody>
       </Modal>
     </LabkesdaLayout>

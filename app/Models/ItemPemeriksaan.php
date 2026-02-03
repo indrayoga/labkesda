@@ -37,4 +37,9 @@ class ItemPemeriksaan extends Model
     {
         return $this->hasMany(ItemPemeriksaan::class, 'parent_id');
     }
+
+    public function referenceRanges()
+    {
+        return $this->hasMany(PemeriksaanReferenceRange::class, 'item_pemeriksaan_id');
+    }
 }

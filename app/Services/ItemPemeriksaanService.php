@@ -59,6 +59,19 @@ class ItemPemeriksaanService
                 'parent_id' => $item->parent_id,
                 'parent_name' => $item->parent?->nama ?? null,
                 'kategori_pemeriksaan_id' => $item->kategori_pemeriksaan_id,
+                'reference_ranges' => $item->referenceRanges->map(function ($range) {
+                    return [
+                        'id' => $range->id,
+                        'label' => $range->label,
+                        'jenis_kelamin' => $range->jenis_kelamin,
+                        'value_type' => $range->value_type,
+                        'min_value' => $range->min_value,
+                        'max_value' => $range->max_value,
+                        'kualitatif_value' => $range->kualitatif_value,
+                        'operator_min' => $range->operator_min,
+                        'operator_max' => $range->operator_max,
+                    ];
+                })->toArray(),
                 'used' => self::isItemUsed($item->id),
             ];
 

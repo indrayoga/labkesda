@@ -61,6 +61,64 @@ class ItemPemeriksaanController extends Controller
         return \redirect()->route('item-pemeriksaan.index');
     }
 
+    public function storeReferenceRange(Request $request, ItemPemeriksaan $itemPemeriksaan)
+    {
+        $request->validate([
+            'ranges' => 'required|array',
+            'ranges.*.label' => 'required',
+            'ranges.*.gender' => 'required',
+            'ranges.*.value_type' => 'required',
+            'ranges.*.min' => 'numeric|nullable',
+            'ranges.*.max' => 'numeric|nullable',
+
+        ]);
+
+        foreach ($request->ranges as $rangeData) {
+            if ($rangeData['value_type'] === 'kualitatif') {
+                $rangeData['min'] = null;
+                $rangeData['max'] = null;
+                $rangeData['operator_min'] = null;
+                $rangeData['operator_max'] = null;
+            } else {
+                $rangeData['kualitatif_value'] = null;
+                if (!($rangeData['min_enabled'] ?? true)) {
+                    $rangeData['min'] = null;
+                }
+                if (!($rangeData['max_enabled'] ?? true)) {
+                    $rangeData['max'] = null;
+                }
+            }
+            // check jika label dan jenis kelamin sudah ada untuk item pemeriksaan ini, update saja
+            $existingRange = $itemPemeriksaan->referenceRanges()
+                ->where('label', $rangeData['label'])
+                ->where('jenis_kelamin', $rangeData['gender'])
+                ->first();
+            if ($existingRange) {
+                $existingRange->update([
+                    'value_type' => $rangeData['value_type'],
+                    'min_value' => $rangeData['min'] ?? null,
+                    'max_value' => $rangeData['max'] ?? null,
+                    'operator_min' => $rangeData['operator_min'],
+                    'operator_max' => $rangeData['operator_max'],
+                    'kualitatif_value' => $rangeData['kualitatif_value'],
+                ]);
+                continue;;
+            }
+
+            $itemPemeriksaan->referenceRanges()->create([
+                'label' => $rangeData['label'],
+                'jenis_kelamin' => $rangeData['gender'],
+                'min_value' => $rangeData['min'] ?? null,
+                'max_value' => $rangeData['max'] ?? null,
+                'operator_min' => $rangeData['operator_min'],
+                'operator_max' => $rangeData['operator_max'],
+                'kualitatif_value' => $rangeData['kualitatif_value'],
+                'value_type' => $rangeData['value_type'],
+            ]);
+        }
+
+        return redirect()->route('item-pemeriksaan.index');
+    }
     /**
      * Display the specified resource.
      */

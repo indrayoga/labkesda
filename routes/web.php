@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('/dokter', DokterController::class);
         Route::resource('/jenis-layanan', JenisLayananController::class);
         Route::resource('/item-pemeriksaan', ItemPemeriksaanController::class);
+        Route::post('/item-pemeriksaan/{itemPemeriksaan}/reference-range', [ItemPemeriksaanController::class, 'storeReferenceRange'])->name('item-pemeriksaan.reference-range.store');
     });
 });
 

@@ -49,7 +49,7 @@ export default function LabkesdaLayout({ header, children }) {
       <div className="bg-gray-50 antialiased dark:bg-gray-800">
         <div className="fixed inset-0 z-40 hidden bg-gray-900/50 dark:bg-gray-900/80" />
         <header className="antialiased">
-          <nav className="border-gray-200 bg-white px-4 py-2.5 lg:px-6 dark:bg-gray-900">
+          <nav className="border-gray-200 bg-white px-4 py-2.5 dark:bg-gray-900 lg:px-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center justify-start">
                 <a href="/dashboard" className="mr-6 flex">
@@ -109,7 +109,7 @@ export default function LabkesdaLayout({ header, children }) {
                   type="button"
                   id="toggleMobileMenuButton"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:ring-4 focus:ring-gray-300 md:ml-2 lg:hidden dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-600"
+                  className="items-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:ring-4 focus:ring-gray-300 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-600 md:ml-2 lg:hidden"
                 >
                   <span className="sr-only">Open menu</span>
                   <svg
@@ -133,12 +133,12 @@ export default function LabkesdaLayout({ header, children }) {
           </nav>
           <nav
             id="toggleMobileMenu"
-            className={`${mobileMenuOpen ? 'block' : 'hidden'} border-b border-gray-200 bg-white shadow-sm lg:block dark:border-gray-800 dark:bg-gray-900`}
+            className={`${mobileMenuOpen ? 'block' : 'hidden'} border-b border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:block`}
           >
             <div className="px-0 lg:px-6">
               <div className="flex items-center">
                 <ul className="mt-0 flex w-full flex-col text-sm font-medium lg:flex-row">
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('dashboard')}
                       className={`block px-4 py-3 ${route().current('dashboard') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -147,7 +147,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Beranda
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('lab.lingkungan.list-register')}
                       className={`block px-4 py-3 ${route().current('lab.lingkungan.list-register') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -156,7 +156,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Lab Lingkungan
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('pasien.index')}
                       className={`block px-4 py-3 ${route().current('pasien.index') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -164,7 +164,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Pasien
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('pendaftaran')}
                       className={`block px-4 py-3 ${route().current('pendaftaran') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -172,7 +172,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Pendaftaran
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('pemeriksaan.index')}
                       className={`block px-4 py-3 ${route().current('pemeriksaan.index') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -180,7 +180,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Pemeriksaan
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('pembayaran.index')}
                       className={`block px-4 py-3 ${route().current('pembayaran.index') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -188,7 +188,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Pembayaran
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <Link
                       href={route('pembayaran.kwitansi')}
                       className={`block px-4 py-3 ${route().current('pembayaran.kwitansi') ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500'} hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
@@ -196,7 +196,7 @@ export default function LabkesdaLayout({ header, children }) {
                       Kwitansi
                     </Link>
                   </li>
-                  <li className="block border-b lg:inline lg:border-b-0 dark:border-gray-700">
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                     <div
                       onClick={() => setIsOpen(true)}
                       className={`hand block cursor-pointer px-4 py-3 ${
@@ -263,6 +263,16 @@ export default function LabkesdaLayout({ header, children }) {
                       >
                         <span className="flex-1 whitespace-nowrap px-3">
                           Dokter
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('item-pemeriksaan.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Item Pemeriksaan
                         </span>
                       </Link>
                     </li>
