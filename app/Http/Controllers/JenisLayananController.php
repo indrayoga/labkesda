@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\JenisLayanan;
+use App\Models\JenisPasien;
 use App\Models\KategoriLayanan;
+use App\Rules\IsTarifLayananValidExists;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -91,6 +93,65 @@ class JenisLayananController extends Controller
 
         return redirect()->route('jenis-layanan.index');
     }
+
+    public function tarif(Request $request, JenisLayanan $jenisLayanan)
+    {
+
+        return Inertia::render('JenisLayanan/Tarif', [
+            'jenisLayanan' => $jenisLayanan,
+            'existingTarif' => $jenisLayanan->tarif()->with('jenisPasien')->orderBy('jenis_pasien')->get(),
+            'jenisPasien' => JenisPasien::all()
+        ]);
+    }
+
+    public function storeTarif(Request $request, JenisLayanan $jenisLayanan)
+    {
+
+        $request->validate([
+            'jenis_pasien' => ['required', 'exists:jenis_pasien,kode', new IsTarifLayananValidExists([
+                'jenis_layanan_id' => $jenisLayanan->id,
+                'valid_dari' => $request->valid_dari,
+                'valid_sampai' => $request->valid_sampai,
+            ])],
+            'harga' => 'required|numeric',
+            'valid_dari' => 'required|date',
+            'valid_sampai' => 'nullable|date|after_or_equal:valid_dari',
+            'keterangan' => 'nullable|string|max:250',
+        ]);
+
+        $jenisLayanan->tarif()->create([
+            'jenis_pasien' => $request->jenis_pasien,
+            'harga' => $request->harga,
+            'valid_dari' => $request->valid_dari,
+            'valid_sampai' => $request->valid_sampai,
+            'keterangan' => $request->keterangan,
+        ]);
+
+        return redirect()->route('jenis-layanan.tarif', $jenisLayanan->id);
+    }
+
+    public function updateTarif(Request $request, JenisLayanan $jenisLayanan, $tarif)
+    {
+        $request->validate([
+            'jenis_pasien' => ['required', 'exists:jenis_pasien,kode'],
+            'harga' => 'required|numeric',
+            'valid_dari' => 'required|date',
+            'valid_sampai' => 'nullable|date|after_or_equal:valid_dari',
+        ]);
+
+        $jenisLayanan->tarif()
+            ->where('id', $tarif)
+            ->update([
+                'jenis_pasien' => $request->jenis_pasien,
+                'harga' => $request->harga,
+                'valid_dari' => $request->valid_dari,
+                'valid_sampai' => $request->valid_sampai,
+                'keterangan' => $request->keterangan,
+            ]);
+
+        return redirect()->route('jenis-layanan.tarif', $jenisLayanan->id);
+    }
+
 
     /**
      * Remove the specified resource from storage.

@@ -182,7 +182,7 @@ export default function Index({ kategoriLayanan, jenisLayanan }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md sm:rounded-b-lg dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
@@ -240,7 +240,14 @@ export default function Index({ kategoriLayanan, jenisLayanan }) {
                       <td className="text-nowrap px-4 py-2">{p.nama}</td>
                       <td className="px-4 py-2">{p.kategori_layanan?.nama}</td>
                       <td className="px-4 py-2">{p.harga.toLocaleString()}</td>
-                      <td className="flex items-center gap-2 text-nowrap px-4 py-2">
+                      <td className="flex justify-center gap-2 text-nowrap px-4 py-2">
+                        {/* tombol tarif */}
+                        <Link
+                          href={route('jenis-layanan.tarif', p.id)}
+                          className="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600"
+                        >
+                          Tarif
+                        </Link>
                         <button
                           onClick={() => handleEdit(p)}
                           className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"

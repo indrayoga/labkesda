@@ -64,6 +64,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('/customers', CustomerController::class);
         Route::resource('/dokter', DokterController::class);
         Route::resource('/jenis-layanan', JenisLayananController::class);
+        Route::get('/jenis-layanan/{jenisLayanan}/tarif', [JenisLayananController::class, 'tarif'])->name('jenis-layanan.tarif');
+        Route::post('/jenis-layanan/{jenisLayanan}/tarif', [JenisLayananController::class, 'storeTarif'])->name('jenis-layanan.tarif.store');
+        Route::put('/jenis-layanan/{jenisLayanan}/tarif/{tarif}', [JenisLayananController::class, 'updateTarif'])->name('jenis-layanan.tarif.update');
         Route::resource('/item-pemeriksaan', ItemPemeriksaanController::class);
         Route::post('/item-pemeriksaan/{itemPemeriksaan}/reference-range', [ItemPemeriksaanController::class, 'storeReferenceRange'])->name('item-pemeriksaan.reference-range.store');
     });

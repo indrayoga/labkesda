@@ -73,4 +73,9 @@ class Pemeriksaan extends Model
     {
         return $this->hasOne(Pembayaran::class, 'pemeriksaan_id');
     }
+
+    public function jenisPasien()
+    {
+        return $this->belongsTo(JenisPasien::class, 'jenis_pasien', 'kode');
+    }
 }
