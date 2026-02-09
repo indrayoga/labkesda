@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\ItemPemeriksaanController;
 use App\Http\Controllers\JenisLayananController;
+use App\Http\Controllers\PaketPemeriksaanController;
 use App\Http\Controllers\PemeriksaanLingkunganController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PembayaranController;
@@ -69,6 +70,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/jenis-layanan/{jenisLayanan}/tarif/{tarif}', [JenisLayananController::class, 'updateTarif'])->name('jenis-layanan.tarif.update');
         Route::resource('/item-pemeriksaan', ItemPemeriksaanController::class);
         Route::post('/item-pemeriksaan/{itemPemeriksaan}/reference-range', [ItemPemeriksaanController::class, 'storeReferenceRange'])->name('item-pemeriksaan.reference-range.store');
+        Route::resource('/paket-pemeriksaan', PaketPemeriksaanController::class);
+        Route::put('/paket-pemeriksaan/{paketPemeriksaan}/sync-items', [PaketPemeriksaanController::class, 'syncItems'])->name('paket-pemeriksaan.sync-items');
+        Route::put('/jenis-layanan/{jenisLayanan}/sync-items', [JenisLayananController::class, 'syncItemPemeriksaan'])->name('jenis-layanan.sync-items');
     });
 });
 

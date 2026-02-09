@@ -11,6 +11,7 @@ export default function PendaftaranLaboratorium({
   kategoriLayanans,
   pemeriksaan,
   auth,
+  paketLayanan,
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedLayanans, setSelectedLayanans] = useState(
@@ -101,7 +102,7 @@ export default function PendaftaranLaboratorium({
   return (
     <LabkesdaLayout>
       <Head title="Pendaftaran Laboratorium" />
-      <section className="bg-white py-8 antialiased md:py-16 dark:bg-gray-900">
+      <section className="bg-white py-8 antialiased dark:bg-gray-900 md:py-16">
         <div className="mx-auto max-w-screen-xl px-4 2xl:px-0">
           {/* Stepper Header */}
           <div className="mb-10">
@@ -423,7 +424,7 @@ export default function PendaftaranLaboratorium({
                             )
                           }
                           min="0"
-                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 md:w-1/3 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white md:w-1/3"
                         />
                       </div>
                     )}
@@ -516,7 +517,49 @@ export default function PendaftaranLaboratorium({
                   <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
                     Pilih Layanan Laboratorium
                   </h2>
-
+                  <div
+                    key={''}
+                    className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/50"
+                  >
+                    <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-white">
+                      Paket
+                    </h3>
+                    <div className="space-y-2">
+                      {paketLayanan && paketLayanan.length > 0 ? (
+                        paketLayanan.map((paket) => (
+                          <label
+                            key={paket.id}
+                            className="flex cursor-pointer items-start gap-3 rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                          >
+                            <Checkbox
+                              id={`layanan_${paket.id}`}
+                              type="checkbox"
+                              checked={selectedLayanans.includes(paket.id)}
+                              onChange={() => handleLayananToggle(paket.id)}
+                              className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                            />
+                            <div className="flex flex-1 flex-row justify-between">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-300">
+                                {paket.nama}
+                              </div>
+                              {paket.harga && (
+                                <div className="mt-0.5 text-xs text-blue-600 dark:text-blue-400">
+                                  Rp{' '}
+                                  {parseInt(paket.harga).toLocaleString(
+                                    'id-ID',
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        ))
+                      ) : (
+                        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                          Tidak ada paket tersedia
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {kategoriLayanans &&
                   Object.keys(kategoriLayanans).length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

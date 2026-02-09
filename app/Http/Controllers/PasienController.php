@@ -6,6 +6,7 @@ use App\Models\Dokter;
 use App\Models\JenisLayanan;
 use App\Models\Kecamatan;
 use App\Models\Kelurahan;
+use App\Models\PaketPemeriksaan;
 use App\Models\Pasien;
 use App\Models\Pemeriksaan;
 use Illuminate\Http\Request;
@@ -106,6 +107,7 @@ class PasienController extends Controller
             'pasien' => $pasien,
             'dokter' => Dokter::all(),
             'kategoriLayanans' => $kategoriLayanan,
+            'paketLayanan' => PaketPemeriksaan::with('jenisLayanan')->where('jenis_lab', 'klinis')->get(),
         ]);
     }
 

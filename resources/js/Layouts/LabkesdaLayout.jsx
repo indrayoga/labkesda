@@ -249,6 +249,17 @@ export default function LabkesdaLayout({ header, children }) {
                     <li>
                       <Link
                         className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('paket-pemeriksaan.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Paket Layanan
+                        </span>
+                      </Link>
+                    </li>
+
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                         href={route('customers.index')}
                       >
                         <span className="flex-1 whitespace-nowrap px-3">

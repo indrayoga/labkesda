@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ItemPemeriksaan;
 use App\Models\JenisLayanan;
 use App\Models\JenisPasien;
 use App\Models\KategoriLayanan;
 use App\Rules\IsTarifLayananValidExists;
+use App\Services\ItemPemeriksaanService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -24,8 +26,9 @@ class JenisLayananController extends Controller
                 ->when($request->kategori_layanan_id, function ($query) use ($request) {
                     $query->where('kategori_layanan_id', $request->kategori_layanan_id);
                 })
-                ->latest()->paginate(10),
+                ->orderBy('kategori_layanan_id')->paginate(10)->withQueryString(),
             'kategoriLayanan' => KategoriLayanan::all(),
+            'itemPemeriksaanTree' => ItemPemeriksaanService::getTree()
         ]);
     }
 
@@ -64,6 +67,10 @@ class JenisLayananController extends Controller
     public function show(JenisLayanan $jenisLayanan)
     {
         //
+        return Inertia::render('JenisLayanan/Show', [
+            'jenisLayanan' => $jenisLayanan->load('kategoriLayanan'),
+            'itemPemeriksaan' => ItemPemeriksaan::all()
+        ]);
     }
 
     /**
@@ -152,7 +159,16 @@ class JenisLayananController extends Controller
         return redirect()->route('jenis-layanan.tarif', $jenisLayanan->id);
     }
 
+    public function syncItemPemeriksaan(Request $request, JenisLayanan $jenisLayanan)
+    {
+        $request->validate([
+            'item_pemeriksaan_id' => 'required'
+        ]);
 
+        $jenisLayanan->itemPemeriksaan()->sync([$request->item_pemeriksaan_id]);
+
+        return redirect()->route('jenis-layanan.index');
+    }
     /**
      * Remove the specified resource from storage.
      */

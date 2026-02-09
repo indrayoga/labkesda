@@ -11,127 +11,27 @@ import {
   TextInput,
 } from 'flowbite-react';
 import { useState } from 'react';
-import CreateJenisLayananForm from './CreateJenisLayananForm';
+import CreatePaketPemeriksaanForm from './CreatePaketPemeriksaanForm';
 
-function filterItemTree(items, query) {
-  const q = query.trim().toLowerCase();
-  if (!q) return items;
-
-  const filterNode = (node) => {
-    const nameMatch = String(node.name || '')
-      .toLowerCase()
-      .includes(q);
-    const children = Array.isArray(node.children) ? node.children : [];
-    const filteredChildren = children
-      .map(filterNode)
-      .filter((child) => child !== null);
-
-    if (nameMatch || filteredChildren.length > 0) {
-      return {
-        ...node,
-        children: filteredChildren,
-      };
-    }
-
-    return null;
-  };
-
-  return items.map(filterNode).filter((node) => node !== null);
-}
-
-function TreeItemRow({
-  node,
-  level = 0,
-  isLast = false,
-  onPick,
-  expandAll,
-  isPicking,
-}) {
-  const hasChildren = Array.isArray(node.children) && node.children.length > 0;
-  const [expanded, setExpanded] = useState(true);
-  const indent = level * 20;
-  const isExpanded = expandAll ? true : expanded;
-
-  return (
-    <div className="relative">
-      <div className="flex items-stretch divide-x divide-slate-200 border-b border-slate-200">
-        <div
-          className="flex min-w-0 flex-1 items-center gap-2 py-2 pr-2"
-          style={{ paddingLeft: indent }}
-        >
-          {hasChildren ? (
-            <button
-              type="button"
-              className="text-slate-600 hover:text-slate-900"
-              onClick={() => !expandAll && setExpanded((v) => !v)}
-              aria-label={isExpanded ? 'Collapse' : 'Expand'}
-            >
-              {isExpanded ? '▾' : '▸'}
-            </button>
-          ) : (
-            <span className="inline-block w-4" />
-          )}
-          <span className="truncate font-medium text-slate-800">
-            <span className="mr-1 text-slate-400">{isLast ? '└─' : '├─'}</span>
-            {node.name}
-          </span>
-        </div>
-        <div className="w-40 shrink-0 px-2 py-1">
-          <button
-            type="button"
-            onClick={() => onPick?.(node)}
-            disabled={isPicking}
-            className="rounded bg-emerald-500 px-3 py-1 text-white hover:bg-emerald-600"
-          >
-            Pilih
-          </button>
-        </div>
-      </div>
-
-      {hasChildren && isExpanded && (
-        <div>
-          {node.children.map((child, idx) => (
-            <TreeItemRow
-              key={child.id ?? `${child.name}-${idx}`}
-              node={child}
-              level={level + 1}
-              isLast={idx === node.children.length - 1}
-              onPick={onPick}
-              expandAll={expandAll}
-              isPicking={isPicking}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function Index({
-  kategoriLayanan,
-  jenisLayanan,
-  itemPemeriksaanTree,
-}) {
+export default function Index({ paketPemeriksaan }) {
   const urlParams = new URLSearchParams(window.location.search);
   const [openModalTambah, setOpenModalTambah] = useState(false);
   const [openModalDelete, setOpenModalDelete] = useState(false);
-  const [openModalTreeItemPemeriksaan, setOpenModalTreeItemPemeriksaan] =
+  const [openModalItemPemeriksaan, setOpenModalItemPemeriksaan] =
     useState(false);
   const [cariNama, setCariNama] = useState(urlParams.get('nama') || '');
-  const [cariKategori, setCariKategori] = useState(
-    urlParams.get('kategori_layanan_id') || '',
+  const [cariJenisLab, setCariJenisLab] = useState(
+    urlParams.get('jenis_lab') || '',
   );
-  const [selectedJenisLayanan, setSelectedJenisLayanan] = useState(null);
-  const [cariItemPemeriksaan, setCariItemPemeriksaan] = useState('');
-  const [isPickingItem, setIsPickingItem] = useState(false);
-  const [pickItemError, setPickItemError] = useState('');
+  const [selectedPaketPemeriksaan, setSelectedPaketPemeriksaan] =
+    useState(null);
 
   const handleFilter = () => {
-    router.visit(route('jenis-layanan.index'), {
+    router.visit(route('paket-pemeriksaan.index'), {
       method: 'get',
       data: {
         nama: cariNama,
-        kategori_layanan_id: cariKategori,
+        jenis_lab: cariJenisLab,
       },
       preserveState: true,
     });
@@ -139,15 +39,15 @@ export default function Index({
 
   const handleReset = () => {
     setCariNama('');
-    setCariKategori('');
-    router.visit(route('jenis-layanan.index'), {
+    setCariJenisLab('');
+    router.visit(route('paket-pemeriksaan.index'), {
       method: 'get',
       preserveState: true,
     });
   };
 
   const handleTambah = () => {
-    setSelectedJenisLayanan(null);
+    setSelectedPaketPemeriksaan(null);
     resetData();
     setOpenModalTambah(true);
   };
@@ -158,28 +58,22 @@ export default function Index({
       kategori_layanan_id: p.kategori_layanan_id,
       harga: p.harga,
     });
-    setSelectedJenisLayanan(p);
+    setSelectedPaketPemeriksaan(p);
     setOpenModalTambah(true);
   };
 
   const handleDelete = (p) => {
-    setSelectedJenisLayanan(p);
+    setSelectedPaketPemeriksaan(p);
     setOpenModalDelete(true);
-  };
-
-  const handleAddItemPemeriksaan = (p) => {
-    setSelectedJenisLayanan(p);
-    setOpenModalTreeItemPemeriksaan(true);
-    setPickItemError('');
   };
 
   const resetData = () => {
     setData({
       nama: '',
-      kategori_layanan_id: '',
-      harga: '',
+      jenis_lab: '',
+      deskripsi: '',
     });
-    setSelectedJenisLayanan(null);
+    setSelectedPaketPemeriksaan(null);
   };
 
   const {
@@ -193,22 +87,22 @@ export default function Index({
     recentlySuccessful,
   } = useForm({
     nama: '',
-    kategori_layanan_id: '',
-    harga: '',
+    jenis_lab: '',
+    deskripsi: '',
   });
 
   const submit = (e) => {
     e.preventDefault();
-    if (selectedJenisLayanan) {
-      put(route('jenis-layanan.update', selectedJenisLayanan.id), {
+    if (selectedPaketPemeriksaan) {
+      put(route('paket-pemeriksaan.update', selectedPaketPemeriksaan.id), {
         onSuccess: () => {
           setOpenModalTambah(false);
-          setSelectedJenisLayanan(null);
+          setSelectedPaketPemeriksaan(null);
           resetData();
         },
       });
     } else {
-      post(route('jenis-layanan.store'), {
+      post(route('paket-pemeriksaan.store'), {
         onSuccess: () => {
           setOpenModalTambah(false);
           resetData();
@@ -217,60 +111,22 @@ export default function Index({
     }
   };
 
-  const hapusJenisLayanan = (jenisLayanan) => {
-    router.delete(route('jenis-layanan.destroy', jenisLayanan.id), {
+  const hapusPaketPemeriksaan = (paketPemeriksaan) => {
+    router.delete(route('paket-pemeriksaan.destroy', paketPemeriksaan.id), {
       onSuccess: () => {
         setOpenModalDelete(false);
       },
     });
   };
 
-  const itemsTree = Array.isArray(itemPemeriksaanTree)
-    ? itemPemeriksaanTree
-    : [];
-  const filteredItemsTree = filterItemTree(itemsTree, cariItemPemeriksaan);
-  const expandAllItems = cariItemPemeriksaan.trim().length > 0;
-
-  const handlePickItemPemeriksaan = (node) => {
-    if (!selectedJenisLayanan?.id) return;
-    setIsPickingItem(true);
-    setPickItemError('');
-    router.put(
-      route('jenis-layanan.sync-items', selectedJenisLayanan.id),
-      {
-        item_pemeriksaan_id: node.id,
-      },
-      {
-        onSuccess: () => {
-          setOpenModalTreeItemPemeriksaan(false);
-          setIsPickingItem(false);
-          router.reload();
-        },
-        onError: (err) => {
-          const firstError =
-            err && typeof err === 'object' ? Object.values(err)[0] : null;
-          setPickItemError(
-            Array.isArray(firstError)
-              ? firstError[0]
-              : firstError || 'Gagal memilih item pemeriksaan.',
-          );
-          setIsPickingItem(false);
-        },
-        onFinish: () => {
-          setIsPickingItem(false);
-        },
-      },
-    );
-  };
-
   return (
     <LabkesdaLayout>
-      <Head title="Daftar Jenis Layanan" />
+      <Head title="Daftar Paket Pemeriksaan" />
       <div className="max-w-screen">
         <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800">
           <div className="flex flex-col space-y-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:space-x-4 lg:space-y-0">
             <div className="flex flex-1 items-center space-x-4">
-              <h2>Daftar Jenis Layanan ({jenisLayanan.total} entri)</h2>
+              <h2>Daftar Paket Pemeriksaan ({paketPemeriksaan.total} entri)</h2>
             </div>
             <div className="flex flex-shrink-0 flex-col space-y-3 md:flex-row md:items-center md:space-x-3 md:space-y-0 lg:justify-end">
               <button
@@ -324,25 +180,26 @@ export default function Index({
               <TextInput
                 type="text"
                 id="searchNama"
-                placeholder="Cari nama layanan..."
+                placeholder="Cari nama paket pemeriksaan..."
                 value={cariNama}
                 onChange={(e) => setCariNama(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
               />
             </div>
             <div className="flex-1">
-              <Label htmlFor="searchKategori">Kategori</Label>
+              <Label htmlFor="searchJenisLab">Jenis Lab</Label>
               <Select
-                id="searchKategori"
-                value={cariKategori}
-                onChange={(e) => setCariKategori(e.target.value)}
+                id="searchJenisLab"
+                value={cariJenisLab}
+                onChange={(e) => setCariJenisLab(e.target.value)}
               >
-                <option value="">Semua Kategori</option>
-                {kategoriLayanan.map((kategori) => (
-                  <option key={kategori.id} value={kategori.id}>
-                    {kategori.nama}
-                  </option>
-                ))}
+                <option value="">Semua Jenis Lab</option>
+                <option key={'klinis'} value={'klinis'}>
+                  Klinis
+                </option>
+                <option key={'lingkungan'} value={'lingkungan'}>
+                  Lingkungan
+                </option>
               </Select>
             </div>
             <div className="flex gap-2">
@@ -372,10 +229,16 @@ export default function Index({
                     Nama
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Kategori
+                    Jenis Lab
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Harga (UMUM)
+                    Deskripsi
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Jumlah Item
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Total Harga
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Pilihan
@@ -383,17 +246,17 @@ export default function Index({
                 </tr>
               </thead>
               <tbody>
-                {jenisLayanan.data.length === 0 ? (
+                {paketPemeriksaan.data.length === 0 ? (
                   <tr>
                     <td
                       colSpan="12"
                       className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
                     >
-                      Tidak ada data jenis layanan.
+                      Tidak ada data paket pemeriksaan.
                     </td>
                   </tr>
                 ) : (
-                  jenisLayanan.data.map((p) => (
+                  paketPemeriksaan.data.map((p) => (
                     <tr
                       key={p.id}
                       className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -407,27 +270,24 @@ export default function Index({
                         </div>
                       </td>
                       <td className="text-nowrap px-4 py-2">{p.nama}</td>
-                      <td className="px-4 py-2">{p.kategori_layanan?.nama}</td>
+                      <td className="px-4 py-2">{p.jenis_lab}</td>
+                      <td className="px-4 py-2">{p.deskripsi}</td>
+                      <td className="flex justify-center gap-2 text-nowrap px-4 py-2">
+                        {p.jumlah}
+                      </td>
                       <td className="px-4 py-2">
-                        {p.harga_umum.toLocaleString('id-ID', {
+                        {p.harga.toLocaleString('id-ID', {
                           style: 'currency',
                           currency: 'IDR',
                         })}
                       </td>
                       <td className="flex justify-center gap-2 text-nowrap px-4 py-2">
-                        {/* tombol tarif */}
                         <Link
-                          href={route('jenis-layanan.tarif', p.id)}
+                          href={route('paket-pemeriksaan.show', p.id)}
                           className="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600"
                         >
-                          Tarif
-                        </Link>
-                        <button
-                          onClick={() => handleAddItemPemeriksaan(p)}
-                          className="rounded bg-emerald-500 px-3 py-1 text-white hover:bg-emerald-600"
-                        >
                           Item Pemeriksaan
-                        </button>
+                        </Link>
                         <button
                           onClick={() => handleEdit(p)}
                           className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
@@ -451,13 +311,15 @@ export default function Index({
           <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
             <span className="text-sm text-gray-700 dark:text-gray-400">
               Menampilkan{' '}
-              <span className="font-semibold">{jenisLayanan.from}</span> sampai{' '}
-              <span className="font-semibold">{jenisLayanan.to}</span> dari
-              total <span className="font-semibold">{jenisLayanan.total}</span>{' '}
+              <span className="font-semibold">{paketPemeriksaan.from}</span>{' '}
+              sampai{' '}
+              <span className="font-semibold">{paketPemeriksaan.to}</span> dari
+              total{' '}
+              <span className="font-semibold">{paketPemeriksaan.total}</span>{' '}
               entri
             </span>
             <div className="xs:mt-0 mt-2 inline-flex">
-              {jenisLayanan.links.map((link, index) => (
+              {paketPemeriksaan.links.map((link, index) => (
                 <Link
                   href={link.url || '#'}
                   key={index}
@@ -485,11 +347,10 @@ export default function Index({
         size="2xl"
         onClose={() => setOpenModalTambah(false)}
       >
-        <ModalHeader>Tambah Jenis Layanan</ModalHeader>
+        <ModalHeader>Tambah Paket Pemeriksaan</ModalHeader>
         <ModalBody className="max-w-2xl">
-          <CreateJenisLayananForm
-            jenisLayanan={selectedJenisLayanan}
-            kategoriLayanan={kategoriLayanan}
+          <CreatePaketPemeriksaanForm
+            paketPemeriksaan={selectedPaketPemeriksaan}
             data={data}
             setData={setData}
             errors={errors}
@@ -546,11 +407,13 @@ export default function Index({
                 />
               </svg>
               <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                Apakah anda yakin ingin menghapus data Jenis Pelayanan ini?
+                Apakah anda yakin ingin menghapus data Paket Pemeriksaan ini?
               </h3>
             </div>
             <div className="flex justify-center gap-4">
-              <Button onClick={() => hapusJenisLayanan(selectedJenisLayanan)}>
+              <Button
+                onClick={() => hapusPaketPemeriksaan(selectedPaketPemeriksaan)}
+              >
                 Ya, Saya yakin
               </Button>
               <Button
@@ -559,61 +422,6 @@ export default function Index({
               >
                 Tidak, batal
               </Button>
-            </div>
-          </div>
-        </ModalBody>
-      </Modal>
-
-      <Modal
-        dismissible
-        show={openModalTreeItemPemeriksaan}
-        size="7xl"
-        onClose={() => setOpenModalTreeItemPemeriksaan(false)}
-      >
-        <ModalHeader>Item Pemeriksaan</ModalHeader>
-        <ModalBody>
-          <div className="relative overflow-hidden border bg-white shadow-sm dark:bg-gray-800 sm:rounded-lg">
-            {isPickingItem && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 text-sm font-medium text-slate-700">
-                Memproses pilihan...
-              </div>
-            )}
-            <div className="border-b border-slate-200 bg-white px-4 py-3 dark:bg-gray-800">
-              <Label htmlFor="searchItemPemeriksaan">Cari Item</Label>
-              <TextInput
-                type="text"
-                id="searchItemPemeriksaan"
-                placeholder="Cari item pemeriksaan..."
-                value={cariItemPemeriksaan}
-                onChange={(e) => setCariItemPemeriksaan(e.target.value)}
-              />
-              {pickItemError ? (
-                <div className="mt-2 text-sm text-red-600">{pickItemError}</div>
-              ) : null}
-            </div>
-            <div className="flex items-center divide-x divide-slate-200 border-b border-slate-300 bg-slate-50 text-sm font-semibold text-slate-700">
-              <div className="flex-1 px-3 py-2">Item Pemeriksaan</div>
-              <div className="w-40 px-3 py-2">Pilih</div>
-            </div>
-
-            <div>
-              {filteredItemsTree.length === 0 ? (
-                <div className="px-4 py-3 text-sm text-slate-500">
-                  Tidak ada data item pemeriksaan.
-                </div>
-              ) : (
-                filteredItemsTree.map((item, idx) => (
-                  <TreeItemRow
-                    key={item.id ?? `${item.name}-${idx}`}
-                    node={item}
-                    level={0}
-                    isLast={idx === itemsTree.length - 1}
-                    onPick={handlePickItemPemeriksaan}
-                    expandAll={expandAllItems}
-                    isPicking={isPickingItem}
-                  />
-                ))
-              )}
             </div>
           </div>
         </ModalBody>

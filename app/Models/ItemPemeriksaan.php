@@ -42,4 +42,9 @@ class ItemPemeriksaan extends Model
     {
         return $this->hasMany(PemeriksaanReferenceRange::class, 'item_pemeriksaan_id');
     }
+
+    public function jenisLayanan()
+    {
+        return $this->belongsToMany(JenisLayanan::class, 'item_pemeriksaan_layanan', 'item_pemeriksaan_id', 'jenis_layanan_id');
+    }
 }
