@@ -93,10 +93,12 @@ class PasienController extends Controller
     public function pendaftaranLaboratorium(Pasien $pasien)
     {
         //
-
-        $jenisLayanan = JenisLayanan::with('kategoriLayanan')->whereHas('kategoriLayanan', function ($query) {
-            $query->where('jenis_lab', 'klinis');
-        })->get();
+        //ambil semua jenis layanan dengan kategori layanan klinis dengan tarif umum yang aktif
+        $jenisLayanan = JenisLayanan::with('kategoriLayanan')
+            ->whereHas('kategoriLayanan', function ($query) {
+                $query->where('jenis_lab', 'klinis');
+            })
+            ->get();
         // grouping jenis layanan by kategori layanan
         $kategoriLayanan = [];
         foreach ($jenisLayanan as $layanan) {

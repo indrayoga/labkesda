@@ -45,6 +45,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('/pemeriksaan', PemeriksaanController::class);
     Route::get('pemeriksaan/form-consent/{pemeriksaan}', [PemeriksaanController::class, 'printInformedConsent'])->name('pemeriksaan.form-consent');
+    Route::get('pemeriksaan/form-pengambilan-sample/{pemeriksaan}', [PemeriksaanController::class, 'printFormulirPengambilanSample'])->name('pemeriksaan.formulir-pengambilan-sample');
+    Route::get('pemeriksaan/permintaan-pemeriksaan-napza/{pemeriksaan}', [PemeriksaanController::class, 'printPermintaanPemeriksaanNapza'])->name('pemeriksaan.permintaan-pemeriksaan-napza');
     Route::get('pembayaran/kwitansi', [PembayaranController::class, 'kwitansi'])->name('pembayaran.kwitansi');
     Route::get('pembayaran/lingkungan', [PembayaranController::class, 'lingkungan'])->name('pembayaran.lingkungan');
     Route::get('pembayaran/cetak-kwitansi/{pembayaran}', [PembayaranController::class, 'printKwitansi'])->name('pembayaran.kwitansi.cetak');
@@ -74,6 +76,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/paket-pemeriksaan/{paketPemeriksaan}/sync-items', [PaketPemeriksaanController::class, 'syncItems'])->name('paket-pemeriksaan.sync-items');
         Route::put('/jenis-layanan/{jenisLayanan}/sync-items', [JenisLayananController::class, 'syncItemPemeriksaan'])->name('jenis-layanan.sync-items');
     });
+
+    Route::get('/fetch-jenis-layanan-with-tarif-by-jenis-pasien', [JenisLayananController::class, 'jenisLayananWithTarifByJenisPasien'])->name('jenis-layanan.jenis-pasien');
 });
 
 require __DIR__ . '/auth.php';

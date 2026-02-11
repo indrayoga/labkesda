@@ -19,7 +19,7 @@ class JenisLayananController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('JenisLayanan/Index', [
-            'jenisLayanan' => JenisLayanan::with('kategoriLayanan')
+            'jenisLayanan' => JenisLayanan::with('kategoriLayanan', 'itemPemeriksaan')
                 ->when($request->nama, function ($query) use ($request) {
                     $query->where('nama', 'like', '%' . $request->nama . '%');
                 })
@@ -49,13 +49,13 @@ class JenisLayananController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'kategori_layanan_id' => 'required|exists:kategori_layanan,id',
-            'harga' => 'required|numeric',
+            // 'harga' => 'required|numeric',
         ]);
 
         JenisLayanan::create([
             'nama' => $request->nama,
             'kategori_layanan_id' => $request->kategori_layanan_id,
-            'harga' => $request->harga,
+            'harga' => 0,
         ]);
 
         return redirect()->route('jenis-layanan.index');
@@ -89,13 +89,13 @@ class JenisLayananController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'kategori_layanan_id' => 'required|exists:kategori_layanan,id',
-            'harga' => 'required|numeric',
+            // 'harga' => 'required|numeric',
         ]);
 
         $jenisLayanan->update([
             'nama' => $request->nama,
             'kategori_layanan_id' => $request->kategori_layanan_id,
-            'harga' => $request->harga,
+            'harga' => 0,
         ]);
 
         return redirect()->route('jenis-layanan.index');
@@ -168,6 +168,34 @@ class JenisLayananController extends Controller
         $jenisLayanan->itemPemeriksaan()->sync([$request->item_pemeriksaan_id]);
 
         return redirect()->route('jenis-layanan.index');
+    }
+
+    public function jenisLayananWithTarifByJenisPasien(Request $request)
+    {
+        $jenis_pasien = $request->jenis_pasien;
+        $jenisLayanan = JenisLayanan::with('kategoriLayanan')
+            ->whereHas('kategoriLayanan', function ($query) {
+                $query->where('jenis_lab', 'klinis');
+            })
+            ->with('activeTarif', function ($query) use ($jenis_pasien) {
+                $query->where('jenis_pasien', $jenis_pasien);
+            })
+            ->get()
+            ->map(function ($layanan) use ($jenis_pasien) {
+                //jika tidak ada, set harga ke jenis pasien umum
+                $layanan->harga = $layanan->tarif()->where('jenis_pasien', $jenis_pasien)->active()->first()->harga ?? $layanan->tarif()->where('jenis_pasien', 'UMUM')->active()->first()->harga ?? 0;
+                return $layanan;
+            });
+
+        // grouping jenis layanan by kategori layanan
+        $kategoriLayanan = [];
+        foreach ($jenisLayanan as $layanan) {
+            $kategoriLayanan[$layanan->kategoriLayanan->nama][] = $layanan;
+        }
+
+        return response()->json([
+            'data' => $kategoriLayanan,
+        ]);
     }
     /**
      * Remove the specified resource from storage.

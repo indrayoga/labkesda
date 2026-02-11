@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\JenisLayanan;
 use App\Models\Pemeriksaan;
+use App\Services\FormulirPengambilanSamplePdf;
+use App\Services\InformedConsentNarkobaPdf;
 use App\Services\InformedConsentPdf;
+use App\Services\PermintaanPengambilanSampleNapza;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -51,8 +54,8 @@ class PemeriksaanController extends Controller
             'tanggal_pendaftaran' => 'required|date',
             'jam_pendaftaran' => 'required',
             'diagnosa' => 'required|string',
-            'layanan_ids' => 'required|array',
-            'layanan_ids.*' => 'exists:jenis_layanan,id',
+            'layanan' => 'required|array',
+            'layanan.*.id' => 'exists:jenis_layanan,id',
         ]);
 
         try {
@@ -74,17 +77,16 @@ class PemeriksaanController extends Controller
                 'petugas_pendaftaran_id' => Auth::user()->id,
             ]);
 
-            $layanans = JenisLayanan::whereIn('id', $request->layanan_ids)->get();
-            foreach ($layanans as $layanan) {
+            foreach ($request->layanan as $layanan) {
                 $pemeriksaan->detailPemeriksaan()->create([
-                    'jenis_layanan_id' => $layanan->id,
-                    'harga' => $layanan->harga,
+                    'jenis_layanan_id' => $layanan['id'],
+                    'harga' => $layanan['harga'],
                 ]);
             }
 
             DB::commit();
 
-            return \redirect()->route('pasien.index');
+            return \redirect()->route('pendaftaran');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error saat mendaftarkan pemeriksaan: ' . $e->getMessage());
@@ -139,6 +141,26 @@ class PemeriksaanController extends Controller
         $pdf->sectionPenjelasan();
         $pdf->sectionPersetujuan();
         $pdf->signatureSection();
+
+        return response($pdf->Output('S'))
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    public function printFormulirPengambilanSample(Pemeriksaan $pemeriksaan)
+    {
+        $pdf = new FormulirPengambilanSamplePdf($pemeriksaan);
+        $pdf->AddPage();
+        $pdf->formSection();
+
+        return response($pdf->Output('S'))
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    public function printPermintaanPemeriksaanNapza(Pemeriksaan $pemeriksaan)
+    {
+        $pdf = new PermintaanPengambilanSampleNapza($pemeriksaan);
+        $pdf->AddPage();
+        $pdf->formSection();
 
         return response($pdf->Output('S'))
             ->header('Content-Type', 'application/pdf');

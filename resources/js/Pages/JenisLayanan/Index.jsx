@@ -156,7 +156,6 @@ export default function Index({
     setData({
       nama: p.nama,
       kategori_layanan_id: p.kategori_layanan_id,
-      harga: p.harga,
     });
     setSelectedJenisLayanan(p);
     setOpenModalTambah(true);
@@ -177,7 +176,6 @@ export default function Index({
     setData({
       nama: '',
       kategori_layanan_id: '',
-      harga: '',
     });
     setSelectedJenisLayanan(null);
   };
@@ -378,6 +376,9 @@ export default function Index({
                     Harga (UMUM)
                   </th>
                   <th scope="col" className="px-4 py-3">
+                    Item Pemeriksaan
+                  </th>
+                  <th scope="col" className="px-4 py-3">
                     Pilihan
                   </th>
                 </tr>
@@ -413,6 +414,11 @@ export default function Index({
                           style: 'currency',
                           currency: 'IDR',
                         })}
+                      </td>
+                      <td className="px-4 py-2">
+                        {p.item_pemeriksaan?.length
+                          ? p.item_pemeriksaan.map((i) => i.nama).join(', ')
+                          : ''}
                       </td>
                       <td className="flex justify-center gap-2 text-nowrap px-4 py-2">
                         {/* tombol tarif */}

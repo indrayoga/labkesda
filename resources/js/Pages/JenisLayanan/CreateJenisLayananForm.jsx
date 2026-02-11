@@ -60,21 +60,6 @@ export default function CreateJenisLayananForm({
           </Select>
           <InputError className="mt-2" message={errors.kategori_layanan_id} />
         </div>
-        <div>
-          <Label htmlFor="harga" color={errors.harga ? 'failure' : 'gray'}>
-            Harga
-          </Label>
-          <TextInput
-            id="harga"
-            className="mt-1"
-            value={data.harga}
-            onChange={(e) => setData('harga', e.target.value)}
-            autoComplete="harga"
-            color={errors.harga ? 'failure' : 'gray'}
-            disabled={processing}
-          />
-          <InputError className="mt-2" message={errors.harga} />
-        </div>
       </div>
     </form>
   );

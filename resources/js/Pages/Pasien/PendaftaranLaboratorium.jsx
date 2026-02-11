@@ -2,8 +2,9 @@ import InputError from '@/Components/InputError';
 import TextInput from '@/Components/TextInput';
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, useForm } from '@inertiajs/react';
+import axios from 'axios';
 import { Button, Checkbox, Label, Select, Textarea } from 'flowbite-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function PendaftaranLaboratorium({
   pasien,
@@ -15,8 +16,13 @@ export default function PendaftaranLaboratorium({
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedLayanans, setSelectedLayanans] = useState(
-    pemeriksaan?.detail_pemeriksaan?.map((dp) => dp.jenis_layanan_id) || [],
+    pemeriksaan?.detail_pemeriksaan?.map((dp) => ({
+      id: dp.jenis_layanan_id,
+      harga: dp.harga,
+    })) || [],
   );
+  const [listKategoriLayanans, setListKategoriLayanans] =
+    useState(kategoriLayanans);
 
   const { data, setData, post, put, processing, errors } = useForm({
     pasien_id: pasien?.id || '',
@@ -36,9 +42,32 @@ export default function PendaftaranLaboratorium({
     pasien_puasa_jam: pemeriksaan?.pasien_puasa_jam || 0,
     persiapan_pasien: pemeriksaan?.persiapan_pasien || '',
     id_spesimen: pemeriksaan?.id_spesimen || '',
-    layanan_ids:
-      pemeriksaan?.detail_pemeriksaan?.map((dp) => dp.jenis_layanan_id) || [],
+    layanan:
+      pemeriksaan?.detail_pemeriksaan.map((dp) => ({
+        id: dp.jenis_layanan_id,
+        harga: dp.harga,
+      })) || [],
   });
+
+  useEffect(() => {
+    // Fetch jenis layanan when jenis_pasien changes
+    const fetchJenisLayanan = async () => {
+      if (!data.jenis_pasien) {
+        setListKategoriLayanans(kategoriLayanans);
+        return;
+      }
+      try {
+        const response = await axios.get(route('jenis-layanan.jenis-pasien'), {
+          params: { jenis_pasien: data.jenis_pasien },
+        });
+        const jenisLayanan = response.data.data;
+        setListKategoriLayanans(jenisLayanan);
+      } catch (error) {
+        console.error('Error fetching jenis layanan:', error);
+      }
+    };
+    fetchJenisLayanan();
+  }, [data.jenis_pasien]);
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -55,15 +84,16 @@ export default function PendaftaranLaboratorium({
     setCurrentStep(currentStep - 1);
   };
 
-  const handleLayananToggle = (layananId) => {
+  const handleLayananToggle = (layanan) => {
+    const selectedItem = { id: layanan.id, harga: layanan.harga };
     setSelectedLayanans((prev) => {
-      const newSelected = prev.includes(layananId)
-        ? prev.filter((id) => id !== layananId)
-        : [...prev, layananId];
+      const exists = prev.some((item) => item.id === layanan.id);
+      const newSelected = exists
+        ? prev.filter((item) => item.id !== layanan.id)
+        : [...prev, selectedItem];
 
       // Sync with form data
-      setData('layanan_ids', newSelected);
-
+      setData('layanan', newSelected);
       return newSelected;
     });
   };
@@ -534,8 +564,10 @@ export default function PendaftaranLaboratorium({
                             <Checkbox
                               id={`layanan_${paket.id}`}
                               type="checkbox"
-                              checked={selectedLayanans.includes(paket.id)}
-                              onChange={() => handleLayananToggle(paket.id)}
+                              checked={selectedLayanans.some(
+                                (item) => item.id === paket.id,
+                              )}
+                              onChange={() => handleLayananToggle(paket)}
                               className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
                             />
                             <div className="flex flex-1 flex-row justify-between">
@@ -560,10 +592,10 @@ export default function PendaftaranLaboratorium({
                       )}
                     </div>
                   </div>
-                  {kategoriLayanans &&
-                  Object.keys(kategoriLayanans).length > 0 ? (
+                  {listKategoriLayanans &&
+                  Object.keys(listKategoriLayanans).length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {Object.entries(kategoriLayanans).map(
+                      {Object.entries(listKategoriLayanans).map(
                         ([namaKategori, layanans]) => (
                           <div
                             key={namaKategori}
@@ -581,11 +613,11 @@ export default function PendaftaranLaboratorium({
                                   <Checkbox
                                     id={`layanan_${layanan.id}`}
                                     type="checkbox"
-                                    checked={selectedLayanans.includes(
-                                      layanan.id,
+                                    checked={selectedLayanans.some(
+                                      (item) => item.id === layanan.id,
                                     )}
                                     onChange={() =>
-                                      handleLayananToggle(layanan.id)
+                                      handleLayananToggle(layanan)
                                     }
                                     className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
                                   />
