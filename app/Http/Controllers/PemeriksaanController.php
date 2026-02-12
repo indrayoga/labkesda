@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ItemPemeriksaan;
 use App\Models\JenisLayanan;
 use App\Models\Pemeriksaan;
 use App\Services\FormulirPengambilanSamplePdf;
+use App\Services\HasilPemeriksaanPdf;
 use App\Services\InformedConsentNarkobaPdf;
 use App\Services\InformedConsentPdf;
+use App\Services\ItemPemeriksaanService;
 use App\Services\PermintaanPengambilanSampleNapza;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -99,7 +102,19 @@ class PemeriksaanController extends Controller
      */
     public function show(Pemeriksaan $pemeriksaan)
     {
-        //
+        // ambil item pemeriksaan terkait dan jenis layanannya
+        $itemPemeriksaan = ItemPemeriksaan::whereHas('jenisLayanan', function ($query) use ($pemeriksaan) {
+            $query->whereIn('jenis_layanan.id', $pemeriksaan->detailPemeriksaan->pluck('jenis_layanan_id'));
+        })->with(['referenceRanges', 'parent'])->get();
+        $pemeriksaanItems = [];
+        foreach ($itemPemeriksaan as $item) {
+            $pemeriksaanItems[] = ItemPemeriksaanService::getTreeById($item->id);
+        }
+        // dd(\json_encode($pemeriksaanItems));
+        return Inertia::render('Pemeriksaan/Show', [
+            'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan']),
+            'pemeriksaanItems' => $pemeriksaanItems,
+        ]);
     }
 
     /**
@@ -116,6 +131,65 @@ class PemeriksaanController extends Controller
     public function update(Request $request, Pemeriksaan $pemeriksaan)
     {
         //
+    }
+
+    public function updateHasilPemeriksaan(Request $request, Pemeriksaan $pemeriksaan)
+    {
+        $request->validate([
+            'nomor_sampel' => 'required|string',
+            'tanggal_sampling' => 'required|date',
+            'jam_sampling' => 'required',
+            'tanggal_sampel_diterima' => 'required|date',
+            'jam_sampel_diterima' => 'required',
+            'tanggal_hasil_selesai' => 'required|date',
+            'jam_hasil_selesai' => 'required',
+            'keterangan' => 'nullable|string',
+            'hasil_pemeriksaan' => 'required|array',
+            'hasil_pemeriksaan.*.item_pemeriksaan_id' => 'required|exists:item_pemeriksaan,id',
+            'hasil_pemeriksaan.*.hasil' => 'required|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            // Update data pemeriksaan
+            $pemeriksaan->update([
+                'nomor_sampel' => $request->nomor_sampel,
+                'tanggal_sampling' => $request->tanggal_sampling,
+                'jam_sampling' => $request->jam_sampling,
+                'tanggal_sampel_diterima' => $request->tanggal_sampel_diterima,
+                'jam_sampel_diterima' => $request->jam_sampel_diterima,
+                'tanggal_hasil_selesai' => $request->tanggal_hasil_selesai,
+                'jam_hasil_selesai' => $request->jam_hasil_selesai,
+                'keterangan' => $request->keterangan,
+            ]);
+            // Hapus hasil pemeriksaan lama
+            $pemeriksaan->hasilPemeriksaan()->delete();
+
+            // Simpan hasil pemeriksaan baru
+            foreach ($request->hasil_pemeriksaan as $hasil) {
+                $itemPemeriksaan = ItemPemeriksaan::query()
+                    ->where('id', $hasil['item_pemeriksaan_id'])
+                    ->with(['referenceRanges', 'parent'])->first();
+
+                $pemeriksaan->hasilPemeriksaan()->create([
+                    'item_pemeriksaan_id' => $hasil['item_pemeriksaan_id'],
+                    'hasil' => $hasil['hasil'],
+                    'status' => $hasil['status'] ?? 'normal',
+                    'satuan' => $itemPemeriksaan->satuan,
+                    'nilai_rujukan' => $itemPemeriksaan->nilai_rujukan,
+                    'metode' => $itemPemeriksaan->metode,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('pemeriksaan.show', $pemeriksaan->id)
+                ->with('success', 'Hasil pemeriksaan berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error saat memperbarui hasil pemeriksaan: ' . $e->getMessage());
+            return back()->withErrors('Terjadi kesalahan saat memperbarui hasil pemeriksaan.');
+        }
     }
 
     /**
@@ -161,6 +235,15 @@ class PemeriksaanController extends Controller
         $pdf = new PermintaanPengambilanSampleNapza($pemeriksaan);
         $pdf->AddPage();
         $pdf->formSection();
+
+        return response($pdf->Output('S'))
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    public function printHasilPemeriksaan(Pemeriksaan $pemeriksaan)
+    {
+        $pdf = new HasilPemeriksaanPdf($pemeriksaan);
+        $pdf->generate();
 
         return response($pdf->Output('S'))
             ->header('Content-Type', 'application/pdf');

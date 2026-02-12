@@ -72,7 +72,7 @@ export default function Index({ tanggal, pemeriksaan }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md sm:rounded-b-lg dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
@@ -182,7 +182,10 @@ export default function Index({ tanggal, pemeriksaan }) {
                         >
                           Form Consent
                         </a>
-                        <Link className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700">
+                        <Link
+                          href={route('pemeriksaan.show', p.id)}
+                          className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700"
+                        >
                           Hasil Pemeriksaan
                         </Link>
                       </td>

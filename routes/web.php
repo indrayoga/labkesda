@@ -44,9 +44,13 @@ Route::middleware('auth')->group(function () {
     Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
 
     Route::resource('/pemeriksaan', PemeriksaanController::class);
+    Route::post('pemeriksaan/{pemeriksaan}/update-hasil-pemeriksaan', [PemeriksaanController::class, 'updateHasilPemeriksaan'])->name('pemeriksaan.update-hasil-pemeriksaan');
     Route::get('pemeriksaan/form-consent/{pemeriksaan}', [PemeriksaanController::class, 'printInformedConsent'])->name('pemeriksaan.form-consent');
     Route::get('pemeriksaan/form-pengambilan-sample/{pemeriksaan}', [PemeriksaanController::class, 'printFormulirPengambilanSample'])->name('pemeriksaan.formulir-pengambilan-sample');
     Route::get('pemeriksaan/permintaan-pemeriksaan-napza/{pemeriksaan}', [PemeriksaanController::class, 'printPermintaanPemeriksaanNapza'])->name('pemeriksaan.permintaan-pemeriksaan-napza');
+    Route::get('pemeriksaan/{pemeriksaan}/hasil-pemeriksaan', [PemeriksaanController::class, 'printHasilPemeriksaan'])->name('print.hasil-pemeriksaan');
+
+
     Route::get('pembayaran/kwitansi', [PembayaranController::class, 'kwitansi'])->name('pembayaran.kwitansi');
     Route::get('pembayaran/lingkungan', [PembayaranController::class, 'lingkungan'])->name('pembayaran.lingkungan');
     Route::get('pembayaran/cetak-kwitansi/{pembayaran}', [PembayaranController::class, 'printKwitansi'])->name('pembayaran.kwitansi.cetak');

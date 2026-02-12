@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Indrayoga\Bday\Bday;
 
 class Pasien extends Model
 {
@@ -17,7 +18,7 @@ class Pasien extends Model
     protected $keyType = 'string';
     public $incrementing = false;
     public $fillable = ['nik', 'nama', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'no_telepon', 'kecamatan_id', 'kelurahan_id', 'alamat', 'pekerjaan'];
-
+    protected $appends = ['umur'];
 
     protected static function boot()
     {
@@ -48,5 +49,14 @@ class Pasien extends Model
     public function kelurahan()
     {
         return $this->belongsTo(Kelurahan::class);
+    }
+
+    public function getUmurAttribute()
+    {
+        if ($this->tanggal_lahir) {
+            $umur = Bday::age($this->tanggal_lahir);
+            return $umur->years() . ' tahun ' . $umur->months() . ' bulan ';
+        }
+        return null;
     }
 }

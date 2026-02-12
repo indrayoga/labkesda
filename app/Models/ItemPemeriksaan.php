@@ -47,4 +47,9 @@ class ItemPemeriksaan extends Model
     {
         return $this->belongsToMany(JenisLayanan::class, 'item_pemeriksaan_layanan', 'item_pemeriksaan_id', 'jenis_layanan_id');
     }
+
+    public function hasilPemeriksaan()
+    {
+        return $this->hasMany(HasilPemeriksaan::class, 'item_pemeriksaan_id');
+    }
 }

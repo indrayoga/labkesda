@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('item_paket_pemeriksaan', function (Blueprint $table) {
-            $table->double('harga')->default(0)->after('item_pemeriksaan_id');
+            $table->double('harga')->default(0);
         });
     }
 

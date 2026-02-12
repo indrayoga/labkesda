@@ -78,4 +78,9 @@ class Pemeriksaan extends Model
     {
         return $this->belongsTo(JenisPasien::class, 'jenis_pasien', 'kode');
     }
+
+    public function hasilPemeriksaan()
+    {
+        return $this->hasMany(HasilPemeriksaan::class, 'pemeriksaan_id');
+    }
 }

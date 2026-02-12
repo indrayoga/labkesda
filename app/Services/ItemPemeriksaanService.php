@@ -10,18 +10,18 @@ class ItemPemeriksaanService
     /**
      * Build hierarchical tree of ItemPemeriksaan in desired format.
      *
-     * @param string|null $kategoriId Optional filter by kategori_pemeriksaan_id
+     * @param string|null $parentId Optional filter by parent_id
      * @return array
      */
-    public static function getTree(?string $kategoriId = null): array
+    public static function getTree(?string $parentId = null): array
     {
         $query = ItemPemeriksaan::query()
             ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut'])
             ->orderBy('urut')
             ->orderBy('nama');
 
-        if ($kategoriId) {
-            $query->where('kategori_pemeriksaan_id', $kategoriId);
+        if ($parentId) {
+            $query->where('parent_id', $parentId);
         }
 
         $items = $query->get();
@@ -38,6 +38,35 @@ class ItemPemeriksaanService
     }
 
     /**
+     * Build tree starting from a specific item id (include its children).
+     *
+     * @param string $itemId
+     * @return array
+     */
+    public static function getTreeById(string $itemId): array
+    {
+        $items = ItemPemeriksaan::query()
+            ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut'])
+            ->orderBy('urut')
+            ->orderBy('nama')
+            ->get();
+
+        // Group items by parent_id for fast tree assembly
+        $byParent = [];
+        foreach ($items as $item) {
+            $parentId = $item->parent_id ?: null;
+            $byParent[$parentId][] = $item;
+        }
+
+        $rootItem = $items->firstWhere('id', $itemId);
+        if (!$rootItem) {
+            return [];
+        }
+
+        return [self::buildNode($rootItem, $byParent)];
+    }
+
+    /**
      * Recursively build children nodes
      *
      * @param string|null $parentId
@@ -50,40 +79,52 @@ class ItemPemeriksaanService
         $nodes = [];
 
         foreach ($children as $item) {
-            $node = [
-                'id' => $item->id,
-                'name' => $item->nama,
-                'satuan' => $item->satuan,
-                'metode' => $item->metode,
-                'urut' => $item->urut,
-                'parent_id' => $item->parent_id,
-                'parent_name' => $item->parent?->nama ?? null,
-                'kategori_pemeriksaan_id' => $item->kategori_pemeriksaan_id,
-                'reference_ranges' => $item->referenceRanges->map(function ($range) {
-                    return [
-                        'id' => $range->id,
-                        'label' => $range->label,
-                        'jenis_kelamin' => $range->jenis_kelamin,
-                        'value_type' => $range->value_type,
-                        'min_value' => $range->min_value,
-                        'max_value' => $range->max_value,
-                        'kualitatif_value' => $range->kualitatif_value,
-                        'operator_min' => $range->operator_min,
-                        'operator_max' => $range->operator_max,
-                    ];
-                })->toArray(),
-                'used' => self::isItemUsed($item->id),
-            ];
-
-            $grandChildren = self::buildChildren($item->id, $byParent);
-            if (!empty($grandChildren)) {
-                $node['children'] = $grandChildren;
-            }
-
-            $nodes[] = $node;
+            $nodes[] = self::buildNode($item, $byParent);
         }
 
         return $nodes;
+    }
+
+    /**
+     * Build a node and attach its children if any.
+     *
+     * @param ItemPemeriksaan $item
+     * @param array<string|null, array<ItemPemeriksaan>> $byParent
+     * @return array
+     */
+    protected static function buildNode(ItemPemeriksaan $item, array $byParent): array
+    {
+        $node = [
+            'id' => $item->id,
+            'name' => $item->nama,
+            'satuan' => $item->satuan,
+            'metode' => $item->metode,
+            'urut' => $item->urut,
+            'parent_id' => $item->parent_id,
+            'parent_name' => $item->parent?->nama ?? null,
+            'kategori_pemeriksaan_id' => $item->kategori_pemeriksaan_id,
+            'reference_ranges' => $item->referenceRanges->map(function ($range) {
+                return [
+                    'id' => $range->id,
+                    'label' => $range->label,
+                    'jenis_kelamin' => $range->jenis_kelamin,
+                    'value_type' => $range->value_type,
+                    'min_value' => $range->min_value,
+                    'max_value' => $range->max_value,
+                    'kualitatif_value' => $range->kualitatif_value,
+                    'operator_min' => $range->operator_min,
+                    'operator_max' => $range->operator_max,
+                ];
+            })->toArray(),
+            'used' => self::isItemUsed($item->id),
+        ];
+
+        $children = self::buildChildren($item->id, $byParent);
+        if (!empty($children)) {
+            $node['children'] = $children;
+        }
+
+        return $node;
     }
 
     /**
