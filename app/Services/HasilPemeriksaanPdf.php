@@ -8,9 +8,20 @@ use FPDF;
 
 class HasilPemeriksaanPdf extends FPDF
 {
+    protected ?string $qrImagePath;
+
+    protected ?array $qrPositionMm;
+
+    protected ?int $qrPage;
+
     public function __construct(
-        protected Pemeriksaan $pemeriksaan
+        protected Pemeriksaan $pemeriksaan,
+        array $options = []
     ) {
+        $this->qrImagePath = $options['qr_image_path'] ?? null;
+        $this->qrPositionMm = $options['qr_position_mm'] ?? null;
+        $this->qrPage = isset($options['qr_page']) ? (int) $options['qr_page'] : null;
+
         return parent::__construct();
     }
 
@@ -51,11 +62,13 @@ class HasilPemeriksaanPdf extends FPDF
 
         // Judul dokumen
         $this->Ln(5);
-        $this->SetFont('Arial', 'B', 13);
-        $this->Cell(0, 7, 'HASIL PEMERIKSAAN LABORATORIUM', 0, 1, 'C');
+        $this->SetFont('Arial', 'B', 11);
+        $this->Cell(0, 5, 'HASIL PEMERIKSAAN LABORATORIUM', 0, 1, 'C');
 
-        $this->SetFont('Arial', 'I', 11);
-        $this->Cell(0, 6, 'Laboratory Examination Result', 0, 1, 'C');
+        $this->SetFont('Arial', 'I', 9);
+        $this->Cell(0, 4, 'Laboratory Examination Result Report', 0, 1, 'C');
+        $this->SetFont('Arial', 'B', 9);
+        $this->Cell(0, 4, 'No.Register Lab ' . $this->pemeriksaan->no_registrasi, 0, 1, 'C');
 
         $this->Ln(5);
     }
@@ -84,17 +97,33 @@ class HasilPemeriksaanPdf extends FPDF
             return '-';
         }
 
-        return $item->referenceRanges->map(function ($range) {
+        $ranges = $item->referenceRanges;
+        $singleRange = $ranges->count() === 1;
+
+        return $ranges->map(function ($range) use ($singleRange) {
             $genderLabel = $range->jenis_kelamin ? $range->jenis_kelamin . ': ' : '';
+            if ($singleRange && strtoupper((string) $range->jenis_kelamin) === 'ALL') {
+                $genderLabel = '';
+            }
+
             if ($range->value_type === 'kualitatif') {
                 return $genderLabel . ($range->kualitatif_value ?? '-');
             }
 
-            $minValue = $range->min_value !== null
-                ? ($range->operator_min ?? '') . $range->min_value
+            $hasMin = $range->min_value !== null;
+            $hasMax = $range->max_value !== null;
+            $operatorMin = $range->operator_min ?? '';
+            $operatorMax = $range->operator_max ?? '';
+            $stripOperators = $hasMin
+                && $hasMax
+                && in_array($operatorMin, ['>=', '>'], true)
+                && in_array($operatorMax, ['<=', '<'], true);
+
+            $minValue = $hasMin
+                ? ($stripOperators ? '' : $operatorMin) . $range->min_value
                 : '';
-            $maxValue = $range->max_value !== null
-                ? ($range->operator_max ?? '') . $range->max_value
+            $maxValue = $hasMax
+                ? ($stripOperators ? '' : $operatorMax) . $range->max_value
                 : '';
             $separator = $minValue && $maxValue ? ' - ' : '';
 
@@ -205,7 +234,7 @@ class HasilPemeriksaanPdf extends FPDF
 
     protected function tableRow(array $cells, array $widths, array $aligns)
     {
-        $lineHeight = 6;
+        $lineHeight = 5;
         $maxLines = 1;
         foreach ($cells as $index => $text) {
             $cleanText = $this->sanitizeText($text);
@@ -227,56 +256,146 @@ class HasilPemeriksaanPdf extends FPDF
         $this->Ln($rowHeight);
     }
 
-    protected function patientInfo()
+    protected function writeBilingualLabel($x, $y, $label, $translation)
     {
         $this->SetFont('Arial', '', 9);
+        $this->Text($x, $y + 3, $label);
+        $this->SetFont('Arial', 'I', 8);
+        $this->Text($x, $y + 5.5, $translation);
+    }
 
-        $this->Cell(30, 6, 'No. Registrasi', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(60, 6, $this->pemeriksaan->no_registrasi ?? '', 0, 0);
+    protected function writeBilingualTableHeader($x, $y, $width, $label, $translation)
+    {
+        $this->Rect($x, $y, $width, 8);
+        $this->SetFont('Arial', 'B', 8);
+        $this->SetXY($x, $y + 1.5);
+        $this->Cell($width, 3.5, $label, 0, 2, 'C');
+        $this->SetFont('Arial', 'I', 7);
+        $this->Cell($width, 2.5, $translation, 0, 0, 'C');
+    }
 
-        $this->Cell(30, 6, 'No. Sampel', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(40, 6, $this->pemeriksaan->nomor_sampel ?? '', 0, 1);
+    protected function patientInfo()
+    {
+        $leftItems = [
+            [
+                'No. Sampel',
+                'Sampling Number',
+                $this->pemeriksaan->nomor_sampel ?? '',
+            ],
+            [
+                'Waktu Sampling',
+                'Sampling Time',
+                trim($this->formatDate($this->pemeriksaan->tanggal_sampling) . ' ' . $this->formatTime($this->pemeriksaan->jam_sampling)),
+            ],
+            [
+                'Sampel Diterima',
+                'Sample Received',
+                trim(
+                    $this->formatDate($this->pemeriksaan->tanggal_sampel_diterima)
+                        . ' '
+                        . $this->formatTime($this->pemeriksaan->jam_sampel_diterima)
+                ),
+            ],
+            [
+                'Waktu Hasil Selesai',
+                'Result Time',
+                trim(
+                    $this->formatDate($this->pemeriksaan->tanggal_hasil_selesai)
+                        . ' '
+                        . $this->formatTime($this->pemeriksaan->jam_hasil_selesai)
+                ),
+            ],
+            [
+                'Rujukan Dari',
+                'Referred By',
+                $this->pemeriksaan->dokter->nama ?? '',
+            ],
+            [
+                'No. Telp Dokter',
+                'Doctor Phone Number',
+                $this->pemeriksaan->dokter->no_telepon ?? '',
+            ],
+        ];
 
-        $this->Cell(30, 6, 'Nama', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(60, 6, $this->pemeriksaan->pasien->nama ?? '', 0, 0);
+        $rightItems = [
+            [
+                'Nama',
+                'Name',
+                $this->pemeriksaan->pasien->nama ?? '',
+            ],
+            [
+                'Tanggal Lahir',
+                'Date of Birth',
+                $this->formatDate($this->pemeriksaan->pasien->tanggal_lahir ?? null),
+            ],
+            [
+                'NIK',
+                'ID Number',
+                $this->pemeriksaan->pasien->nik ?? '',
+            ],
+            [
+                'Jenis Kelamin',
+                'Sex',
+                $this->pemeriksaan->pasien->jenis_kelamin ?? '',
+            ],
+            [
+                'No. Telepon',
+                'Phone Number',
+                $this->pemeriksaan->pasien->no_telepon ?? '',
+            ],
+            [
+                'Alamat',
+                'Address',
+                $this->pemeriksaan->pasien->alamat ?? '',
+            ],
+        ];
 
-        $this->Cell(30, 6, 'Dokter', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(40, 6, $this->pemeriksaan->dokter->nama ?? '', 0, 1);
+        $leftX = 10;
+        $rightX = 105;
+        $labelWidth = 38;
+        $colonWidth = 3;
+        $valueWidth = 54;
+        $y = $this->GetY();
 
-        $this->Cell(30, 6, 'Jenis Kelamin', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(60, 6, $this->pemeriksaan->pasien->jenis_kelamin ?? '', 0, 0);
+        foreach ($leftItems as $index => $leftItem) {
+            $rowHeight = $index === 5 ? 14 : 7;
 
-        $this->Cell(30, 6, 'Tgl Sampling', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(
-            40,
-            6,
-            trim($this->formatDate($this->pemeriksaan->tanggal_sampling) . ' ' . $this->formatTime($this->pemeriksaan->jam_sampling)),
-            0,
-            1
-        );
+            [$labelLeft, $translationLeft, $valueLeft] = $leftItem;
+            [$labelRight, $translationRight, $valueRight] = $rightItems[$index];
 
-        $this->Cell(30, 6, 'Alamat', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->MultiCell(60, 6, $this->pemeriksaan->pasien->alamat ?? '');
+            $this->writeBilingualLabel($leftX, $y, $labelLeft, $translationLeft);
+            $this->SetFont('Arial', '', 9);
+            $this->Text($leftX + $labelWidth, $y + 3.5, ':');
+            $this->Text(
+                $leftX + $labelWidth + $colonWidth,
+                $y + 3.5,
+                $this->sanitizeText($valueLeft)
+            );
 
-        $this->SetXY(105, $this->GetY() - 12);
-        $this->Cell(30, 6, 'Hasil Selesai', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(
-            40,
-            6,
-            trim($this->formatDate($this->pemeriksaan->tanggal_hasil_selesai) . ' ' . $this->formatTime($this->pemeriksaan->jam_hasil_selesai)),
-            0,
-            1
-        );
+            $this->writeBilingualLabel($rightX, $y, $labelRight, $translationRight);
+            $this->SetFont('Arial', '', 9);
+            $this->Text($rightX + $labelWidth, $y + 3.5, ':');
 
-        $this->Ln(4);
+            if ($index === 5) {
+                $this->SetXY($rightX + $labelWidth + $colonWidth, $y + 1);
+                $this->MultiCell(
+                    $valueWidth,
+                    4,
+                    $this->sanitizeText($valueRight)
+                );
+            } else {
+                $this->Text(
+                    $rightX + $labelWidth + $colonWidth,
+                    $y + 3.5,
+                    $this->sanitizeText($valueRight)
+                );
+            }
+
+            $y += $rowHeight;
+            $this->SetXY($leftX, $y);
+        }
+
+        $this->SetY($y + 2);
     }
 
     protected function resultTable()
@@ -293,16 +412,24 @@ class HasilPemeriksaanPdf extends FPDF
                 return sprintf('%04d-%s-%04d', $parentOrder, $parentName, $itemOrder);
             });
 
-        $this->SetFont('Arial', 'B', 9);
         $this->SetFillColor(230, 230, 230);
-        $this->Cell(60, 7, 'PARAMETER', 1, 0, 'C', true);
-        $this->Cell(20, 7, 'HASIL', 1, 0, 'C', true);
-        $this->Cell(20, 7, 'SATUAN', 1, 0, 'C', true);
-        $this->Cell(40, 7, 'NILAI RUJUKAN', 1, 0, 'C', true);
-        $this->Cell(35, 7, 'METODE', 1, 0, 'C', true);
-        $this->Cell(15, 7, 'STATUS', 1, 1, 'C', true);
+        $headerY = $this->GetY();
+        $headerX = $this->GetX();
+        $this->Rect($headerX, $headerY, 190, 8, 'F');
 
-        $this->SetFont('Arial', '', 9);
+        $x = $headerX;
+        $this->writeBilingualTableHeader($x, $headerY, 60, 'PARAMETER', 'Test');
+        $x += 60;
+        $this->writeBilingualTableHeader($x, $headerY, 25, 'HASIL', 'Result');
+        $x += 25;
+        $this->writeBilingualTableHeader($x, $headerY, 20, 'SATUAN', 'Unit');
+        $x += 20;
+        $this->writeBilingualTableHeader($x, $headerY, 40, 'NILAI RUJUKAN', 'Reference');
+        $x += 40;
+        $this->writeBilingualTableHeader($x, $headerY, 45, 'METODE', 'Method');
+        $this->SetY($headerY + 8);
+
+        $this->SetFont('Arial', '', 8);
 
         $currentGroup = null;
         foreach ($results as $hasil) {
@@ -315,27 +442,38 @@ class HasilPemeriksaanPdf extends FPDF
             if ($groupName && $groupName !== $currentGroup) {
                 $currentGroup = $groupName;
                 $this->SetFillColor(245, 245, 245);
-                $this->Cell(190, 7, $this->sanitizeText(strtoupper($groupName)), 1, 1, 'L', true);
+                $this->Cell(190, 6, $this->sanitizeText(strtoupper($groupName)), 1, 1, 'L', true);
             }
 
             $nilaiRujukan = $hasil->nilai_rujukan ?: $this->formatReferenceRanges($item);
-            $statusLabel = $hasil->status === 'tidak_normal' ? 'Tidak Normal' : 'Normal';
+            $hasilValue = $hasil->hasil ?? '';
+            if ($hasil->status === 'tidak_normal') {
+                $hasilValue = $hasilValue !== '' ? $hasilValue . ' *' : '*';
+            }
 
             $this->tableRow(
                 [
                     $item->nama ?? '-',
-                    $hasil->hasil ?? '',
+                    $hasilValue,
                     $hasil->satuan ?? $item->satuan ?? '-',
                     $nilaiRujukan,
                     $hasil->metode ?? $item->metode ?? '-',
-                    $statusLabel,
                 ],
-                [60, 20, 20, 40, 35, 15],
-                ['L', 'C', 'C', 'L', 'L', 'C']
+                [60, 25, 20, 40, 45],
+                ['L', 'C', 'C', 'C', 'L']
             );
         }
 
         $this->Ln(4);
+    }
+
+    protected function notesSection()
+    {
+        $this->SetFont('Arial', '', 8);
+        $this->Cell(0, 5, 'Catatan:', 0, 1);
+        $this->Cell(0, 4, '- spesimen layak diperiksa', 0, 1);
+        $this->Cell(0, 4, '- tanda * untuk hasil abnormal', 0, 1);
+        $this->Ln(2);
     }
 
     protected function keteranganSection()
@@ -349,18 +487,49 @@ class HasilPemeriksaanPdf extends FPDF
 
     protected function signatureSection()
     {
-        $this->Ln(3);
+        $this->Ln(2);
         $tanggalTtd = $this->pemeriksaan->tanggal_hasil_selesai ?? now();
         $this->SetFont('Arial', '', 9);
-        $this->Cell(0, 6, 'Balikpapan, ' . $this->formatDateLongId($tanggalTtd), 0, 1, 'R');
+        $this->Cell(170, 6, 'Balikpapan, ' . $this->formatDateLongId($tanggalTtd), 0, 1, 'R');
 
-        $this->Ln(2);
+        // $this->Ln(2);
         $this->Cell(95, 6, 'Validated by', 0, 0, 'C');
         $this->Cell(95, 6, 'Authorized by', 0, 1, 'C');
 
         $this->Ln(16);
         $this->Cell(95, 6, '(............................)', 0, 0, 'C');
         $this->Cell(95, 6, '(............................)', 0, 1, 'C');
+        $this->Ln(2);
+    }
+
+    protected function drawQrAtSelectedPosition(): void
+    {
+        if (empty($this->qrImagePath) || !is_file($this->qrImagePath)) {
+            return;
+        }
+
+        if (!is_array($this->qrPositionMm)) {
+            return;
+        }
+
+        $targetPage = $this->qrPage ?? $this->PageNo();
+        $totalPages = $this->PageNo();
+        $targetPage = max(1, min($totalPages, $targetPage));
+
+        $xMm = (float) ($this->qrPositionMm['x'] ?? 0);
+        $yMm = (float) ($this->qrPositionMm['y'] ?? 0);
+        $qrSize = 18;
+
+        $pageWidth = (float) $this->GetPageWidth();
+        $pageHeight = (float) $this->GetPageHeight();
+
+        $x = max(0, min($pageWidth - $qrSize, $xMm - ($qrSize / 2)));
+        $y = max(0, min($pageHeight - $qrSize, $yMm - ($qrSize / 2)));
+
+        $originalPage = $this->page;
+        $this->page = $targetPage;
+        $this->Image($this->qrImagePath, $x, $y, $qrSize, $qrSize, 'PNG');
+        $this->page = $originalPage;
     }
 
     public function generate()
@@ -368,7 +537,8 @@ class HasilPemeriksaanPdf extends FPDF
         $this->AddPage();
         $this->patientInfo();
         $this->resultTable();
-        $this->keteranganSection();
         $this->signatureSection();
+        $this->notesSection();
+        $this->drawQrAtSelectedPosition();
     }
 }

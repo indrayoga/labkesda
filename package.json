@@ -36,6 +36,9 @@
         "clsx": "^2.1.1",
         "flowbite": "^4.0.1",
         "flowbite-react": "^0.12.15",
-        "react-icons": "^5.5.0"
+        "pdfjs-dist": "5.4.296",
+        "qrcode": "^1.5.4",
+        "react-icons": "^5.5.0",
+        "react-pdf": "^10.4.1"
     }
 }

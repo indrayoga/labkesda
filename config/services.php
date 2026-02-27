@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'bsre' => [
+        'base_url' => env('BSRE_BASE_URL', 'http://10.10.200.194'),
+        'v2_endpoint' => env('BSRE_V2_ENDPOINT', '/api/sign/pdf'),
+        'username' => env('BSRE_USERNAME'),
+        'password' => env('BSRE_PASSWORD'),
+        'timeout' => (int) env('BSRE_TIMEOUT', 120),
+    ],
+
 ];

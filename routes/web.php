@@ -49,6 +49,9 @@ Route::middleware('auth')->group(function () {
     Route::get('pemeriksaan/form-pengambilan-sample/{pemeriksaan}', [PemeriksaanController::class, 'printFormulirPengambilanSample'])->name('pemeriksaan.formulir-pengambilan-sample');
     Route::get('pemeriksaan/permintaan-pemeriksaan-napza/{pemeriksaan}', [PemeriksaanController::class, 'printPermintaanPemeriksaanNapza'])->name('pemeriksaan.permintaan-pemeriksaan-napza');
     Route::get('pemeriksaan/{pemeriksaan}/hasil-pemeriksaan', [PemeriksaanController::class, 'printHasilPemeriksaan'])->name('print.hasil-pemeriksaan');
+    Route::post('pemeriksaan/{pemeriksaan}/preview-ttd', [PemeriksaanController::class, 'previewHasilPemeriksaanWithQr'])->name('pemeriksaan.preview-ttd');
+    Route::get('pemeriksaan/{pemeriksaan}/preview-ttd', [PemeriksaanController::class, 'previewTtd'])->name('pemeriksaan.preview-ttd');
+    Route::post('pemeriksaan/{pemeriksaan}/sign', [PemeriksaanController::class, 'signHasilPemeriksaan'])->name('pemeriksaan.sign');
 
 
     Route::get('pembayaran/kwitansi', [PembayaranController::class, 'kwitansi'])->name('pembayaran.kwitansi');

@@ -50,7 +50,7 @@ class FormulirPengambilanSamplePdf extends FPDF
 
         // Judul dokumen
         $this->Ln(5);
-        $this->SetFont('Arial', 'B', 13);
+        $this->SetFont('Arial', 'UB', 13);
         $this->Cell(0, 7, 'FORMULIR PENGAMBILAN SAMPEL', 0, 1, 'C');
 
         $this->SetFont('Arial', 'I', 11);
@@ -186,7 +186,7 @@ class FormulirPengambilanSamplePdf extends FPDF
         $this->SetFont('Arial', 'I', 8);
         $this->SetX($left + 2);
         $this->Cell(0, 4, 'record of medicines taken in the last 3 (three) days', 0, 1);
-        $this->drawNoteLines($left + 2, $y, $boxWidth - 4, $noteHeight);
+        // $this->drawNoteLines($left + 2, $y, $boxWidth - 4, $noteHeight);
 
         // Notes: other
         $y += $noteHeight;
@@ -197,7 +197,7 @@ class FormulirPengambilanSamplePdf extends FPDF
         $this->SetFont('Arial', 'I', 8);
         $this->SetX($left + 2);
         $this->Cell(0, 4, 'Other notes (things that need to be reported)', 0, 1);
-        $this->drawNoteLines($left + 2, $y, $boxWidth - 4, $noteHeight);
+        // $this->drawNoteLines($left + 2, $y, $boxWidth - 4, $noteHeight);
 
         // Declaration
         $y += $noteHeight;
@@ -207,11 +207,11 @@ class FormulirPengambilanSamplePdf extends FPDF
         $this->MultiCell(
             $boxWidth - 4,
             4,
-            "Saya menyatakan bahwa saya mengerti untuk pengambilan sampel ini dalam rangka pemeriksaan\n" .
-                "Narkotika, Polikotropika, dan Zat Adiktif lainnya (NAPZA) dan harus dilakukan dengan\n" .
+            "Saya menyatakan bahwa saya mengerti untuk pengambilan sampel ini dalam rangka pemeriksaan " .
+                "Narkotika, Polikotropika, dan Zat Adiktif lainnya (NAPZA) dan harus dilakukan dengan " .
                 "pengawasan petugas yang berjenis kelamin sama yang telah ditentukan.\n" .
-                "I declare that I understand that this sampling is for examination purposes Narcotics,\n" .
-                "Polytropic Drugs and Other Addictive Substances (NAPZA) and must be carried out under the\n" .
+                "I declare that I understand that this sampling is for examination purposes Narcotics," .
+                "Polytropic Drugs and Other Addictive Substances (NAPZA) and must be carried out under the " .
                 "supervision of an officer of the same gender as determined"
         );
 

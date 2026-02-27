@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ItemPemeriksaan;
 use App\Models\JenisLayanan;
 use App\Models\Pemeriksaan;
+use App\Services\EsignBsreService;
+use App\Services\EsignBsreV2Service;
 use App\Services\FormulirPengambilanSamplePdf;
 use App\Services\HasilPemeriksaanPdf;
 use App\Services\InformedConsentNarkobaPdf;
@@ -15,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class PemeriksaanController extends Controller
@@ -114,6 +117,13 @@ class PemeriksaanController extends Controller
         return Inertia::render('Pemeriksaan/Show', [
             'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan']),
             'pemeriksaanItems' => $pemeriksaanItems,
+        ]);
+    }
+
+    public function previewTtd(Pemeriksaan $pemeriksaan)
+    {
+        return Inertia::render('Pemeriksaan/PreviewTtd', [
+            'pemeriksaan' => $pemeriksaan,
         ]);
     }
 
@@ -247,5 +257,141 @@ class PemeriksaanController extends Controller
 
         return response($pdf->Output('S'))
             ->header('Content-Type', 'application/pdf');
+    }
+
+    public function signHasilPemeriksaan(Request $request, Pemeriksaan $pemeriksaan)
+    {
+        $request->validate([
+            'nik' => 'required|string|max:32',
+            'passphrase' => 'required|string',
+            'qr_page' => 'required|integer|min:1',
+            'qr_x_ratio' => 'required|numeric|min:0|max:1',
+            'qr_y_ratio' => 'required|numeric|min:0|max:1',
+            'qr_page_width_pt' => 'nullable|numeric|min:1|max:5000',
+            'qr_page_height_pt' => 'nullable|numeric|min:1|max:5000',
+            'qr_image' => 'required|string',
+        ]);
+
+        $pdf = new HasilPemeriksaanPdf($pemeriksaan);
+        $pdf->generate();
+
+        $tmpDir = storage_path('app/tmp');
+        if (!is_dir($tmpDir)) {
+            mkdir($tmpDir, 0755, true);
+        }
+
+        $tempFilePath = storage_path('app/tmp/hasil-pemeriksaan-' . Str::uuid() . '.pdf');
+        $pdf->Output($tempFilePath, 'F');
+
+        try {
+            if (!preg_match('/^data:image\/png;base64,/', $request->qr_image)) {
+                return response()->json([
+                    'message' => 'Format QR image tidak valid.',
+                ], 422);
+            }
+
+            $imageBase64 = preg_replace('/^data:image\/png;base64,/', '', $request->qr_image);
+            $imageBinary = base64_decode($imageBase64, true);
+
+            if ($imageBinary === false) {
+                return response()->json([
+                    'message' => 'QR image tidak dapat diproses.',
+                ], 422);
+            }
+
+            $pageWidthPt = (float) ($request->qr_page_width_pt ?? 595.28);
+            $pageHeightPt = (float) ($request->qr_page_height_pt ?? 841.89);
+            $xRatio = (float) $request->qr_x_ratio;
+            $yRatio = (float) $request->qr_y_ratio;
+
+            $xCenterPt = $xRatio * $pageWidthPt;
+            $yCenterPt = $yRatio * $pageHeightPt;
+
+            $stampWidthPt = 56.0 * 72 / 25.4;
+            $stampHeightPt = 22.0 * 72 / 25.4;
+
+            $originX = max(0, min($pageWidthPt - $stampWidthPt, $xCenterPt - ($stampWidthPt / 2)));
+            $originY = max(0, min($pageHeightPt - $stampHeightPt, $yCenterPt - ($stampHeightPt / 2)));
+
+            $signedPdfContent = app(EsignBsreV2Service::class)->signPdf(
+                $tempFilePath,
+                $request->nik,
+                $request->passphrase,
+                [[
+                    'page' => (int) $request->qr_page,
+                    'originX' => round($originX, 2),
+                    'originY' => round($originY, 2),
+                    'imageBase64' => $imageBase64,
+                    'reason' => 'TTE',
+                    'tampilan' => 'VISIBLE',
+                    'width' => round($stampWidthPt, 2),
+                    'height' => round($stampHeightPt, 2),
+                ]]
+            );
+            return response($signedPdfContent)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="hasil-pemeriksaan-ttd.pdf"');
+        } finally {
+            // if (file_exists($tempFilePath)) {
+            //     @unlink($tempFilePath);
+            // }
+        }
+    }
+
+    public function previewHasilPemeriksaanWithQr(Request $request, Pemeriksaan $pemeriksaan)
+    {
+        $validated = $request->validate([
+            'nik' => 'required|string|max:32',
+            'passphrase' => 'required|string',
+            'qr_page' => 'required|integer|min:1',
+            'qr_x_mm' => 'required|numeric|min:0|max:210',
+            'qr_y_mm' => 'required|numeric|min:0|max:297',
+            'qr_image' => 'required|string',
+        ]);
+
+        $qrImagePath = null;
+
+        try {
+            if (!preg_match('/^data:image\/png;base64,/', $validated['qr_image'])) {
+                return response()->json([
+                    'message' => 'Format QR image tidak valid.',
+                ], 422);
+            }
+
+            $imageBase64 = preg_replace('/^data:image\/png;base64,/', '', $validated['qr_image']);
+            $imageBinary = base64_decode($imageBase64, true);
+
+            if ($imageBinary === false) {
+                return response()->json([
+                    'message' => 'QR image tidak dapat diproses.',
+                ], 422);
+            }
+
+            $tmpDir = storage_path('app/tmp/qr-preview');
+            if (!is_dir($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
+
+            $qrImagePath = $tmpDir . '/' . Str::uuid() . '.png';
+            file_put_contents($qrImagePath, $imageBinary);
+
+            $pdf = new HasilPemeriksaanPdf($pemeriksaan, [
+                'qr_image_path' => $qrImagePath,
+                'qr_page' => (int) $validated['qr_page'],
+                'qr_position_mm' => [
+                    'x' => (float) $validated['qr_x_mm'],
+                    'y' => (float) $validated['qr_y_mm'],
+                ],
+            ]);
+            $pdf->generate();
+
+            return response($pdf->Output('S'))
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="preview-hasil-pemeriksaan.pdf"');
+        } finally {
+            if ($qrImagePath && file_exists($qrImagePath)) {
+                @unlink($qrImagePath);
+            }
+        }
     }
 }

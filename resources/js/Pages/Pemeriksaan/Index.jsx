@@ -72,8 +72,8 @@ export default function Index({ tanggal, pemeriksaan }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
-          <div className="overflow-x-auto">
+        <div className="relative overflow-visible bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
+          <div className="min-h-16 overflow-x-auto overflow-y-visible pb-16">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -138,7 +138,7 @@ export default function Index({ tanggal, pemeriksaan }) {
                   pemeriksaan.data.map((p) => (
                     <tr
                       key={p.id}
-                      className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
+                      className="overflow-visible border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
                       <td className="w-4 px-4 py-2">
                         <div className="flex items-center">
@@ -174,14 +174,31 @@ export default function Index({ tanggal, pemeriksaan }) {
                           .join(', ')}
                       </td>
                       <td className="px-4 py-2">{p.jenis_pasien}</td>
-                      <td className="flex items-center gap-2 text-nowrap px-4 py-2">
-                        <a
-                          href={route('pemeriksaan.form-consent', p.id)}
-                          target="_blank"
-                          className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
-                        >
-                          Form Consent
-                        </a>
+                      <td className="relative z-20 flex items-center gap-2 overflow-visible text-nowrap px-4 py-2">
+                        <details className="relative">
+                          <summary className="cursor-pointer list-none rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600">
+                            Form Consent
+                          </summary>
+                          <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded border border-gray-200 bg-white shadow-lg">
+                            <a
+                              href={route('pemeriksaan.form-consent', p.id)}
+                              target="_blank"
+                              className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Form Consent
+                            </a>
+                            <a
+                              href={route(
+                                'pemeriksaan.formulir-pengambilan-sample',
+                                p.id,
+                              )}
+                              target="_blank"
+                              className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Form Consent Narkoba
+                            </a>
+                          </div>
+                        </details>
                         <Link
                           href={route('pemeriksaan.show', p.id)}
                           className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700"
@@ -196,7 +213,7 @@ export default function Index({ tanggal, pemeriksaan }) {
             </table>
           </div>
           {/* tampilkan navigasi pagination */}
-          <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
+          <div className="relative z-0 flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
             <span className="text-sm text-gray-700 dark:text-gray-400">
               Menampilkan{' '}
               <span className="font-semibold">{pemeriksaan.from}</span> sampai{' '}
