@@ -21,66 +21,159 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 const STAMP_WIDTH_MM = 56;
 const STAMP_HEIGHT_MM = 22;
+const BSRE_LOGO_PATH = '/images/logo-bsre.png';
 
-const generateTteVisualization = async ({ qrPayload, nik }) => {
+const generateTteVisualization = async ({ qrPayload, signerName }) => {
+  const loadImage = (source) =>
+    new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = source;
+    });
+
   const qrDataUrl = await QRCode.toDataURL(qrPayload, {
-    width: 220,
-    margin: 0,
+    width: 560,
+    margin: 2,
+    errorCorrectionLevel: 'M',
   });
 
-  const qrImage = await new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = qrDataUrl;
-  });
+  const qrImage = await loadImage(qrDataUrl);
+
+  let bsreLogo = null;
+
+  try {
+    bsreLogo = await loadImage(BSRE_LOGO_PATH);
+  } catch {
+    bsreLogo = null;
+  }
 
   const canvas = document.createElement('canvas');
-  canvas.width = 850;
-  canvas.height = 250;
+  canvas.width = 1180;
+  canvas.height = 452;
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
     throw new Error('Canvas context tidak tersedia.');
   }
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const drawRoundedRect = (x, y, width, height, radius) => {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  };
 
-  ctx.strokeStyle = '#D1D5DB';
+  ctx.strokeStyle = '#000000';
   ctx.lineWidth = 4;
-  ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+  ctx.fillStyle = '#FFFFFF';
+  drawRoundedRect(2, 2, canvas.width - 4, canvas.height - 4, 16);
+  ctx.fill();
+  ctx.stroke();
 
-  ctx.drawImage(qrImage, 24, 24, 200, 200);
+  const qrFrameX = 14;
+  const qrFrameY = 14;
+  const qrFrameSize = 412;
+  const qrPadding = 8;
+  const qrTop = qrFrameY;
+  const qrBottom = qrFrameY + qrFrameSize;
+  const contentX = 438;
+  const contentWidth = canvas.width - contentX - 20;
+  let certificateTextY = qrBottom - 30;
+
+  drawRoundedRect(qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 10);
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 2;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.drawImage(
+    qrImage,
+    qrFrameX + qrPadding,
+    qrFrameY + qrPadding,
+    qrFrameSize - qrPadding * 2,
+    qrFrameSize - qrPadding * 2,
+  );
+
+  ctx.textBaseline = 'top';
+
+  ctx.fillStyle = '#111827';
+  ctx.font = 'bold 38px Arial';
+  ctx.fillText('Ditandatangani Secara Elektronik Oleh:', contentX, qrTop);
 
   ctx.fillStyle = '#1F2937';
-  ctx.font = '30px Arial';
-  ctx.fillText('Dokumen ini telah ditandatangani', 350, 60);
-  ctx.fillText('secara elektronik menggunakan', 350, 95);
-  ctx.fillText('sertifikat elektronik yang diterbitkan', 350, 130);
-  ctx.fillText('oleh BSrE', 350, 165);
+  ctx.font = 'bold 36px Arial';
+  ctx.fillText('Kepala Laboratorium', contentX, qrTop + 58);
 
-  ctx.fillStyle = '#6B7280';
-  ctx.font = '18px Arial';
-  ctx.fillText(`NIK: ${nik || '-'}`, 350, 230);
+  if (bsreLogo) {
+    const logoWidth = 220;
+    const logoHeight = 76;
+    const logoX = contentX + (contentWidth - logoWidth) / 2;
+    const logoY = qrTop + 142;
 
-  ctx.fillStyle = '#0EA5E9';
+    drawRoundedRect(
+      logoX - 12,
+      logoY - 12,
+      logoWidth + 24,
+      logoHeight + 24,
+      10,
+    );
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fill();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.drawImage(bsreLogo, logoX, logoY, logoWidth, logoHeight);
+
+    certificateTextY = logoY + logoHeight + 22;
+  }
+
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 24px Arial';
+  ctx.fillText('Nama Penandatangan:', contentX, qrBottom - 108);
+
+  ctx.fillStyle = '#0F172A';
+  ctx.font = 'bold 38px Arial';
+  const signerNameText = signerName || '-';
+  const signerNameY = qrBottom - 78;
+  ctx.fillText(signerNameText, contentX, signerNameY);
+
+  const signerNameWidth = ctx.measureText(signerNameText).width;
+  const underlineMaxWidth = contentWidth;
+  const underlineWidth = Math.min(signerNameWidth, underlineMaxWidth);
+  const underlineY = signerNameY + 46;
+
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(690, 290, 38, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(contentX, underlineY);
+  ctx.lineTo(contentX + underlineWidth, underlineY);
+  ctx.stroke();
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 11px Arial';
-  ctx.fillText('Balai', 670, 282);
-  ctx.fillText('Sertifikasi', 658, 296);
-  ctx.fillText('Elektronik', 663, 310);
+  ctx.fillStyle = '#64748B';
+  ctx.font = '24px Arial';
+  ctx.fillText(
+    'Sertifikat elektronik diterbitkan oleh BSrE',
+    contentX,
+    certificateTextY,
+  );
 
   return canvas.toDataURL('image/png');
 };
 
 export default function PreviewTtd({ pemeriksaan }) {
   const [openModalCredential, setOpenModalCredential] = useState(false);
-  const [qrPosition, setQrPosition] = useState(null);
+  const [qrPositions, setQrPositions] = useState([]);
+  const [activeStampId, setActiveStampId] = useState(null);
   const [isPickMode, setIsPickMode] = useState(false);
   const [isDraggingStamp, setIsDraggingStamp] = useState(false);
   const [credential, setCredential] = useState({
@@ -114,7 +207,8 @@ export default function PreviewTtd({ pemeriksaan }) {
 
   useEffect(() => {
     setCurrentPage(1);
-    setQrPosition(null);
+    setQrPositions([]);
+    setActiveStampId(null);
     setQrImage('');
     setSavedCredential(null);
     setIsDraggingStamp(false);
@@ -123,10 +217,17 @@ export default function PreviewTtd({ pemeriksaan }) {
   useEffect(() => {
     let active = true;
 
+    const signerName =
+      pemeriksaan?.nama_penandatangan ||
+      pemeriksaan?.penandatangan ||
+      pemeriksaan?.kepala_laboratorium ||
+      pemeriksaan?.dokter?.nama ||
+      'Nama Penandatangan';
+
     (async () => {
       const preview = await generateTteVisualization({
-        qrPayload: `preview-${pemeriksaan.id}-${new Date().toISOString()}`,
-        nik: 'PREVIEW',
+        qrPayload: `https://example.com/verifikasi-ttd/${pemeriksaan.id}`,
+        signerName,
       });
 
       if (active) {
@@ -137,7 +238,13 @@ export default function PreviewTtd({ pemeriksaan }) {
     return () => {
       active = false;
     };
-  }, [pemeriksaan.id]);
+  }, [
+    pemeriksaan.id,
+    pemeriksaan?.dokter?.nama,
+    pemeriksaan?.kepala_laboratorium,
+    pemeriksaan?.nama_penandatangan,
+    pemeriksaan?.penandatangan,
+  ]);
 
   const getPdfSizeMmFromPage = (pageNumber) => {
     const metric = pageMetrics[pageNumber];
@@ -151,9 +258,9 @@ export default function PreviewTtd({ pemeriksaan }) {
     return { widthMm, heightMm };
   };
 
-  const handlePlaceQr = (event) => {
+  const createPositionFromEvent = (event, page, currentId = null) => {
     if (!pageContainerRef.current) {
-      return;
+      return null;
     }
 
     const rect = pageContainerRef.current.getBoundingClientRect();
@@ -166,31 +273,62 @@ export default function PreviewTtd({ pemeriksaan }) {
     const xMm = safeXRatio * widthMm;
     const yMm = safeYRatio * heightMm;
 
-    setQrPosition({
-      page: currentPage,
+    return {
+      id: currentId || `${Date.now()}-${Math.random()}`,
+      page,
       xRatio: safeXRatio,
       yRatio: safeYRatio,
       xMm,
       yMm,
-    });
+    };
   };
 
-  const handleStampMouseDown = (event) => {
+  const handlePlaceQr = (event) => {
+    if (!isPickMode) {
+      return;
+    }
+
+    const newPosition = createPositionFromEvent(event, currentPage);
+
+    if (!newPosition) {
+      return;
+    }
+
+    setQrPositions((prev) => [...prev, newPosition]);
+    setActiveStampId(newPosition.id);
+  };
+
+  const handleStampMouseDown = (event, stampId) => {
     if (!isPickMode) {
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
+    setActiveStampId(stampId);
     setIsDraggingStamp(true);
   };
 
   const handleStampMouseMove = (event) => {
-    if (!isPickMode || !isDraggingStamp) {
+    if (!isPickMode || !isDraggingStamp || !activeStampId) {
       return;
     }
 
-    handlePlaceQr(event);
+    const movedPosition = createPositionFromEvent(
+      event,
+      currentPage,
+      activeStampId,
+    );
+
+    if (!movedPosition) {
+      return;
+    }
+
+    setQrPositions((prev) =>
+      prev.map((position) =>
+        position.id === activeStampId ? movedPosition : position,
+      ),
+    );
   };
 
   const handleStampMouseUp = () => {
@@ -201,44 +339,99 @@ export default function PreviewTtd({ pemeriksaan }) {
     setIsDraggingStamp(false);
   };
 
+  const handleRemoveActiveStamp = () => {
+    if (!activeStampId) {
+      return;
+    }
+
+    setQrPositions((prev) => {
+      const nextPositions = prev.filter(
+        (position) => position.id !== activeStampId,
+      );
+      setActiveStampId(
+        nextPositions.length > 0
+          ? nextPositions[nextPositions.length - 1].id
+          : null,
+      );
+      return nextPositions;
+    });
+
+    setSavedCredential(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Delete' || !activeStampId) {
+        return;
+      }
+
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      handleRemoveActiveStamp();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeStampId]);
+
   const handleSaveCredential = async (event) => {
     event.preventDefault();
 
-    if (!qrPosition) {
+    if (qrPositions.length === 0) {
       return;
     }
 
     setIsGeneratingQr(true);
 
     try {
-      const qrPayload = JSON.stringify({
-        pemeriksaan_id: pemeriksaan.id,
-        no_registrasi: pemeriksaan.no_registrasi,
-        nik: credential.nik,
-        page: qrPosition.page,
-        x_mm: Number(qrPosition.xMm.toFixed(2)),
-        y_mm: Number(qrPosition.yMm.toFixed(2)),
-        generated_at: new Date().toISOString(),
-      });
+      const qrPayload = `https://example.com/verifikasi-ttd/${pemeriksaan.id}`;
 
       const generatedStamp = await generateTteVisualization({
         qrPayload,
-        nik: credential.nik,
+        signerName:
+          pemeriksaan?.nama_penandatangan ||
+          pemeriksaan?.penandatangan ||
+          pemeriksaan?.kepala_laboratorium ||
+          pemeriksaan?.dokter?.nama ||
+          'Nama Penandatangan',
       });
-      const metric = pageMetrics[qrPosition.page];
-      const pageWidthPt = metric?.widthPt ?? 595.28;
-      const pageHeightPt = metric?.heightPt ?? 841.89;
+      const placements = qrPositions.map((position) => {
+        const metric = pageMetrics[position.page];
+        const pageWidthPt = metric?.widthPt ?? 595.28;
+        const pageHeightPt = metric?.heightPt ?? 841.89;
+
+        return {
+          page: position.page,
+          x_ratio: Number(position.xRatio.toFixed(6)),
+          y_ratio: Number(position.yRatio.toFixed(6)),
+          page_width_pt: Number(pageWidthPt.toFixed(2)),
+          page_height_pt: Number(pageHeightPt.toFixed(2)),
+        };
+      });
+
+      const firstPlacement = placements[0];
 
       const response = await axios.post(
         route('pemeriksaan.sign', pemeriksaan.id),
         {
           nik: credential.nik,
           passphrase: credential.passphrase,
-          qr_page: qrPosition.page,
-          qr_x_ratio: Number(qrPosition.xRatio.toFixed(6)),
-          qr_y_ratio: Number(qrPosition.yRatio.toFixed(6)),
-          qr_page_width_pt: Number(pageWidthPt.toFixed(2)),
-          qr_page_height_pt: Number(pageHeightPt.toFixed(2)),
+          qr_page: firstPlacement?.page,
+          qr_x_ratio: firstPlacement?.x_ratio,
+          qr_y_ratio: firstPlacement?.y_ratio,
+          qr_page_width_pt: firstPlacement?.page_width_pt,
+          qr_page_height_pt: firstPlacement?.page_height_pt,
+          placements,
           qr_image: generatedStamp,
         },
         {
@@ -258,6 +451,7 @@ export default function PreviewTtd({ pemeriksaan }) {
       setSavedCredential({
         nik: credential.nik,
         hasPassphrase: credential.passphrase.length > 0,
+        placementsCount: placements.length,
         payload: qrPayload,
       });
       setIsPickMode(false);
@@ -281,9 +475,8 @@ export default function PreviewTtd({ pemeriksaan }) {
                 Preview Hasil Pemeriksaan
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                {isPickMode
-                  ? 'Mode pilih posisi aktif. Klik area dokumen untuk menentukan posisi QR Code.'
-                  : 'Pilih halaman dulu, lalu klik tombol Pilih Posisi QR untuk meletakkan QR.'}
+                Pilih halaman, aktifkan mode atur, lalu tambahkan beberapa
+                posisi TTE di halaman mana pun.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -310,40 +503,29 @@ export default function PreviewTtd({ pemeriksaan }) {
               </Button>
               <Button
                 size="sm"
-                color={isPickMode ? 'failure' : 'blue'}
-                onClick={() => {
-                  setIsPickMode((prev) => {
-                    const next = !prev;
-                    if (next && !qrPosition) {
-                      const { widthMm, heightMm } =
-                        getPdfSizeMmFromPage(currentPage);
-                      setQrPosition({
-                        page: currentPage,
-                        xRatio: 0.5,
-                        yRatio: 0.5,
-                        xMm: widthMm / 2,
-                        yMm: heightMm / 2,
-                      });
-                    }
-
-                    return next;
-                  });
-                }}
+                className={`bg-blue-600 font-semibold text-white shadow-sm ring-1 ring-offset-1 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1`}
+                onClick={() => setIsPickMode((prev) => !prev)}
               >
                 {isPickMode ? 'Selesai Atur Posisi' : 'Pilih Posisi TTE'}
               </Button>
-              {qrPosition && (
+              {qrPositions.length > 0 && (
                 <Button
                   size="sm"
-                  color="success"
+                  className="font-semibold shadow-md ring-1"
                   onClick={() => setOpenModalCredential(true)}
                   disabled={isGeneratingQr}
                 >
-                  Simpan Tanda Tangan
+                  Tanda Tangan
                 </Button>
               )}
             </div>
           </div>
+          {qrPositions.length > 0 && (
+            <p className="mt-2 text-xs text-slate-600">
+              Total posisi TTE: {qrPositions.length}
+              {activeStampId ? ' • 1 posisi sedang dipilih' : ''}
+            </p>
+          )}
         </div>
 
         <div
@@ -385,30 +567,42 @@ export default function PreviewTtd({ pemeriksaan }) {
                 />
               </Document>
 
-              {qrPosition && qrPosition.page === currentPage && (
-                <img
-                  src={qrImage || ttePreviewImage}
-                  alt="Visualisasi TTE"
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 border border-slate-300 bg-white shadow-sm ${isPickMode ? 'cursor-move' : 'pointer-events-none'}`}
-                  style={{
-                    left: `${qrPosition.xRatio * 100}%`,
-                    top: `${qrPosition.yRatio * 100}%`,
-                    width: `${(STAMP_WIDTH_MM / getPdfSizeMmFromPage(currentPage).widthMm) * 100}%`,
-                    height: `${(STAMP_HEIGHT_MM / getPdfSizeMmFromPage(currentPage).heightMm) * 100}%`,
-                  }}
-                  onMouseDown={handleStampMouseDown}
-                  draggable={false}
-                />
-              )}
+              {qrPositions
+                .filter((position) => position.page === currentPage)
+                .map((position) => (
+                  <img
+                    key={position.id}
+                    src={qrImage || ttePreviewImage}
+                    alt="Visualisasi TTE"
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 border bg-white shadow-sm ${isPickMode ? 'cursor-move' : 'pointer-events-none'} ${
+                      activeStampId === position.id
+                        ? 'border-blue-500 ring-2 ring-blue-200'
+                        : 'border-slate-300'
+                    }`}
+                    style={{
+                      left: `${position.xRatio * 100}%`,
+                      top: `${position.yRatio * 100}%`,
+                      width: `${(STAMP_WIDTH_MM / getPdfSizeMmFromPage(currentPage).widthMm) * 100}%`,
+                      height: `${(STAMP_HEIGHT_MM / getPdfSizeMmFromPage(currentPage).heightMm) * 100}%`,
+                    }}
+                    onMouseDown={(event) =>
+                      handleStampMouseDown(event, position.id)
+                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setActiveStampId(position.id);
+                    }}
+                    draggable={false}
+                  />
+                ))}
             </div>
           </div>
         </div>
 
-        {savedCredential && qrPosition && (
+        {savedCredential && qrPositions.length > 0 && (
           <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-            Posisi QR tersimpan di halaman {qrPosition.page}, koordinat PDF ({' '}
-            {qrPosition.xMm.toFixed(2)} mm, {qrPosition.yMm.toFixed(2)} mm )
-            dengan NIK {savedCredential.nik}.
+            Berhasil simpan tanda tangan pada {savedCredential.placementsCount}{' '}
+            posisi dengan NIK {savedCredential.nik}.
           </div>
         )}
       </div>

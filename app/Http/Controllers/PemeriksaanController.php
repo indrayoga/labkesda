@@ -252,6 +252,19 @@ class PemeriksaanController extends Controller
 
     public function printHasilPemeriksaan(Pemeriksaan $pemeriksaan)
     {
+        // Check apakah sudah ada file ttd, jika ada tampilkan yang sudah ttd, jika belum buat pdf baru
+        if ($pemeriksaan->file_tte) {
+            $filePath = storage_path('app/' . $pemeriksaan->file_tte);
+            if (file_exists($filePath)) {
+                return response()->file($filePath, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="hasil-pemeriksaan-ttd.pdf"',
+                ]);
+            } else {
+                Log::warning('File TTE tidak ditemukan untuk pemeriksaan ID ' . $pemeriksaan->id);
+            }
+        }
+
         $pdf = new HasilPemeriksaanPdf($pemeriksaan);
         $pdf->generate();
 
@@ -261,36 +274,59 @@ class PemeriksaanController extends Controller
 
     public function signHasilPemeriksaan(Request $request, Pemeriksaan $pemeriksaan)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nik' => 'required|string|max:32',
             'passphrase' => 'required|string',
-            'qr_page' => 'required|integer|min:1',
-            'qr_x_ratio' => 'required|numeric|min:0|max:1',
-            'qr_y_ratio' => 'required|numeric|min:0|max:1',
+            'placements' => 'nullable|array|min:1',
+            'placements.*.page' => 'required_with:placements|integer|min:1',
+            'placements.*.x_ratio' => 'required_with:placements|numeric|min:0|max:1',
+            'placements.*.y_ratio' => 'required_with:placements|numeric|min:0|max:1',
+            'placements.*.page_width_pt' => 'nullable|numeric|min:1|max:5000',
+            'placements.*.page_height_pt' => 'nullable|numeric|min:1|max:5000',
+            'qr_page' => 'required_without:placements|integer|min:1',
+            'qr_x_ratio' => 'required_without:placements|numeric|min:0|max:1',
+            'qr_y_ratio' => 'required_without:placements|numeric|min:0|max:1',
             'qr_page_width_pt' => 'nullable|numeric|min:1|max:5000',
             'qr_page_height_pt' => 'nullable|numeric|min:1|max:5000',
             'qr_image' => 'required|string',
         ]);
 
-        $pdf = new HasilPemeriksaanPdf($pemeriksaan);
-        $pdf->generate();
+        // check file tte sudah ada di table, jika ada pakai file tte yang sudah ada, jika belum buat pdf baru untuk ditandatangani
+        if ($pemeriksaan->file_tte) {
+            $filePath = storage_path('app/' . $pemeriksaan->file_tte);
+            if (file_exists($filePath)) {
+                $tempFilePath = $filePath;
+                $existingFileName = basename((string) $pemeriksaan->file_tte);
+                $filename = pathinfo($existingFileName, PATHINFO_FILENAME);
+            } else {
+                Log::warning('File TTE tidak ditemukan untuk pemeriksaan ID ' . $pemeriksaan->id);
+                return response()->json([
+                    'message' => 'File TTE tidak ditemukan. Pastikan hasil pemeriksaan sudah ditandatangani sebelumnya.',
+                ], 422);
+            }
+        } else {
+            $pdf = new HasilPemeriksaanPdf($pemeriksaan);
+            $pdf->generate();
 
-        $tmpDir = storage_path('app/tmp');
-        if (!is_dir($tmpDir)) {
-            mkdir($tmpDir, 0755, true);
+            $tmpDir = storage_path('app/tmp');
+            if (!is_dir($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
+
+            $tempFilePath = storage_path('app/tmp/hasil-pemeriksaan-' . $pemeriksaan->id . '.pdf');
+            $filename = 'hasil-pemeriksaan-' . $pemeriksaan->id;
+            $pdf->Output($tempFilePath, 'F');
         }
 
-        $tempFilePath = storage_path('app/tmp/hasil-pemeriksaan-' . Str::uuid() . '.pdf');
-        $pdf->Output($tempFilePath, 'F');
 
         try {
-            if (!preg_match('/^data:image\/png;base64,/', $request->qr_image)) {
+            if (!preg_match('/^data:image\/png;base64,/', $validated['qr_image'])) {
                 return response()->json([
                     'message' => 'Format QR image tidak valid.',
                 ], 422);
             }
 
-            $imageBase64 = preg_replace('/^data:image\/png;base64,/', '', $request->qr_image);
+            $imageBase64 = preg_replace('/^data:image\/png;base64,/', '', $validated['qr_image']);
             $imageBinary = base64_decode($imageBase64, true);
 
             if ($imageBinary === false) {
@@ -299,26 +335,32 @@ class PemeriksaanController extends Controller
                 ], 422);
             }
 
-            $pageWidthPt = (float) ($request->qr_page_width_pt ?? 595.28);
-            $pageHeightPt = (float) ($request->qr_page_height_pt ?? 841.89);
-            $xRatio = (float) $request->qr_x_ratio;
-            $yRatio = (float) $request->qr_y_ratio;
-
-            $xCenterPt = $xRatio * $pageWidthPt;
-            $yCenterPt = $yRatio * $pageHeightPt;
-
             $stampWidthPt = 56.0 * 72 / 25.4;
             $stampHeightPt = 22.0 * 72 / 25.4;
 
-            $originX = max(0, min($pageWidthPt - $stampWidthPt, $xCenterPt - ($stampWidthPt / 2)));
-            $originY = max(0, min($pageHeightPt - $stampHeightPt, $yCenterPt - ($stampHeightPt / 2)));
+            $placementInputs = $validated['placements'] ?? [[
+                'page' => (int) $validated['qr_page'],
+                'x_ratio' => (float) $validated['qr_x_ratio'],
+                'y_ratio' => (float) $validated['qr_y_ratio'],
+                'page_width_pt' => (float) ($validated['qr_page_width_pt'] ?? 595.28),
+                'page_height_pt' => (float) ($validated['qr_page_height_pt'] ?? 841.89),
+            ]];
 
-            $signedPdfContent = app(EsignBsreV2Service::class)->signPdf(
-                $tempFilePath,
-                $request->nik,
-                $request->passphrase,
-                [[
-                    'page' => (int) $request->qr_page,
+            $signatureOptions = [];
+            foreach ($placementInputs as $placement) {
+                $pageWidthPt = (float) ($placement['page_width_pt'] ?? 595.28);
+                $pageHeightPt = (float) ($placement['page_height_pt'] ?? 841.89);
+                $xRatio = (float) $placement['x_ratio'];
+                $yRatio = (float) $placement['y_ratio'];
+
+                $xCenterPt = $xRatio * $pageWidthPt;
+                $yCenterPt = $yRatio * $pageHeightPt;
+
+                $originX = max(0, min($pageWidthPt - $stampWidthPt, $xCenterPt - ($stampWidthPt / 2)));
+                $originY = max(0, min($pageHeightPt - $stampHeightPt, $yCenterPt - ($stampHeightPt / 2)));
+
+                $signatureOptions[] = [
+                    'page' => (int) $placement['page'],
                     'originX' => round($originX, 2),
                     'originY' => round($originY, 2),
                     'imageBase64' => $imageBase64,
@@ -326,15 +368,31 @@ class PemeriksaanController extends Controller
                     'tampilan' => 'VISIBLE',
                     'width' => round($stampWidthPt, 2),
                     'height' => round($stampHeightPt, 2),
-                ]]
+                ];
+            }
+
+            $signedPdfContent = app(EsignBsreV2Service::class)->signPdf(
+                $tempFilePath,
+                $validated['nik'],
+                $validated['passphrase'],
+                $signatureOptions
             );
+            // save signed pdf
+            $file_tte = $filename . '-signed.pdf';
+            $signedPdfPath = storage_path('app/private/' . $file_tte);
+            file_put_contents($signedPdfPath, $signedPdfContent);
+            //update path signed pdf ke database
+            $pemeriksaan->update([
+                'file_tte' => 'private/' . $file_tte,
+            ]);
+
             return response($signedPdfContent)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="hasil-pemeriksaan-ttd.pdf"');
+                ->header('Content-Disposition', 'inline; filename="' . $file_tte . '"');
         } finally {
-            // if (file_exists($tempFilePath)) {
-            //     @unlink($tempFilePath);
-            // }
+            if (file_exists($tempFilePath)) {
+                @unlink($tempFilePath);
+            }
         }
     }
 

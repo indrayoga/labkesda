@@ -1,6 +1,6 @@
 import InputError from '@/Components/InputError';
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { Button, Select, Textarea, TextInput } from 'flowbite-react';
 
 const formatReferenceRanges = (ranges = []) => {
@@ -232,18 +232,31 @@ export default function Show({ pemeriksaan, pemeriksaanItems }) {
                 Pastikan data pasien sudah sesuai sebelum menyimpan.
               </p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700">
-              No. Registrasi: {pemeriksaan.no_registrasi}
+            <div className="flex gap-2">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700">
+                No. Registrasi: {pemeriksaan.no_registrasi}
+              </div>
+              {/* link ttd hasil */}
+              <Link href={route('pemeriksaan.preview-ttd', pemeriksaan.id)}>
+                <Button
+                  size="sm"
+                  outline={true}
+                  className="border-blue-700 text-blue-700 hover:border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-blue-700"
+                >
+                  Tanda Tangan Hasil
+                </Button>
+              </Link>
+
+              <a
+                href={route('print.hasil-pemeriksaan', pemeriksaan.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="sm" outline={true}>
+                  Cetak Hasil Pemeriksaan
+                </Button>
+              </a>
             </div>
-            <a
-              href={route('print.hasil-pemeriksaan', pemeriksaan.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="sm" outline={true}>
-                Cetak Hasil Pemeriksaan
-              </Button>
-            </a>
           </div>
 
           <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-5">
