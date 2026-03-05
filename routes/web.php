@@ -5,12 +5,14 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DokterController;
 use App\Http\Controllers\ItemPemeriksaanController;
 use App\Http\Controllers\JenisLayananController;
+use App\Http\Controllers\JenisPasienController;
 use App\Http\Controllers\PaketPemeriksaanController;
 use App\Http\Controllers\PemeriksaanLingkunganController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\PemeriksaanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -73,7 +75,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('master-data')->group(function () {
         Route::resource('/customers', CustomerController::class);
         Route::resource('/dokter', DokterController::class);
+        Route::resource('/users', UserController::class);
         Route::resource('/jenis-layanan', JenisLayananController::class);
+        Route::resource('/jenis-pasien', JenisPasienController::class);
         Route::get('/jenis-layanan/{jenisLayanan}/tarif', [JenisLayananController::class, 'tarif'])->name('jenis-layanan.tarif');
         Route::post('/jenis-layanan/{jenisLayanan}/tarif', [JenisLayananController::class, 'storeTarif'])->name('jenis-layanan.tarif.store');
         Route::put('/jenis-layanan/{jenisLayanan}/tarif/{tarif}', [JenisLayananController::class, 'updateTarif'])->name('jenis-layanan.tarif.update');

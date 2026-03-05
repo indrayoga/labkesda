@@ -192,7 +192,6 @@ class JenisLayananController extends Controller
         foreach ($jenisLayanan as $layanan) {
             $kategoriLayanan[$layanan->kategoriLayanan->nama][] = $layanan;
         }
-
         return response()->json([
             'data' => $kategoriLayanan,
         ]);

@@ -13,8 +13,11 @@ export default function PendaftaranLaboratorium({
   pemeriksaan,
   auth,
   paketLayanan,
+  jenisPasien,
 }) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [jenisPasienQuery, setJenisPasienQuery] = useState('');
+  const [showJenisPasienOptions, setShowJenisPasienOptions] = useState(false);
   const [selectedLayanans, setSelectedLayanans] = useState(
     pemeriksaan?.detail_pemeriksaan?.map((dp) => ({
       id: dp.jenis_layanan_id,
@@ -68,6 +71,65 @@ export default function PendaftaranLaboratorium({
     };
     fetchJenisLayanan();
   }, [data.jenis_pasien]);
+
+  useEffect(() => {
+    if (!jenisPasien || jenisPasien.length === 0) return;
+
+    const selectedJenisPasien = jenisPasien.find(
+      (jp) => jp.kode === data.jenis_pasien,
+    );
+
+    if (selectedJenisPasien) {
+      setJenisPasienQuery(selectedJenisPasien.nama);
+    }
+  }, [jenisPasien, data.jenis_pasien]);
+
+  const filteredJenisPasien = (jenisPasien || [])
+    .filter((jp) => {
+      const query = jenisPasienQuery.trim().toLowerCase();
+      if (!query) return true;
+
+      return (
+        jp.nama?.toLowerCase().includes(query) ||
+        jp.kode?.toLowerCase().includes(query)
+      );
+    })
+    .slice(0, 15);
+
+  const handleJenisPasienSelect = (jp) => {
+    setJenisPasienQuery(jp.nama);
+    setData('jenis_pasien', jp.kode);
+    setShowJenisPasienOptions(false);
+  };
+
+  const commitJenisPasienInput = () => {
+    const query = jenisPasienQuery.trim();
+
+    if (!query) {
+      setJenisPasienQuery('');
+      setData('jenis_pasien', '');
+      setShowJenisPasienOptions(false);
+      return;
+    }
+
+    const exactMatch = (jenisPasien || []).find((jp) => {
+      const nama = jp.nama?.trim().toLowerCase();
+      const kode = jp.kode?.trim().toLowerCase();
+      const normalizedQuery = query.toLowerCase();
+
+      return nama === normalizedQuery || kode === normalizedQuery;
+    });
+
+    if (exactMatch) {
+      setJenisPasienQuery(exactMatch.nama);
+      setData('jenis_pasien', exactMatch.kode);
+    } else {
+      setJenisPasienQuery('');
+      setData('jenis_pasien', '');
+    }
+
+    setShowJenisPasienOptions(false);
+  };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -324,18 +386,54 @@ export default function PendaftaranLaboratorium({
                       >
                         Jenis Pasien <span className="text-red-500">*</span>
                       </Label>
-                      <Select
-                        id="jenis_pasien"
-                        value={data.jenis_pasien}
-                        onChange={(e) =>
-                          setData('jenis_pasien', e.target.value)
-                        }
-                        color={errors.jenis_pasien ? 'failure' : 'gray'}
-                      >
-                        <option value="">Pilih Jenis Pasien</option>
-                        <option value="Umum">Umum</option>
-                        <option value="BPJS">BPJS</option>
-                      </Select>
+                      <div className="relative">
+                        <TextInput
+                          id="jenis_pasien"
+                          type="text"
+                          value={jenisPasienQuery}
+                          onFocus={() => setShowJenisPasienOptions(true)}
+                          onChange={(e) => {
+                            setJenisPasienQuery(e.target.value);
+                            setData('jenis_pasien', '');
+                            setShowJenisPasienOptions(true);
+                          }}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              commitJenisPasienInput();
+                            }, 150);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              commitJenisPasienInput();
+                            }
+                          }}
+                          placeholder="Ketik nama/kode jenis pasien"
+                          color={errors.jenis_pasien ? 'failure' : 'gray'}
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          autoComplete="off"
+                        />
+
+                        {showJenisPasienOptions &&
+                          filteredJenisPasien.length > 0 && (
+                            <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                              {filteredJenisPasien.map((jp) => (
+                                <button
+                                  key={jp.kode}
+                                  type="button"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => handleJenisPasienSelect(jp)}
+                                  className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                                >
+                                  <span>{jp.nama}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-300">
+                                    {jp.kode}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                      </div>
                       <InputError
                         className="mt-2"
                         message={errors.jenis_pasien}

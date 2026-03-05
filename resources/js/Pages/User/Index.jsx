@@ -10,17 +10,17 @@ import {
   TextInput,
 } from 'flowbite-react';
 import { useState } from 'react';
-import CreateJenisPasienForm from './CreateJenisPasienForm';
+import CreateUserForm from './CreateUserForm';
 
-export default function Index({ jenis_pasiens }) {
+export default function Index({ users }) {
   const [openModalFilter, setOpenModalFilter] = useState(false);
   const [openModalTambah, setOpenModalTambah] = useState(false);
   const [openModalDelete, setOpenModalDelete] = useState(false);
   const [cariNama, setCariNama] = useState('');
-  const [selectedJenisPasien, setSelectedJenisPasien] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const handleFilter = () => {
-    router.visit(route('jenis-pasien.index'), {
+    router.visit(route('users.index'), {
       method: 'get',
       data: {
         nama: cariNama,
@@ -30,35 +30,38 @@ export default function Index({ jenis_pasiens }) {
   };
 
   const handleTambah = () => {
-    setSelectedJenisPasien(null);
+    setSelectedUser(null);
     resetData();
     setOpenModalTambah(true);
   };
 
   const handleEdit = (p) => {
     setData({
-      kode: p.kode,
-      nama: p.nama,
-      urut: p.urut,
-      kategori: p.kategori,
+      name: p.name,
+      email: p.email,
+      jabatan: p.jabatan,
+      role: p.role,
     });
-    setSelectedJenisPasien(p);
+    setSelectedUser(p);
     setOpenModalTambah(true);
   };
 
   const handleDelete = (p) => {
-    setSelectedJenisPasien(p);
+    setSelectedUser(p);
     setOpenModalDelete(true);
   };
 
   const resetData = () => {
     setData({
-      kode: '',
-      nama: '',
-      urut: '',
-      kategori: '',
+      name: '',
+      email: '',
+      password: '',
+      jabatan: '',
+      role: '',
+      password: '',
+      password_confirmation: '',
     });
-    setSelectedJenisPasien(null);
+    setSelectedUser(null);
   };
 
   const {
@@ -71,24 +74,27 @@ export default function Index({ jenis_pasiens }) {
     reset,
     recentlySuccessful,
   } = useForm({
-    kode: '',
-    nama: '',
-    urut: '',
-    kategori: '',
+    name: '',
+    email: '',
+    password: '',
+    jabatan: '',
+    role: '',
+    password: '',
+    password_confirmation: '',
   });
 
   const submit = (e) => {
     e.preventDefault();
-    if (selectedJenisPasien) {
-      put(route('jenis-pasien.update', selectedJenisPasien.id), {
+    if (selectedUser) {
+      put(route('users.update', selectedUser.id), {
         onSuccess: () => {
           setOpenModalTambah(false);
-          setSelectedJenisPasien(null);
+          setSelectedUser(null);
           resetData();
         },
       });
     } else {
-      post(route('jenis-pasien.store'), {
+      post(route('users.store'), {
         onSuccess: () => {
           setOpenModalTambah(false);
           resetData();
@@ -97,8 +103,8 @@ export default function Index({ jenis_pasiens }) {
     }
   };
 
-  const hapusJenisPasien = (jenisPasien) => {
-    router.delete(route('jenis-pasien.destroy', jenisPasien.id), {
+  const hapusUser = (user) => {
+    router.delete(route('users.destroy', user.id), {
       onSuccess: () => {
         setOpenModalDelete(false);
       },
@@ -107,12 +113,12 @@ export default function Index({ jenis_pasiens }) {
 
   return (
     <LabkesdaLayout>
-      <Head title="Daftar Jenis Pasien" />
+      <Head title="Daftar User" />
       <div className="max-w-screen">
         <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800">
           <div className="flex flex-col space-y-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:space-x-4 lg:space-y-0">
             <div className="flex flex-1 items-center space-x-4">
-              <h2>Daftar Jenis Pasien ({jenis_pasiens.total} entri)</h2>
+              <h2>Daftar User ({users.total} entri)</h2>
             </div>
             <div className="flex flex-shrink-0 flex-col space-y-3 md:flex-row md:items-center md:space-x-3 md:space-y-0 lg:justify-end">
               <button
@@ -200,10 +206,13 @@ export default function Index({ jenis_pasiens }) {
                     </div>
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Kode
+                    Nama
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Nama
+                    Jabatan
+                  </th>
+                  <th scope="col" className="px-4 py-3">
+                    Role
                   </th>
                   <th scope="col" className="px-4 py-3">
                     Pilihan
@@ -211,17 +220,17 @@ export default function Index({ jenis_pasiens }) {
                 </tr>
               </thead>
               <tbody>
-                {jenis_pasiens.data.length === 0 ? (
+                {users.data.length === 0 ? (
                   <tr>
                     <td
                       colSpan="12"
                       className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
                     >
-                      Tidak ada data jenis pasien.
+                      Tidak ada data user.
                     </td>
                   </tr>
                 ) : (
-                  jenis_pasiens.data.map((p) => (
+                  users.data.map((p) => (
                     <tr
                       key={p.id}
                       className="border-b hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -234,8 +243,9 @@ export default function Index({ jenis_pasiens }) {
                           />
                         </div>
                       </td>
-                      <td className="text-nowrap px-4 py-2">{p.kode}</td>
-                      <td className="px-4 py-2">{p.nama}</td>
+                      <td className="text-nowrap px-4 py-2">{p.name}</td>
+                      <td className="px-4 py-2">{p.jabatan}</td>
+                      <td className="px-4 py-2">{p.role}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
                         <button
                           onClick={() => handleEdit(p)}
@@ -259,14 +269,12 @@ export default function Index({ jenis_pasiens }) {
           {/* tampilkan navigasi pagination */}
           <div className="flex items-center justify-between border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700">
             <span className="text-sm text-gray-700 dark:text-gray-400">
-              Menampilkan{' '}
-              <span className="font-semibold">{jenis_pasiens.from}</span> sampai{' '}
-              <span className="font-semibold">{jenis_pasiens.to}</span> dari
-              total <span className="font-semibold">{jenis_pasiens.total}</span>{' '}
-              entri
+              Menampilkan <span className="font-semibold">{users.from}</span>{' '}
+              sampai <span className="font-semibold">{users.to}</span> dari
+              total <span className="font-semibold">{users.total}</span> entri
             </span>
             <div className="xs:mt-0 mt-2 inline-flex">
-              {jenis_pasiens.links.map((link, index) => (
+              {users.links.map((link, index) => (
                 <Link
                   href={link.url || '#'}
                   key={index}
@@ -294,7 +302,7 @@ export default function Index({ jenis_pasiens }) {
         onClose={() => setOpenModalFilter(false)}
         size="2xl"
       >
-        <ModalHeader>Filter Jenis Pasien</ModalHeader>
+        <ModalHeader>Filter Dokter</ModalHeader>
         <ModalBody className="max-w-2xl">
           {/* Isi filter form di sini */}
           <div className="grid grid-cols-2 gap-4">
@@ -303,7 +311,7 @@ export default function Index({ jenis_pasiens }) {
               <TextInput
                 type="text"
                 id="nama"
-                placeholder="Nama Jenis Pasien"
+                placeholder="Nama Dokter"
                 value={cariNama}
                 onChange={(e) => setCariNama(e.target.value)}
               />
@@ -330,10 +338,10 @@ export default function Index({ jenis_pasiens }) {
         size="2xl"
         onClose={() => setOpenModalTambah(false)}
       >
-        <ModalHeader>Tambah Jenis Pasien</ModalHeader>
+        <ModalHeader>Tambah User</ModalHeader>
         <ModalBody className="max-w-2xl">
-          <CreateJenisPasienForm
-            jenisPasien={selectedJenisPasien}
+          <CreateUserForm
+            user={selectedUser}
             data={data}
             setData={setData}
             errors={errors}
@@ -390,11 +398,11 @@ export default function Index({ jenis_pasiens }) {
                 />
               </svg>
               <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                Apakah anda yakin ingin menghapus data Jenis Pasien ini?
+                Apakah anda yakin ingin menghapus data User ini?
               </h3>
             </div>
             <div className="flex justify-center gap-4">
-              <Button onClick={() => hapusJenisPasien(selectedJenisPasien)}>
+              <Button onClick={() => hapusUser(selectedUser)}>
                 Ya, Saya yakin
               </Button>
               <Button

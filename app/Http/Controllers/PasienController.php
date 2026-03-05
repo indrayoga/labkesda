@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dokter;
 use App\Models\JenisLayanan;
+use App\Models\JenisPasien;
 use App\Models\Kecamatan;
 use App\Models\Kelurahan;
 use App\Models\PaketPemeriksaan;
@@ -108,6 +109,7 @@ class PasienController extends Controller
         return Inertia::render('Pasien/PendaftaranLaboratorium', [
             'pasien' => $pasien,
             'dokter' => Dokter::all(),
+            'jenisPasien' => JenisPasien::orderByRaw('urut IS NULL, urut ASC')->get(),
             'kategoriLayanans' => $kategoriLayanan,
             'paketLayanan' => PaketPemeriksaan::with('jenisLayanan')->where('jenis_lab', 'klinis')->get(),
         ]);

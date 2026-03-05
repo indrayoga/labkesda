@@ -238,6 +238,16 @@ export default function LabkesdaLayout({ header, children }) {
                     <li>
                       <Link
                         className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('jenis-pasien.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Jenis Pasien
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                         href={route('jenis-layanan.index')}
                       >
                         <span className="flex-1 whitespace-nowrap px-3">
@@ -253,6 +263,16 @@ export default function LabkesdaLayout({ header, children }) {
                       >
                         <span className="flex-1 whitespace-nowrap px-3">
                           Paket Layanan
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('item-pemeriksaan.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Item Pemeriksaan
                         </span>
                       </Link>
                     </li>
@@ -280,10 +300,10 @@ export default function LabkesdaLayout({ header, children }) {
                     <li>
                       <Link
                         className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                        href={route('item-pemeriksaan.index')}
+                        href={route('users.index')}
                       >
                         <span className="flex-1 whitespace-nowrap px-3">
-                          Item Pemeriksaan
+                          User
                         </span>
                       </Link>
                     </li>
