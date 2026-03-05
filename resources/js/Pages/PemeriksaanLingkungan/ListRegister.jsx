@@ -82,7 +82,7 @@ export default function ListRegister({ tanggal, items }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md sm:rounded-b-lg dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
@@ -192,12 +192,12 @@ export default function ListRegister({ tanggal, items }) {
                         {p.wadah_contoh_uji}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.detail_pemeriksaan_lingkungan
-                          .map((dp) => dp.jenis_layanan.nama)
+                        {p.paket_pemeriksaan_lingkungan
+                          .map((dp) => dp.paket_pemeriksaan.nama)
                           .join(', ')}
                       </td>
                       <td className="text-nowrap px-4 py-2">
-                        {p.detail_pemeriksaan_lingkungan
+                        {p.paket_pemeriksaan_lingkungan
                           .reduce((total, dp) => total + dp.harga, 0)
                           .toLocaleString('id-ID', {
                             style: 'currency',

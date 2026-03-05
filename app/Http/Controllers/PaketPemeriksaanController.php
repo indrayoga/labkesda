@@ -68,6 +68,11 @@ class PaketPemeriksaanController extends Controller
         ]);
     }
 
+    public function items(PaketPemeriksaan $paketPemeriksaan)
+    {
+        return \response()->json($paketPemeriksaan->jenisLayanan);
+    }
+
     /**
      * Sync item pemeriksaan for a paket.
      */

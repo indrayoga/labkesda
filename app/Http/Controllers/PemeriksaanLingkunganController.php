@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\JenisLayanan;
+use App\Models\PaketPemeriksaan;
 use App\Models\PemeriksaanLingkungan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,7 @@ class PemeriksaanLingkunganController extends Controller
 
         return Inertia::render('PemeriksaanLingkungan/ListRegister', [
             'tanggal' => $tanggal,
-            'items' => PemeriksaanLingkungan::with(['customer', 'detailPemeriksaanLingkungan.jenisLayanan'])
+            'items' => PemeriksaanLingkungan::with(['customer', 'paketPemeriksaanLingkungan.paketPemeriksaan'])
                 ->whereDate('tanggal_pendaftaran', $tanggal)
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),
@@ -40,6 +41,11 @@ class PemeriksaanLingkunganController extends Controller
     {
         return Inertia::render('PemeriksaanLingkungan/Pendaftaran', [
             'customers' => Customer::all(),
+            'paketPemeriksaan' => PaketPemeriksaan::whereHas('jenisLayanan', function ($query) {
+                $query->whereHas('kategoriLayanan', function ($query) {
+                    $query->where('jenis_lab', 'lingkungan');
+                });
+            })->with('jenisLayanan.kategoriLayanan')->get(),
             'jenisLayanan' => JenisLayanan::whereHas('kategoriLayanan', function ($query) {
                 $query->where('jenis_lab', 'lingkungan');
             })->with('kategoriLayanan')->get(),
@@ -49,8 +55,13 @@ class PemeriksaanLingkunganController extends Controller
     public function editPendaftaran(PemeriksaanLingkungan $pemeriksaanLingkungan)
     {
         return Inertia::render('PemeriksaanLingkungan/EditPendaftaran', [
-            'pemeriksaanLingkungan' => $pemeriksaanLingkungan->load(['customer', 'detailPemeriksaanLingkungan.jenisLayanan']),
+            'pemeriksaanLingkungan' => $pemeriksaanLingkungan->load(['customer', 'paketPemeriksaanLingkungan.paketPemeriksaan', 'detailPemeriksaanLingkungan.jenisLayanan']),
             'customers' => Customer::all(),
+            'paketPemeriksaan' => PaketPemeriksaan::whereHas('jenisLayanan', function ($query) {
+                $query->whereHas('kategoriLayanan', function ($query) {
+                    $query->where('jenis_lab', 'lingkungan');
+                });
+            })->with('jenisLayanan.kategoriLayanan')->get(),
             'jenisLayanan' => JenisLayanan::whereHas('kategoriLayanan', function ($query) {
                 $query->where('jenis_lab', 'lingkungan');
             })->with('kategoriLayanan')->get(),
@@ -80,21 +91,41 @@ class PemeriksaanLingkunganController extends Controller
             'pengambil_contoh_uji' => 'required|string',
             'wadah_contoh_uji' => 'required',
             'jenis_bayar' => 'required',
-            'detail_pemeriksaan_lingkungan' => 'required|array|min:1',
-            'detail_pemeriksaan_lingkungan.*.jenis_layanan_id' => 'required|exists:jenis_layanan,id',
-            'detail_pemeriksaan_lingkungan.*.no_lab_contoh_uji' => 'required',
-            'detail_pemeriksaan_lingkungan.*.jam_pengambilan_contoh_uji' => 'nullable|string',
-            'detail_pemeriksaan_lingkungan.*.parameter' => 'nullable|string',
-            'detail_pemeriksaan_lingkungan.*.uraian' => 'nullable|string',
+            'paket_pemeriksaan_lingkungan' => 'required|array|min:1',
+            'paket_pemeriksaan_lingkungan.*.paket_pemeriksaan_id' => 'required|exists:paket_pemeriksaan,id',
+            'paket_pemeriksaan_lingkungan.*.no_lab_contoh_uji' => 'required',
+            'paket_pemeriksaan_lingkungan.*.jam_pengambilan_contoh_uji' => 'nullable|string',
+            'paket_pemeriksaan_lingkungan.*.parameter' => 'nullable|string',
+            'paket_pemeriksaan_lingkungan.*.uraian' => 'nullable|string',
         ]);
 
         try {
             DB::beginTransaction();
             $pemeriksaanLingkungan = PemeriksaanLingkungan::create($request->all());
-            foreach ($request->detail_pemeriksaan_lingkungan as $detail) {
-                $layanan = JenisLayanan::find($detail['jenis_layanan_id']);
-                $detail['harga'] = $layanan->harga;
-                $pemeriksaanLingkungan->detailPemeriksaanLingkungan()->create($detail);
+            foreach ($request->paket_pemeriksaan_lingkungan as $detail) {
+                $paket = PaketPemeriksaan::find($detail['paket_pemeriksaan_id']);
+                $detail['harga'] = $paket->harga;
+                $paketPemeriksaan = $pemeriksaanLingkungan->paketPemeriksaanLingkungan()->create([
+                    'paket_pemeriksaan_id' => $detail['paket_pemeriksaan_id'],
+                    'no_lab_contoh_uji' => $detail['no_lab_contoh_uji'],
+                    'jam_pengambilan_contoh_uji' => $detail['jam_pengambilan_contoh_uji'],
+                    'parameter' => $detail['parameter'],
+                    'uraian' => $detail['uraian'] ?? '-',
+                    'harga' => $detail['harga'],
+                ]);
+                // input item parameter nya
+                foreach ($paket->jenisLayanan as $layanan) {
+                    $pemeriksaanLingkungan->detailPemeriksaanLingkungan()->create([
+                        'paket_pemeriksaan_lingkungan_id' => $paketPemeriksaan->id,
+                        'jenis_layanan_id' => $layanan->id,
+                        'jenis_contoh_uji' => $paket->nama,
+                        'no_lab_contoh_uji' => $detail['no_lab_contoh_uji'],
+                        'jam_pengambilan_contoh_uji' => $detail['jam_pengambilan_contoh_uji'],
+                        'parameter' => '',
+                        'uraian' => $detail['uraian'] ?? '-',
+                        'harga' => $layanan->harga,
+                    ]);
+                }
             }
             DB::commit();
             return redirect()->route('lab.lingkungan.list-register')->with('success', 'Pendaftaran pemeriksaan lingkungan berhasil disimpan.');
@@ -117,22 +148,43 @@ class PemeriksaanLingkunganController extends Controller
             'pengambil_contoh_uji' => 'required|string',
             'wadah_contoh_uji' => 'required',
             'jenis_bayar' => 'required',
-            'detail_pemeriksaan_lingkungan' => 'required|array|min:1',
-            'detail_pemeriksaan_lingkungan.*.jenis_layanan_id' => 'required|exists:jenis_layanan,id',
-            'detail_pemeriksaan_lingkungan.*.no_lab_contoh_uji' => 'required',
-            'detail_pemeriksaan_lingkungan.*.jam_pengambilan_contoh_uji' => 'nullable|string',
-            'detail_pemeriksaan_lingkungan.*.parameter' => 'nullable|string',
-            'detail_pemeriksaan_lingkungan.*.uraian' => 'nullable|string',
+            'paket_pemeriksaan_lingkungan' => 'required|array|min:1',
+            'paket_pemeriksaan_lingkungan.*.paket_pemeriksaan_id' => 'required|exists:paket_pemeriksaan,id',
+            'paket_pemeriksaan_lingkungan.*.no_lab_contoh_uji' => 'required',
+            'paket_pemeriksaan_lingkungan.*.jam_pengambilan_contoh_uji' => 'nullable|string',
+            'paket_pemeriksaan_lingkungan.*.parameter' => 'nullable|string',
+            'paket_pemeriksaan_lingkungan.*.uraian' => 'nullable|string',
         ]);
 
         try {
             DB::beginTransaction();
             $pemeriksaanLingkungan->update($request->all());
-            $pemeriksaanLingkungan->detailPemeriksaanLingkungan()->delete();
-            foreach ($request->detail_pemeriksaan_lingkungan as $detail) {
-                $layanan = JenisLayanan::find($detail['jenis_layanan_id']);
-                $detail['harga'] = $layanan->harga;
-                $pemeriksaanLingkungan->detailPemeriksaanLingkungan()->create($detail);
+            $pemeriksaanLingkungan->paketPemeriksaanLingkungan()->delete();
+            foreach ($request->paket_pemeriksaan_lingkungan as $detail) {
+                $paket = PaketPemeriksaan::find($detail['paket_pemeriksaan_id']);
+                $detail['harga'] = $paket->harga;
+                $paketPemeriksaan = $pemeriksaanLingkungan->paketPemeriksaanLingkungan()->create([
+                    'paket_pemeriksaan_id' => $detail['paket_pemeriksaan_id'],
+                    'no_lab_contoh_uji' => $detail['no_lab_contoh_uji'],
+                    'jam_pengambilan_contoh_uji' => $detail['jam_pengambilan_contoh_uji'],
+                    'parameter' => $detail['parameter'],
+                    'uraian' => $detail['uraian'] ?? '-',
+                    'harga' => $detail['harga'],
+                ]);
+                // input item parameter nya
+                $pemeriksaanLingkungan->detailPemeriksaanLingkungan()->delete();
+                foreach ($paket->jenisLayanan as $layanan) {
+                    $pemeriksaanLingkungan->detailPemeriksaanLingkungan()->create([
+                        'jenis_layanan_id' => $layanan->id,
+                        'paket_pemeriksaan_lingkungan_id' => $paketPemeriksaan->id,
+                        'jenis_contoh_uji' => $paket->nama,
+                        'no_lab_contoh_uji' => $detail['no_lab_contoh_uji'],
+                        'jam_pengambilan_contoh_uji' => $detail['jam_pengambilan_contoh_uji'],
+                        'parameter' => '',
+                        'uraian' => $detail['uraian'] ?? '-',
+                        'harga' => $layanan->harga,
+                    ]);
+                }
             }
             DB::commit();
             return redirect()->route('lab.lingkungan.list-register')->with('success', 'Pendaftaran pemeriksaan lingkungan berhasil disimpan.');

@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/fetch-jenis-layanan-with-tarif-by-jenis-pasien', [JenisLayananController::class, 'jenisLayananWithTarifByJenisPasien'])->name('jenis-layanan.jenis-pasien');
+    Route::get('/fetch-item-paket-pemeriksaan/{paketPemeriksaan}', [PaketPemeriksaanController::class, 'items'])->name('paket-pemeriksaan.items');
 });
 
 require __DIR__ . '/auth.php';

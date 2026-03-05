@@ -138,6 +138,7 @@ export default function EditPendaftaran({
   customers = [],
   jenisLayanan,
   pemeriksaanLingkungan,
+  paketPemeriksaan,
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const { data, setData, put, processing, errors } = useForm({
@@ -149,8 +150,8 @@ export default function EditPendaftaran({
     pengambil_contoh_uji: pemeriksaanLingkungan.pengambil_contoh_uji || '',
     wadah_contoh_uji: pemeriksaanLingkungan.wadah_contoh_uji || 'steril',
     jenis_bayar: pemeriksaanLingkungan.jenis_bayar || 'cash',
-    detail_pemeriksaan_lingkungan:
-      pemeriksaanLingkungan.detail_pemeriksaan_lingkungan || [
+    paket_pemeriksaan_lingkungan:
+      pemeriksaanLingkungan.paket_pemeriksaan_lingkungan || [
         createEmptyDetailRow(),
       ],
   });
@@ -184,16 +185,23 @@ export default function EditPendaftaran({
     });
   };
 
-  const detailRows = data.detail_pemeriksaan_lingkungan || [];
+  const detailRows = data.paket_pemeriksaan_lingkungan || [];
   const updateDetailRow = (index, patch) => {
-    const next = detailRows.map((row, i) =>
-      i === index ? { ...row, ...patch } : row,
-    );
-    setData('detail_pemeriksaan_lingkungan', next);
+    setData((prev) => {
+      const rows = prev.paket_pemeriksaan_lingkungan || [];
+      const next = rows.map((row, i) =>
+        i === index ? { ...row, ...patch } : row,
+      );
+
+      return {
+        ...prev,
+        paket_pemeriksaan_lingkungan: next,
+      };
+    });
   };
 
   const addDetailRow = () => {
-    setData('detail_pemeriksaan_lingkungan', [
+    setData('paket_pemeriksaan_lingkungan', [
       ...detailRows,
       createEmptyDetailRow(),
     ]);
@@ -201,11 +209,11 @@ export default function EditPendaftaran({
 
   const removeDetailRow = (index) => {
     if (detailRows.length <= 1) {
-      setData('detail_pemeriksaan_lingkungan', [createEmptyDetailRow()]);
+      setData('paket_pemeriksaan_lingkungan', [createEmptyDetailRow()]);
       return;
     }
     setData(
-      'detail_pemeriksaan_lingkungan',
+      'paket_pemeriksaan_lingkungan',
       detailRows.filter((_, i) => i !== index),
     );
   };
@@ -241,10 +249,11 @@ export default function EditPendaftaran({
               setData={setData}
               errors={errors}
               detailRows={detailRows}
-              jenisLayanan={jenisLayanan}
+              paketPemeriksaan={paketPemeriksaan}
               addDetailRow={addDetailRow}
               updateDetailRow={updateDetailRow}
               removeDetailRow={removeDetailRow}
+              detailFieldName="detail_pemeriksaan_lingkungan"
             />
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">

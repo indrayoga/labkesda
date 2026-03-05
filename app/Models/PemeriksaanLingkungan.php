@@ -60,4 +60,9 @@ class PemeriksaanLingkungan extends Model
     {
         return $this->hasMany(DetailPemeriksaanLingkungan::class, 'pemeriksaan_lingkungan_id');
     }
+
+    public function paketPemeriksaanLingkungan()
+    {
+        return $this->hasMany(PaketPemeriksaanLingkungan::class, 'pemeriksaan_lingkungan_id');
+    }
 }

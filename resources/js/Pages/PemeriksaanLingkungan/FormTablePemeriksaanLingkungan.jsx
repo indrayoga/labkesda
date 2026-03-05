@@ -2,11 +2,12 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Combobox } from '@headlessui/react';
+import axios from 'axios';
 import clsx from 'clsx';
 import { Button } from 'flowbite-react';
 import { useMemo, useState } from 'react';
 
-function JenisLayananCombobox({
+function PaketPemeriksaanCombobox({
   items,
   valueId,
   valueName,
@@ -21,7 +22,7 @@ function JenisLayananCombobox({
     if (valueName) return items.find((i) => i.nama === valueName) || null;
     if (valuePrice) return items.find((i) => i.harga === valuePrice) || null;
     return null;
-  }, [items, valueId, valuePrice]);
+  }, [items, valueId, valueName, valuePrice]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -46,11 +47,15 @@ function JenisLayananCombobox({
     <Combobox
       value={selected}
       onChange={(item) =>
-        onChange({
-          jenis_layanan_id: item?.id || '',
-          jenis_contoh_uji: item?.nama || '',
-          harga: item?.harga || '',
-        })
+        onChange(
+          {
+            paket_pemeriksaan_id: item?.id || '',
+            jenis_layanan_id: item?.id || '',
+            jenis_contoh_uji: item?.nama || '',
+            harga: item?.harga || '',
+          },
+          item,
+        )
       }
     >
       <div className="relative">
@@ -60,7 +65,7 @@ function JenisLayananCombobox({
             error && 'border-red-500',
           )}
           displayValue={displayValue}
-          placeholder="Cari jenis layanan"
+          placeholder="Contoh Uji"
           onChange={(event) => setQuery(event.target.value)}
         />
         <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -125,11 +130,69 @@ export default function FormTablePemeriksaanLingkungan({
   setData,
   errors,
   detailRows,
-  jenisLayanan,
+  paketPemeriksaan,
   addDetailRow,
   updateDetailRow,
   removeDetailRow,
+  detailFieldName = 'paket_pemeriksaan_lingkungan',
 }) {
+  const [loadingParameterByRow, setLoadingParameterByRow] = useState({});
+
+  const parseParameterTags = (value) => {
+    if (!value) return [];
+
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  };
+
+  const serializeParameterTags = (tags) => tags.join(', ');
+
+  const fetchPaketParameterNames = async (paketPemeriksaanId) => {
+    if (!paketPemeriksaanId) return [];
+
+    const response = await axios.get(
+      route('paket-pemeriksaan.items', paketPemeriksaanId),
+    );
+
+    return (response.data || [])
+      .map((item) => item?.nama)
+      .filter((name) => typeof name === 'string' && name.trim().length > 0);
+  };
+
+  const handlePaketPemeriksaanChange = async (index, patch, selectedItem) => {
+    updateDetailRow(index, patch);
+
+    if (!selectedItem?.id) {
+      updateDetailRow(index, { parameter: '' });
+      return;
+    }
+
+    setLoadingParameterByRow((prev) => ({ ...prev, [index]: true }));
+
+    try {
+      const names = await fetchPaketParameterNames(selectedItem.id);
+      updateDetailRow(index, {
+        parameter: serializeParameterTags(names),
+      });
+    } catch (error) {
+      updateDetailRow(index, { parameter: '' });
+      alert('Gagal mengambil item paket pemeriksaan.');
+    } finally {
+      setLoadingParameterByRow((prev) => ({ ...prev, [index]: false }));
+    }
+  };
+
+  const removeParameterTag = (index, tagIndex) => {
+    const tags = parseParameterTags(detailRows[index]?.parameter);
+    const nextTags = tags.filter((_, i) => i !== tagIndex);
+
+    updateDetailRow(index, {
+      parameter: serializeParameterTags(nextTags),
+    });
+  };
+
   return (
     <div className="mt-6">
       <div className="flex items-start justify-between gap-3">
@@ -147,7 +210,7 @@ export default function FormTablePemeriksaanLingkungan({
         <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-900/50 dark:text-gray-300">
             <tr>
-              <th className="px-3 py-2">Jenis layanan</th>
+              <th className="px-3 py-2">Jenis Contoh Uji</th>
               <th className="px-3 py-2">No lab</th>
               <th className="px-3 py-2">Jam ambil</th>
               <th className="px-3 py-2">Parameter</th>
@@ -159,17 +222,17 @@ export default function FormTablePemeriksaanLingkungan({
             {detailRows.map((row, index) => (
               <tr key={index} className="align-top">
                 <td className="px-3 py-2">
-                  <JenisLayananCombobox
-                    items={jenisLayanan || []}
-                    valueId={row.jenis_layanan_id}
+                  <PaketPemeriksaanCombobox
+                    items={paketPemeriksaan || []}
+                    valueId={row.paket_pemeriksaan_id || row.jenis_layanan_id}
                     valueName={row.jenis_contoh_uji}
                     valuePrice={row.harga}
-                    onChange={(patch) => updateDetailRow(index, patch)}
+                    onChange={(patch, item) =>
+                      handlePaketPemeriksaanChange(index, patch, item)
+                    }
                     error={
                       errors[
-                        'detail_pemeriksaan_lingkungan.' +
-                          index +
-                          '.jenis_layanan_id'
+                        detailFieldName + '.' + index + '.jenis_layanan_id'
                       ]
                     }
                   />
@@ -179,9 +242,7 @@ export default function FormTablePemeriksaanLingkungan({
                     type="text"
                     className={clsx(
                       errors[
-                        'detail_pemeriksaan_lingkungan.' +
-                          index +
-                          '.no_lab_contoh_uji'
+                        detailFieldName + '.' + index + '.no_lab_contoh_uji'
                       ] && 'border-red-500',
                     )}
                     value={row.no_lab_contoh_uji}
@@ -196,9 +257,7 @@ export default function FormTablePemeriksaanLingkungan({
                     className="mt-2"
                     message={
                       errors[
-                        'detail_pemeriksaan_lingkungan.' +
-                          index +
-                          '.no_lab_contoh_uji'
+                        detailFieldName + '.' + index + '.no_lab_contoh_uji'
                       ]
                     }
                   />
@@ -208,12 +267,13 @@ export default function FormTablePemeriksaanLingkungan({
                     type="time"
                     className={clsx(
                       errors[
-                        'detail_pemeriksaan_lingkungan.' +
+                        detailFieldName +
+                          '.' +
                           index +
                           '.jam_pengambilan_contoh_uji'
                       ] && 'border-red-500',
                     )}
-                    value={row.jam_pengambilan_contoh_uji}
+                    value={(row.jam_pengambilan_contoh_uji || '').slice(0, 5)}
                     onChange={(e) =>
                       updateDetailRow(index, {
                         jam_pengambilan_contoh_uji: e.target.value,
@@ -224,7 +284,8 @@ export default function FormTablePemeriksaanLingkungan({
                     className="mt-2"
                     message={
                       errors[
-                        'detail_pemeriksaan_lingkungan.' +
+                        detailFieldName +
+                          '.' +
                           index +
                           '.jam_pengambilan_contoh_uji'
                       ]
@@ -232,28 +293,42 @@ export default function FormTablePemeriksaanLingkungan({
                   />
                 </td>
                 <td className="px-3 py-2">
-                  <TextInput
-                    type="text"
-                    className={clsx(
-                      'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600',
-                      errors[
-                        'detail_pemeriksaan_lingkungan.' + index + '.parameter'
-                      ] && 'border-red-500',
-                    )}
-                    value={row.parameter}
-                    onChange={(e) =>
-                      updateDetailRow(index, {
-                        parameter: e.target.value,
-                      })
-                    }
-                    placeholder="Contoh: pH"
-                  />
+                  {loadingParameterByRow[index] ? (
+                    <div className="rounded-md border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                      Mengambil item paket...
+                    </div>
+                  ) : parseParameterTags(row.parameter).length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {parseParameterTags(row.parameter).map(
+                        (tag, tagIndex) => (
+                          <span
+                            key={`${tag}-${tagIndex}`}
+                            className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                              onClick={() =>
+                                removeParameterTag(index, tagIndex)
+                              }
+                              aria-label={`Hapus parameter ${tag}`}
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-gray-300 px-3 py-2 text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                      Pilih paket untuk mengisi parameter.
+                    </div>
+                  )}
                   <InputError
                     className="mt-2"
                     message={
-                      errors[
-                        'detail_pemeriksaan_lingkungan.' + index + '.parameter'
-                      ]
+                      errors[detailFieldName + '.' + index + '.parameter']
                     }
                   />
                 </td>
@@ -261,9 +336,8 @@ export default function FormTablePemeriksaanLingkungan({
                   <TextInput
                     type="text"
                     className={clsx(
-                      errors[
-                        'detail_pemeriksaan_lingkungan.' + index + '.uraian'
-                      ] && 'border-red-500',
+                      errors[detailFieldName + '.' + index + '.uraian'] &&
+                        'border-red-500',
                     )}
                     value={row.uraian}
                     onChange={(e) =>
@@ -275,11 +349,7 @@ export default function FormTablePemeriksaanLingkungan({
                   />
                   <InputError
                     className="mt-2"
-                    message={
-                      errors[
-                        'detail_pemeriksaan_lingkungan.' + index + '.uraian'
-                      ]
-                    }
+                    message={errors[detailFieldName + '.' + index + '.uraian']}
                   />
                 </td>
                 <td className="px-3 py-2 text-right">
@@ -302,7 +372,7 @@ export default function FormTablePemeriksaanLingkungan({
                 TOTAL
               </th>
               <th className="px-3 py-2 text-right">
-                {data.detail_pemeriksaan_lingkungan
+                {(data[detailFieldName] || [])
                   .reduce((sum, row) => sum + (Number(row.harga) || 0), 0)
                   .toLocaleString('id-ID', {
                     style: 'currency',
@@ -320,8 +390,9 @@ export default function FormTablePemeriksaanLingkungan({
         </PrimaryButton>
       </div>
       {/* tampilkan error detail pmeriksaan jika ada */}
-      {typeof errors['detail_pemeriksaan_lingkungan.0.jenis_layanan_id'] ===
-        'string' && <p className="mt-2 text-sm text-red-600">dfdf</p>}
+      {typeof errors[detailFieldName + '.0.jenis_layanan_id'] === 'string' && (
+        <p className="mt-2 text-sm text-red-600">dfdf</p>
+      )}
     </div>
   );
 }

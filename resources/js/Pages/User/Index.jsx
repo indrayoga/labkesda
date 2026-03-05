@@ -58,7 +58,6 @@ export default function Index({ users }) {
       password: '',
       jabatan: '',
       role: '',
-      password: '',
       password_confirmation: '',
     });
     setSelectedUser(null);
@@ -79,7 +78,6 @@ export default function Index({ users }) {
     password: '',
     jabatan: '',
     role: '',
-    password: '',
     password_confirmation: '',
   });
 
