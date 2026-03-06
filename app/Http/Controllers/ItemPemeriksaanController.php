@@ -20,7 +20,17 @@ class ItemPemeriksaanController extends Controller
 
         return Inertia::render('ItemPemeriksaan/Index', [
             'kategoriPemeriksaan' => $kategori,
-            'itemPemeriksaan' => ItemPemeriksaan::with('kategoriPemeriksaan')->get(),
+            'items' => $itemsTree,
+        ]);
+    }
+
+    public function lingkungan()
+    {
+        $kategori = KategoriPemeriksaan::where('nama', 'LINGKUNGAN')->get();
+        $itemsTree = ItemPemeriksaanService::getTreeByKategori('LINGKUNGAN');
+
+        return Inertia::render('ItemPemeriksaan/Index', [
+            'kategoriPemeriksaan' => $kategori,
             'items' => $itemsTree,
         ]);
     }
@@ -48,9 +58,16 @@ class ItemPemeriksaanController extends Controller
             'metode' => 'nullable|string|max:100',
             'parent_id' => 'nullable|exists:item_pemeriksaan,id',
         ]);
+        $kategoriPemeriksaanId = $request->kategori_pemeriksaan_id;
+        if (empty($kategoriPemeriksaanId) && $request->parent_id) {
+            $parentItem = ItemPemeriksaan::find($request->parent_id);
+            if ($parentItem) {
+                $kategoriPemeriksaanId = $parentItem->kategori_pemeriksaan_id;
+            }
+        }
 
         ItemPemeriksaan::create([
-            'kategori_pemeriksaan_id' => $request->kategori_pemeriksaan_id,
+            'kategori_pemeriksaan_id' => $kategoriPemeriksaanId,
             'nama' => $request->nama,
             'satuan' => $request->satuan,
             'metode' => $request->metode,
@@ -58,6 +75,12 @@ class ItemPemeriksaanController extends Controller
             'parent_id' => $request->parent_id,
         ]);
 
+        if ($kategoriPemeriksaanId) {
+            $kategori = KategoriPemeriksaan::find($kategoriPemeriksaanId);
+            if ($kategori && $kategori->nama === 'LINGKUNGAN') {
+                return \redirect()->route('item-pemeriksaan.lingkungan');
+            }
+        }
         return \redirect()->route('item-pemeriksaan.index');
     }
 
@@ -83,9 +106,11 @@ class ItemPemeriksaanController extends Controller
                 $rangeData['kualitatif_value'] = null;
                 if (!($rangeData['min_enabled'] ?? true)) {
                     $rangeData['min'] = null;
+                    $rangeData['operator_min'] = null;
                 }
                 if (!($rangeData['max_enabled'] ?? true)) {
                     $rangeData['max'] = null;
+                    $rangeData['operator_max'] = null;
                 }
             }
             // check jika label dan jenis kelamin sudah ada untuk item pemeriksaan ini, update saja
@@ -117,7 +142,14 @@ class ItemPemeriksaanController extends Controller
             ]);
         }
 
-        return redirect()->route('item-pemeriksaan.index');
+        if ($itemPemeriksaan->kategori_pemeriksaan_id) {
+            $kategori = KategoriPemeriksaan::find($itemPemeriksaan->kategori_pemeriksaan_id);
+            if ($kategori && $kategori->nama === 'LINGKUNGAN') {
+                return \redirect()->route('item-pemeriksaan.lingkungan');
+            }
+        }
+
+        return \redirect()->route('item-pemeriksaan.index');
     }
     /**
      * Display the specified resource.
@@ -149,14 +181,29 @@ class ItemPemeriksaanController extends Controller
             'parent_id' => 'nullable|exists:item_pemeriksaan,id',
         ]);
 
+        $kategoriPemeriksaanId = $request->kategori_pemeriksaan_id;
+        if (empty($kategoriPemeriksaanId) && $request->parent_id) {
+            $parentItem = ItemPemeriksaan::find($request->parent_id);
+            if ($parentItem) {
+                $kategoriPemeriksaanId = $parentItem->kategori_pemeriksaan_id;
+            }
+        }
+
         $itemPemeriksaan->update([
-            'kategori_pemeriksaan_id' => $request->kategori_pemeriksaan_id,
+            'kategori_pemeriksaan_id' => $kategoriPemeriksaanId,
             'nama' => $request->nama,
             'satuan' => $request->satuan,
             'metode' => $request->metode,
             'urut' => $request->urut,
             'parent_id' => $request->parent_id,
         ]);
+
+        if ($kategoriPemeriksaanId) {
+            $kategori = KategoriPemeriksaan::find($kategoriPemeriksaanId);
+            if ($kategori && $kategori->nama === 'LINGKUNGAN') {
+                return \redirect()->route('item-pemeriksaan.lingkungan');
+            }
+        }
 
         return \redirect()->route('item-pemeriksaan.index');
     }
@@ -170,6 +217,10 @@ class ItemPemeriksaanController extends Controller
         $itemPemeriksaan->children()->delete();
         $itemPemeriksaan->delete();
 
-        return redirect()->route('item-pemeriksaan.index');
+        if ($itemPemeriksaan->kategoriPemeriksaan && $itemPemeriksaan->kategoriPemeriksaan->nama === 'LINGKUNGAN') {
+            return \redirect()->route('item-pemeriksaan.lingkungan');
+        }
+
+        return \redirect()->route('item-pemeriksaan.index');
     }
 }

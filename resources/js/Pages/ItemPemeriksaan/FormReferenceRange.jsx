@@ -161,8 +161,19 @@ export default function FormReferenceRange({
                     className="w-full rounded-md border border-slate-300 px-2 py-1 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="NORMAL">Normal</option>
-                    <option value="DM">DM</option>
-                    <option value="PRE DM">Pre DM</option>
+                    {item.kategori_pemeriksaan_nama == 'LINGKUNGAN' ? (
+                      <>
+                        <option value="KELAS 1">KELAS 1</option>
+                        <option value="KELAS 2">KELAS 2</option>
+                        <option value="KELAS 3">KELAS 3</option>
+                        <option value="KELAS 4">KELAS 4</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="DM">DM</option>
+                        <option value="PRE DM">Pre DM</option>
+                      </>
+                    )}
                   </select>
                   <InputError message={errors[`ranges.${idx}.label`]} />
                 </td>

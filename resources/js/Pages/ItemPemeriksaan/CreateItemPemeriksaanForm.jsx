@@ -3,7 +3,6 @@ import { Label, Select, TextInput } from 'flowbite-react';
 
 export default function CreateItemPemeriksaanForm({
   kategoriPemeriksaan,
-  itemPemeriksaan,
   data,
   setData,
   errors,

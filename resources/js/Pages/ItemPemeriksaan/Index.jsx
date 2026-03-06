@@ -176,7 +176,7 @@ function TreeNode({
   );
 }
 
-export default function Index({ kategoriPemeriksaan, itemPemeriksaan, items }) {
+export default function Index({ kategoriPemeriksaan, items }) {
   const { props } = usePage();
   const [openModalTambah, setOpenModalTambah] = useState(false);
   const [openModalReferenceRange, setOpenModalReferenceRange] = useState(false);
@@ -341,7 +341,6 @@ export default function Index({ kategoriPemeriksaan, itemPemeriksaan, items }) {
         <ModalBody className="max-w-2xl">
           <CreateItemPemeriksaanForm
             kategoriPemeriksaan={kategoriPemeriksaan}
-            itemPemeriksaan={itemPemeriksaan}
             data={data}
             setData={setData}
             errors={errors}

@@ -16,7 +16,13 @@ class ItemPemeriksaanService
     public static function getTree(?string $parentId = null): array
     {
         $query = ItemPemeriksaan::query()
-            ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut'])
+            ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut', 'kategori_pemeriksaan_id'])
+            ->where(function ($query) {
+                $query->whereNull('kategori_pemeriksaan_id')
+                    ->orWhereHas('kategoriPemeriksaan', function ($kategoriQuery) {
+                        $kategoriQuery->where('nama', '!=', 'LINGKUNGAN');
+                    });
+            })
             ->orderBy('urut')
             ->orderBy('nama');
 
@@ -37,6 +43,29 @@ class ItemPemeriksaanService
         return self::buildChildren(null, $byParent);
     }
 
+    public static function getTreeByKategori($kategori): array
+    {
+        $query = ItemPemeriksaan::query()
+            ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut', 'kategori_pemeriksaan_id'])
+            ->with('kategoriPemeriksaan:id,nama')
+            ->whereHas('kategoriPemeriksaan', function ($kategoriQuery) use ($kategori) {
+                $kategoriQuery->where('nama', $kategori);
+            })
+            ->orderBy('urut')
+            ->orderBy('nama');
+
+        $items = $query->get();
+        // Group items by parent_id for fast tree assembly
+        $byParent = [];
+        foreach ($items as $item) {
+            $parentId = $item->parent_id ?: null;
+            $byParent[$parentId][] = $item;
+        }
+
+        // Build recursively from parent_id = null
+        return self::buildChildren(null, $byParent);
+    }
+
     /**
      * Build tree starting from a specific item id (include its children).
      *
@@ -46,7 +75,7 @@ class ItemPemeriksaanService
     public static function getTreeById(string $itemId): array
     {
         $items = ItemPemeriksaan::query()
-            ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut'])
+            ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut', 'kategori_pemeriksaan_id'])
             ->orderBy('urut')
             ->orderBy('nama')
             ->get();
@@ -103,6 +132,7 @@ class ItemPemeriksaanService
             'parent_id' => $item->parent_id,
             'parent_name' => $item->parent?->nama ?? null,
             'kategori_pemeriksaan_id' => $item->kategori_pemeriksaan_id,
+            'kategori_pemeriksaan_nama' => $item->kategoriPemeriksaan?->nama ?? null,
             'reference_ranges' => $item->referenceRanges->map(function ($range) {
                 return [
                     'id' => $range->id,

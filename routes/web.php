@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/jenis-layanan/{jenisLayanan}/tarif', [JenisLayananController::class, 'storeTarif'])->name('jenis-layanan.tarif.store');
         Route::put('/jenis-layanan/{jenisLayanan}/tarif/{tarif}', [JenisLayananController::class, 'updateTarif'])->name('jenis-layanan.tarif.update');
         Route::resource('/item-pemeriksaan', ItemPemeriksaanController::class);
+        Route::get('/item-pemeriksaan-lingkungan', [ItemPemeriksaanController::class, 'lingkungan'])->name('item-pemeriksaan.lingkungan');
         Route::post('/item-pemeriksaan/{itemPemeriksaan}/reference-range', [ItemPemeriksaanController::class, 'storeReferenceRange'])->name('item-pemeriksaan.reference-range.store');
         Route::resource('/paket-pemeriksaan', PaketPemeriksaanController::class);
         Route::put('/paket-pemeriksaan/{paketPemeriksaan}/sync-items', [PaketPemeriksaanController::class, 'syncItems'])->name('paket-pemeriksaan.sync-items');
