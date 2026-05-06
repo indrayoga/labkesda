@@ -51,7 +51,11 @@ Route::middleware('auth')->group(function () {
     Route::get('pemeriksaan/form-pengambilan-sample/{pemeriksaan}', [PemeriksaanController::class, 'printFormulirPengambilanSample'])->name('pemeriksaan.formulir-pengambilan-sample');
     Route::get('pemeriksaan/permintaan-pemeriksaan-napza/{pemeriksaan}', [PemeriksaanController::class, 'printPermintaanPemeriksaanNapza'])->name('pemeriksaan.permintaan-pemeriksaan-napza');
     Route::get('pemeriksaan/{pemeriksaan}/hasil-pemeriksaan', [PemeriksaanController::class, 'printHasilPemeriksaan'])->name('print.hasil-pemeriksaan');
-    Route::post('pemeriksaan/{pemeriksaan}/preview-ttd', [PemeriksaanController::class, 'previewHasilPemeriksaanWithQr'])->name('pemeriksaan.preview-ttd');
+    // BUG FIX #2: Renamed POST route from 'pemeriksaan.preview-ttd' to 'pemeriksaan.preview-ttd.generate'.
+    // Both POST and GET were sharing the same route name 'pemeriksaan.preview-ttd'. In Laravel,
+    // the last registration wins, so the POST name was silently overwritten by the GET definition,
+    // making route('pemeriksaan.preview-ttd') always resolve to the GET endpoint.
+    Route::post('pemeriksaan/{pemeriksaan}/preview-ttd', [PemeriksaanController::class, 'previewHasilPemeriksaanWithQr'])->name('pemeriksaan.preview-ttd.generate');
     Route::get('pemeriksaan/{pemeriksaan}/preview-ttd', [PemeriksaanController::class, 'previewTtd'])->name('pemeriksaan.preview-ttd');
     Route::post('pemeriksaan/{pemeriksaan}/sign', [PemeriksaanController::class, 'signHasilPemeriksaan'])->name('pemeriksaan.sign');
 
@@ -60,8 +64,13 @@ Route::middleware('auth')->group(function () {
     Route::get('pembayaran/lingkungan', [PembayaranController::class, 'lingkungan'])->name('pembayaran.lingkungan');
     Route::get('pembayaran/cetak-kwitansi/{pembayaran}', [PembayaranController::class, 'printKwitansi'])->name('pembayaran.kwitansi.cetak');
     Route::resource('/pembayaran', PembayaranController::class);
-    Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
+    // BUG FIX #1: Removed duplicate route 'pendaftaran-laboratorium/{pasien}' that was re-declared
+    // here after already being defined above. Duplicate named routes cause the first definition
+    // to be silently overwritten in the named-route registry.
     Route::get('pendaftaran-laboratorium/{pasien}/{pemeriksaan}', [PasienController::class, 'editPendaftaranLaboratorium'])->name('edit-pendaftaran-laboratorium');
+    // BUG FIX #3: Added missing PUT route for updatePendaftaranLaboratorium. The controller method
+    // existed but had no corresponding route, making the edit form unable to submit changes.
+    Route::put('pendaftaran-laboratorium/{pasien}/{pemeriksaan}', [PasienController::class, 'updatePendaftaranLaboratorium'])->name('update-pendaftaran-laboratorium');
 
     Route::prefix('lab-lingkungan')->group(function () {
         Route::get('list-register', [PemeriksaanLingkunganController::class, 'daftarregister'])->name('lab.lingkungan.list-register');

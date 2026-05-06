@@ -1,5 +1,5 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import {
   Button,
@@ -23,7 +23,11 @@ const STAMP_WIDTH_MM = 56;
 const STAMP_HEIGHT_MM = 22;
 const BSRE_LOGO_PATH = '/images/logo-bsre.png';
 
-const generateTteVisualization = async ({ qrPayload, signerName }) => {
+const generateTteVisualization = async ({
+  qrPayload,
+  signerName,
+  signerPosition,
+}) => {
   const loadImage = (source) =>
     new Promise((resolve, reject) => {
       const image = new Image();
@@ -111,7 +115,7 @@ const generateTteVisualization = async ({ qrPayload, signerName }) => {
 
   ctx.fillStyle = '#1F2937';
   ctx.font = 'bold 36px Arial';
-  ctx.fillText('Kepala Laboratorium', contentX, qrTop + 58);
+  ctx.fillText(signerPosition || 'Jabatan Penandatangan', contentX, qrTop + 58);
 
   if (bsreLogo) {
     const logoWidth = 220;
@@ -171,6 +175,7 @@ const generateTteVisualization = async ({ qrPayload, signerName }) => {
 };
 
 export default function PreviewTtd({ pemeriksaan }) {
+  const user = usePage().props.auth?.user;
   const [openModalCredential, setOpenModalCredential] = useState(false);
   const [qrPositions, setQrPositions] = useState([]);
   const [activeStampId, setActiveStampId] = useState(null);
@@ -189,6 +194,8 @@ export default function PreviewTtd({ pemeriksaan }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageMetrics, setPageMetrics] = useState({});
   const pageContainerRef = useRef(null);
+  const signerName = user?.name || 'Nama Penandatangan';
+  const signerPosition = user?.jabatan || 'Jabatan Penandatangan';
 
   const defaultPdfUrl = useMemo(
     () => route('print.hasil-pemeriksaan', pemeriksaan.id),
@@ -217,17 +224,11 @@ export default function PreviewTtd({ pemeriksaan }) {
   useEffect(() => {
     let active = true;
 
-    const signerName =
-      pemeriksaan?.nama_penandatangan ||
-      pemeriksaan?.penandatangan ||
-      pemeriksaan?.kepala_laboratorium ||
-      pemeriksaan?.dokter?.nama ||
-      'Nama Penandatangan';
-
     (async () => {
       const preview = await generateTteVisualization({
-        qrPayload: `https://example.com/verifikasi-ttd/${pemeriksaan.id}`,
+        qrPayload: `https://lab.balikpapan.go.id/verifikasi-ttd/${pemeriksaan.id}`,
         signerName,
+        signerPosition,
       });
 
       if (active) {
@@ -238,13 +239,7 @@ export default function PreviewTtd({ pemeriksaan }) {
     return () => {
       active = false;
     };
-  }, [
-    pemeriksaan.id,
-    pemeriksaan?.dokter?.nama,
-    pemeriksaan?.kepala_laboratorium,
-    pemeriksaan?.nama_penandatangan,
-    pemeriksaan?.penandatangan,
-  ]);
+  }, [pemeriksaan.id, signerName, signerPosition]);
 
   const getPdfSizeMmFromPage = (pageNumber) => {
     const metric = pageMetrics[pageNumber];
@@ -394,16 +389,12 @@ export default function PreviewTtd({ pemeriksaan }) {
     setIsGeneratingQr(true);
 
     try {
-      const qrPayload = `https://example.com/verifikasi-ttd/${pemeriksaan.id}`;
+      const qrPayload = `https://lab.balikpapan.go.id/verifikasi-ttd/${pemeriksaan.id}`;
 
       const generatedStamp = await generateTteVisualization({
         qrPayload,
-        signerName:
-          pemeriksaan?.nama_penandatangan ||
-          pemeriksaan?.penandatangan ||
-          pemeriksaan?.kepala_laboratorium ||
-          pemeriksaan?.dokter?.nama ||
-          'Nama Penandatangan',
+        signerName,
+        signerPosition,
       });
       const placements = qrPositions.map((position) => {
         const metric = pageMetrics[position.page];
