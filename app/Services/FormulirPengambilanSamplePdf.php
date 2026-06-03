@@ -104,8 +104,8 @@ class FormulirPengambilanSamplePdf extends FPDF
 
         $rowHeight = 9;
         $noteHeight = 18;
-        $declarationHeight = 32;
-        $signatureTitleHeight = 8;
+        $declarationHeight = 22;
+        $signatureTitleHeight = 10;
         $signatureAreaHeight = 35;
 
         $boxHeight = ($rowHeight * 4) + ($noteHeight * 2) + $declarationHeight + $signatureTitleHeight + $signatureAreaHeight;
@@ -131,6 +131,13 @@ class FormulirPengambilanSamplePdf extends FPDF
         $this->writeLabel($midX + 2, $y, 'Nomor Botol', 'Botol Number');
         $this->Text($midX + 33, $y + 3.5, ':');
         $this->Text($midX + 37, $y + 3.5, $this->pemeriksaan->no_botol ?? '');
+
+        // Row 2: Nomor Identitas / Jenis Sampel
+        $y += $rowHeight;
+        $this->writeLabel($left + 2, $y, 'Tanggal Lahir', 'Date of Birth');
+        $this->SetFont('Arial', '', 9);
+        $this->Text($left + 33, $y + 3.5, ':');
+        $this->Text($left + 37, $y + 3.5, $this->formatDate($this->pemeriksaan->pasien->tanggal_lahir ?? null));
 
         // Row 2: Nomor Identitas / Jenis Sampel
         $y += $rowHeight;

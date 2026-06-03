@@ -155,25 +155,25 @@ class KwitansiPdf extends FPDF
 
         $this->SetFont('Arial', '', 10);
         $this->Cell(40, 6, 'Lembar I   : Pasien', 0, 0);
-        $this->Cell(60, 6, 'Kasir', 0, 0, 'C');
+        $this->Cell(60, 6, '', 0, 0, 'C');
         $this->Cell(20);
         $this->Cell(60, 6, 'Balikpapan, ' . Carbon::parse($this->pembayaran->tanggal_bayar)->format('d F Y'), 0, 1);
 
         $this->Cell(40, 6, 'Lembar II  : UPTD', 0, 0);
         $this->Cell(60, 6, '', 0, 0);
         $this->Cell(20);
-        $this->Cell(60, 6, 'Bendahara Penerimaan', 0, 1);
+        $this->Cell(60, 6, 'Kasir', 0, 1, 'C');
 
         $this->Cell(40, 6, 'Lembar III : DKK', 0, 1);
 
         $this->Ln(20);
         $this->Cell(40);
-        $this->Cell(60, 6, 'Sherly Shelviana', 0, 0, 'C');
+        $this->Cell(60, 6, '', 0, 0, 'C');
         $this->Cell(20);
-        $this->Cell(60, 6, 'Renny Prasetyowati', 0, 1, 'C');
+        $this->Cell(60, 6, 'Sherly Shelviana', 0, 1, 'C');
 
-        $this->Cell(60, 6, '', 0, 0);
-        $this->Cell(60, 6, '', 0, 0);
-        $this->Cell(60, 6, 'NIP. 198202182001122001', 0, 1, 'C');
+        // $this->Cell(60, 6, '', 0, 0);
+        // $this->Cell(60, 6, '', 0, 0);
+        // $this->Cell(60, 6, 'NIP. 198202182001122001', 0, 1, 'C');
     }
 }

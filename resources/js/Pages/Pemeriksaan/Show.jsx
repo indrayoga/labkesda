@@ -241,6 +241,16 @@ export default function Show({ pemeriksaan, pemeriksaanItems }) {
                 <Button
                   size="sm"
                   outline={true}
+                  className="border-green-700 text-green-700 hover:border-green-700 hover:bg-green-700 hover:text-white focus:ring-green-700"
+                >
+                  Validasi Hasil
+                </Button>
+              </Link>
+
+              <Link href={route('pemeriksaan.preview-ttd', pemeriksaan.id)}>
+                <Button
+                  size="sm"
+                  outline={true}
                   className="border-blue-700 text-blue-700 hover:border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-blue-700"
                 >
                   Tanda Tangan Hasil
