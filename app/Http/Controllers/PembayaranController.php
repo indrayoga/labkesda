@@ -25,7 +25,7 @@ class PembayaranController extends Controller
         return Inertia::render('Pembayaran/Index', [
             'tanggal' => $tanggal,
             'jenis_pembayaran' => JenisPembayaran::all(),
-            'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])
+            'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'layananOrder'])
                 ->whereDate('tanggal_pendaftaran', $tanggal)
                 ->whereNull('status_bayar')
                 ->orderBy('created_at', 'asc')
@@ -53,7 +53,7 @@ class PembayaranController extends Controller
         $tanggal = $request->tanggal ?? date('Y-m-d');
         return Inertia::render('Pembayaran/SudahBayar', [
             'tanggal' => $tanggal,
-            'pembayaran' => Pembayaran::with(['pasien', 'customer', 'dokter', 'jenisPembayaran', 'pemeriksaan.detailPemeriksaan.jenisLayanan', 'pemeriksaanLingkungan.detailPemeriksaanLingkungan.jenisLayanan'])
+            'pembayaran' => Pembayaran::with(['pasien', 'customer', 'dokter', 'jenisPembayaran', 'pemeriksaan.detailPemeriksaan.jenisLayanan', 'pemeriksaan.layananOrder', 'pemeriksaanLingkungan.detailPemeriksaanLingkungan.jenisLayanan'])
                 ->whereDate('tanggal_bayar', $tanggal)
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),

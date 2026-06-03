@@ -16,7 +16,7 @@ class Pemeriksaan extends Model
     protected $keyType = 'string';
     public $incrementing = false;
     protected $appends = ['total'];
-    protected $with = ['detailPemeriksaan'];
+    protected $with = ['detailPemeriksaan', 'layananOrder'];
 
     protected static function boot()
     {
@@ -50,7 +50,9 @@ class Pemeriksaan extends Model
     protected function total(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->detailPemeriksaan->sum('harga'),
+            get: fn() => $this->layananOrder->isNotEmpty()
+                ? $this->layananOrder->sum('harga')
+                : $this->detailPemeriksaan->sum('harga'),
         );
     }
 
@@ -67,6 +69,11 @@ class Pemeriksaan extends Model
     public function detailPemeriksaan()
     {
         return $this->hasMany(DetailPemeriksaan::class, 'pemeriksaan_id');
+    }
+
+    public function layananOrder()
+    {
+        return $this->hasMany(PemeriksaanLayananOrder::class, 'pemeriksaan_id')->orderBy('urutan');
     }
 
     public function pembayaran()

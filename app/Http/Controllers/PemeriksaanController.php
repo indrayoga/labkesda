@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ItemPemeriksaan;
-use App\Models\JenisLayanan;
 use App\Models\Pemeriksaan;
 use App\Services\EsignBsreService;
 use App\Services\EsignBsreV2Service;
@@ -12,12 +11,14 @@ use App\Services\HasilPemeriksaanPdf;
 use App\Services\InformedConsentNarkobaPdf;
 use App\Services\InformedConsentPdf;
 use App\Services\ItemPemeriksaanService;
+use App\Services\PemeriksaanRegistrasiService;
 use App\Services\PermintaanPengambilanSampleNapza;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PemeriksaanController extends Controller
@@ -49,50 +50,37 @@ class PemeriksaanController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, PemeriksaanRegistrasiService $registrasiService)
     {
-        $request->validate([
-            'id_spesimen' => 'required|string',
-            'pasien_id' => 'required|exists:pasien,id',
-            'dokter_id' => 'required|exists:dokter,id',
-            'email' => 'nullable|email',
-            'jenis_pasien' => 'required|string',
-            'tanggal_pendaftaran' => 'required|date',
-            'jam_pendaftaran' => 'required',
-            'diagnosa' => 'required|string',
-            'layanan' => 'required|array',
-            'layanan.*.id' => 'exists:jenis_layanan,id',
-        ]);
+        $validated = $registrasiService->validateRegistrationRequest($request);
 
         try {
             DB::beginTransaction();
             $pemeriksaan = Pemeriksaan::create([
-                'id_spesimen' => $request->id_spesimen,
-                'pasien_id' => $request->pasien_id,
-                'dokter_id' => $request->dokter_id,
-                'email' => $request->email,
-                'jenis_pasien' => $request->jenis_pasien,
-                'tanggal_pendaftaran' => $request->tanggal_pendaftaran,
-                'jam_pendaftaran' => $request->jam_pendaftaran,
-                'diagnosa' => $request->diagnosa,
-                'hasil_dikirim_ke_pasien' => $request->hasil_dikirim_ke_pasien ?? false,
-                'hasil_dikirim_ke_dokter' => $request->hasil_dikirim_ke_dokter ?? false,
-                'pasien_tidak_puasa' => $request->pasien_tidak_puasa ?? false,
-                'pasien_puasa_jam' => $request->pasien_puasa_jam ?? 0,
-                'persiapan_pasien' => $request->persiapan_pasien ?? '',
+                'id_spesimen' => $validated['id_spesimen'],
+                'pasien_id' => $validated['pasien_id'],
+                'dokter_id' => $validated['dokter_id'],
+                'email' => $validated['email'] ?? null,
+                'jenis_pasien' => $validated['jenis_pasien'],
+                'tanggal_pendaftaran' => $validated['tanggal_pendaftaran'],
+                'jam_pendaftaran' => $validated['jam_pendaftaran'],
+                'diagnosa' => $validated['diagnosa'],
+                'hasil_dikirim_ke_pasien' => $validated['hasil_dikirim_ke_pasien'] ?? false,
+                'hasil_dikirim_ke_dokter' => $validated['hasil_dikirim_ke_dokter'] ?? false,
+                'pasien_tidak_puasa' => $validated['pasien_tidak_puasa'] ?? false,
+                'pasien_puasa_jam' => $validated['pasien_puasa_jam'] ?? 0,
+                'persiapan_pasien' => $validated['persiapan_pasien'] ?? '',
                 'petugas_pendaftaran_id' => Auth::user()->id,
             ]);
 
-            foreach ($request->layanan as $layanan) {
-                $pemeriksaan->detailPemeriksaan()->create([
-                    'jenis_layanan_id' => $layanan['id'],
-                    'harga' => $layanan['harga'],
-                ]);
-            }
+            $registrasiService->syncItems($pemeriksaan, $validated['items'], $validated['jenis_pasien']);
 
             DB::commit();
 
             return \redirect()->route('pendaftaran');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error saat mendaftarkan pemeriksaan: ' . $e->getMessage());
@@ -138,9 +126,42 @@ class PemeriksaanController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Pemeriksaan $pemeriksaan)
+    public function update(Request $request, Pemeriksaan $pemeriksaan, PemeriksaanRegistrasiService $registrasiService)
     {
-        //
+        $validated = $registrasiService->validateRegistrationRequest($request);
+
+        try {
+            DB::beginTransaction();
+
+            $pemeriksaan->update([
+                'id_spesimen' => $validated['id_spesimen'],
+                'pasien_id' => $validated['pasien_id'],
+                'dokter_id' => $validated['dokter_id'],
+                'email' => $validated['email'] ?? null,
+                'jenis_pasien' => $validated['jenis_pasien'],
+                'tanggal_pendaftaran' => $validated['tanggal_pendaftaran'],
+                'jam_pendaftaran' => $validated['jam_pendaftaran'],
+                'diagnosa' => $validated['diagnosa'],
+                'hasil_dikirim_ke_pasien' => $validated['hasil_dikirim_ke_pasien'] ?? false,
+                'hasil_dikirim_ke_dokter' => $validated['hasil_dikirim_ke_dokter'] ?? false,
+                'pasien_tidak_puasa' => $validated['pasien_tidak_puasa'] ?? false,
+                'pasien_puasa_jam' => $validated['pasien_puasa_jam'] ?? 0,
+                'persiapan_pasien' => $validated['persiapan_pasien'] ?? '',
+            ]);
+
+            $registrasiService->syncItems($pemeriksaan, $validated['items'], $validated['jenis_pasien']);
+
+            DB::commit();
+
+            return redirect()->route('pemeriksaan.index');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error saat memperbarui pendaftaran pemeriksaan: ' . $e->getMessage());
+            return back()->withErrors('Terjadi kesalahan saat memperbarui pendaftaran pemeriksaan.');
+        }
     }
 
     public function updateHasilPemeriksaan(Request $request, Pemeriksaan $pemeriksaan)
@@ -212,6 +233,7 @@ class PemeriksaanController extends Controller
             return redirect()->back()->with('error', 'Pemeriksaan ini tidak dapat dihapus karena sudah memiliki status pembayaran.');
         }
 
+        $pemeriksaan->layananOrder()->delete();
         $pemeriksaan->detailPemeriksaan()->delete();
         $pemeriksaan->delete();
 

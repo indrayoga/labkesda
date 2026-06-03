@@ -35,6 +35,11 @@ class JenisLayanan extends Model
         return $this->hasMany(DetailPemeriksaan::class, 'jenis_layanan_id');
     }
 
+    public function layananOrder()
+    {
+        return $this->hasMany(PemeriksaanLayananOrder::class, 'jenis_layanan_id');
+    }
+
     public function tarif()
     {
         return $this->hasMany(DaftarHarga::class, 'jenis_layanan_id');

@@ -33,6 +33,11 @@ class PaketPemeriksaan extends Model
             ->withTimestamps();
     }
 
+    public function layananOrder()
+    {
+        return $this->hasMany(PemeriksaanLayananOrder::class, 'paket_pemeriksaan_id');
+    }
+
     public function getJumlahAttribute()
     {
         return $this->jenisLayanan()->count();
