@@ -134,10 +134,10 @@ class FormulirPengambilanSamplePdf extends FPDF
 
         // Row 2: Nomor Identitas / Jenis Sampel
         $y += $rowHeight;
-        $this->writeLabel($left + 2, $y, 'Tanggal Lahir', 'Date of Birth');
+        $this->writeLabel($left + 2, $y, 'Tempat/Tanggal Lahir', 'Place/Date of Birth');
         $this->SetFont('Arial', '', 9);
         $this->Text($left + 33, $y + 3.5, ':');
-        $this->Text($left + 37, $y + 3.5, $this->formatDate($this->pemeriksaan->pasien->tanggal_lahir ?? null));
+        $this->Text($left + 37, $y + 3.5, ($this->pemeriksaan->pasien->tempat_lahir ?? '') . ', ' . $this->formatDate($this->pemeriksaan->pasien->tanggal_lahir ?? null));
 
         // Row 2: Nomor Identitas / Jenis Sampel
         $y += $rowHeight;

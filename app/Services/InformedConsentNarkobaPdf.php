@@ -106,7 +106,7 @@ class InformedConsentNarkobaPdf extends FPDF
         $this->checkbox(175, $this->GetY() + 1, false);
         $this->Cell(0, 6, 'Perempuan', 0, 1);
 
-        $this->Cell(35, 6, 'Tanggal lahir', 0, 0);
+        $this->Cell(35, 6, 'Tempat/Tanggal lahir', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
         $this->Cell(0, 6, '........................................', 0, 1);
 
