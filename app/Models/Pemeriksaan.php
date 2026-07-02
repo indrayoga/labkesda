@@ -90,4 +90,14 @@ class Pemeriksaan extends Model
     {
         return $this->hasMany(HasilPemeriksaan::class, 'pemeriksaan_id');
     }
+
+    public function petugas()
+    {
+        return $this->belongsToMany(User::class, 'petugas_pemeriksaan', 'pemeriksaan_id', 'user_id');
+    }
+
+    public function petugasPemeriksaan()
+    {
+        return $this->hasMany(PetugasPemeriksaan::class);
+    }
 }

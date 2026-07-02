@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ItemPemeriksaan;
 use App\Models\Pemeriksaan;
+use App\Models\User;
 use App\Services\EsignBsreService;
 use App\Services\EsignBsreV2Service;
 use App\Services\FormulirPengambilanSamplePdf;
@@ -11,6 +12,7 @@ use App\Services\HasilPemeriksaanPdf;
 use App\Services\InformedConsentNarkobaPdf;
 use App\Services\InformedConsentPdf;
 use App\Services\ItemPemeriksaanService;
+use App\Services\LembarHasilUjiSementaraPdf;
 use App\Services\PemeriksaanRegistrasiService;
 use App\Services\PermintaanPengambilanSampleNapza;
 use Illuminate\Http\Request;
@@ -105,8 +107,9 @@ class PemeriksaanController extends Controller
         }
         // dd(\json_encode($pemeriksaanItems));
         return Inertia::render('Pemeriksaan/Show', [
-            'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan']),
+            'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan', 'petugasPemeriksaan.user']),
             'pemeriksaanItems' => $pemeriksaanItems,
+            'analisLab' => User::where('role', 'analis_lab')->get(),
         ]);
     }
 
@@ -180,6 +183,8 @@ class PemeriksaanController extends Controller
             'hasil_pemeriksaan' => 'required|array',
             'hasil_pemeriksaan.*.item_pemeriksaan_id' => 'required|exists:item_pemeriksaan,id',
             'hasil_pemeriksaan.*.hasil' => 'required|string',
+            'petugas' => 'nullable|array',
+            'petugas.*' => 'required|exists:users,id',
         ]);
 
         try {
@@ -195,6 +200,19 @@ class PemeriksaanController extends Controller
                 'jam_hasil_selesai' => $request->jam_hasil_selesai,
                 'keterangan' => $request->keterangan,
             ]);
+
+            if ($request->has('petugas')) {
+                $pemeriksaan->petugasPemeriksaan()->delete();
+                foreach ($request->petugas as $petugasId) {
+                    $user = \App\Models\User::find($petugasId);
+                    if ($user && $user->role === 'analis_lab') {
+                        $pemeriksaan->petugasPemeriksaan()->create([
+                            'user_id' => $petugasId,
+                        ]);
+                    }
+                }
+            }
+
             // Hapus hasil pemeriksaan lama
             $pemeriksaan->hasilPemeriksaan()->delete();
 
@@ -290,6 +308,15 @@ class PemeriksaanController extends Controller
         }
 
         $pdf = new HasilPemeriksaanPdf($pemeriksaan);
+        $pdf->generate();
+
+        return response($pdf->Output('S'))
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    public function printLembarHasilUjiSementara(Pemeriksaan $pemeriksaan)
+    {
+        $pdf = new LembarHasilUjiSementaraPdf($pemeriksaan);
         $pdf->generate();
 
         return response($pdf->Output('S'))

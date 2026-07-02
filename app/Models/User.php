@@ -47,4 +47,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function pemeriksaan()
+    {
+        return $this->belongsToMany(Pemeriksaan::class, 'petugas_pemeriksaan', 'user_id', 'pemeriksaan_id');
+    }
 }

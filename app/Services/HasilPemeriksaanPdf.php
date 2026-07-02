@@ -256,22 +256,26 @@ class HasilPemeriksaanPdf extends FPDF
         $this->Ln($rowHeight);
     }
 
-    protected function writeBilingualLabel($x, $y, $label, $translation)
+    protected function writeBilingualLabel($x, $y, $label, $translation = '')
     {
         $this->SetFont('Arial', '', 9);
         $this->Text($x, $y + 3, $label);
         $this->SetFont('Arial', 'I', 8);
-        $this->Text($x, $y + 5.5, $translation);
+        if ($translation !== '') {
+            $this->Text($x, $y + 5.5, $translation);
+        }
     }
 
-    protected function writeBilingualTableHeader($x, $y, $width, $label, $translation)
+    protected function writeBilingualTableHeader($x, $y, $width, $label, $translation = '')
     {
         $this->Rect($x, $y, $width, 8);
         $this->SetFont('Arial', 'B', 8);
         $this->SetXY($x, $y + 1.5);
         $this->Cell($width, 3.5, $label, 0, 2, 'C');
         $this->SetFont('Arial', 'I', 7);
-        $this->Cell($width, 2.5, $translation, 0, 0, 'C');
+        if ($translation !== '') {
+            $this->Cell($width, 2.5, $translation, 0, 0, 'C');
+        }
     }
 
     protected function patientInfo()
@@ -490,15 +494,45 @@ class HasilPemeriksaanPdf extends FPDF
         $this->Ln(2);
         $tanggalTtd = $this->pemeriksaan->tanggal_hasil_selesai ?? now();
         $this->SetFont('Arial', '', 9);
-        $this->Cell(170, 6, 'Balikpapan, ' . $this->formatDateLongId($tanggalTtd), 0, 1, 'R');
+        $this->Cell(120, 3, '', 0, 0, 'L');
+        $this->Cell(95, 3, 'Balikpapan, ' . $this->formatDateLongId($tanggalTtd), 0, 1, 'L');
 
-        // $this->Ln(2);
-        $this->Cell(95, 6, 'Validated by', 0, 0, 'C');
-        $this->Cell(95, 6, 'Authorized by', 0, 1, 'C');
+        $petugas = $this->pemeriksaan->petugasPemeriksaan()->with('user')->get();
 
+        $this->SetFont('Arial', 'B', 9);
+        $this->Cell(120, 6, 'Petugas', 0, 0, 'L');
+        $this->Cell(95, 6, 'Authorized by', 0, 1, 'L');
+        $this->SetFont('Arial', '', 9);
+
+        $startY = $this->GetY();
+        $rightX = 105;
+
+        // Authorized by section
+        $this->SetXY($rightX, $startY);
+        $this->Cell(95, 6, '', 0, 1, 'C'); // Placeholder for vertical alignment
         $this->Ln(16);
-        $this->Cell(95, 6, '(............................)', 0, 0, 'C');
+        $this->Cell(95, 6, '', 0, 0, 'C');
         $this->Cell(95, 6, '(............................)', 0, 1, 'C');
+
+        // Petugas table
+        $this->SetXY(10, $startY);
+        if ($petugas->count() > 0) {
+            $this->SetFont('Arial', 'B', 8);
+            $this->Cell(65, 6, 'Nama', 1, 0, 'C');
+            $this->Cell(30, 6, 'Paraf', 1, 1, 'C');
+
+            $this->SetFont('Arial', '', 8);
+            $lineHeight = 8;
+            $maxPetugas = 3; // Limit to 3 petugas to avoid page overflow
+            foreach ($petugas->take($maxPetugas) as $index => $p) {
+                $this->Cell(65, $lineHeight, $this->sanitizeText($p->user->name), 1, 0, 'L');
+                $this->Cell(30, $lineHeight, ($index + 1) . '.', 1, 1, 'C');
+            }
+        } else {
+            $this->Cell(95, 6, '(............................)', 0, 0, 'C');
+        }
+
+
         $this->Ln(2);
     }
 

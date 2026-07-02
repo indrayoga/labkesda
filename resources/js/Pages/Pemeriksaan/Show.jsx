@@ -139,7 +139,7 @@ const PemeriksaanRows = ({
   });
 };
 
-export default function Show({ pemeriksaan, pemeriksaanItems }) {
+export default function Show({ pemeriksaan, pemeriksaanItems, analisLab }) {
   const { data, setData, post, processing, errors, recentlySuccessful, reset } =
     useForm({
       nomor_sampel: pemeriksaan.nomor_sampel || '',
@@ -167,6 +167,7 @@ export default function Show({ pemeriksaan, pemeriksaanItems }) {
           hasil: h.hasil,
           status: h.status,
         })) || [],
+      petugas: pemeriksaan.petugas_pemeriksaan?.map((p) => p.user_id) || [],
     });
 
   const handleChangeHasil = (itemId, value) => {
@@ -264,6 +265,20 @@ export default function Show({ pemeriksaan, pemeriksaanItems }) {
               >
                 <Button size="sm" outline={true}>
                   Cetak Hasil Pemeriksaan
+                </Button>
+              </a>
+
+              <a
+                href={route('print.hasil-uji-sementara', pemeriksaan.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  size="sm"
+                  outline={true}
+                  className="border-amber-600 text-amber-700 hover:border-amber-600 hover:bg-amber-600 hover:text-white focus:ring-amber-600"
+                >
+                  Cetak Hasil Uji Sementara
                 </Button>
               </a>
             </div>
@@ -484,6 +499,55 @@ export default function Show({ pemeriksaan, pemeriksaanItems }) {
               onChange={(e) => setData('keterangan', e.target.value)}
               placeholder="Opsional - keterangan tambahan hasil lab"
             />
+          </div>
+
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <span aria-hidden="true">&#128100;</span>
+              <span>Petugas Pemeriksaan</span>
+            </div>
+            <div className="mt-4 space-y-2">
+              {data.petugas.map((petugasId, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Select
+                    className="flex-1"
+                    value={petugasId}
+                    onChange={(e) => {
+                      const newPetugas = [...data.petugas];
+                      newPetugas[index] = e.target.value;
+                      setData('petugas', newPetugas);
+                    }}
+                  >
+                    <option value="">Pilih Petugas</option>
+                    {analisLab.map((analis) => (
+                      <option key={analis.id} value={analis.id}>
+                        {analis.name}
+                      </option>
+                    ))}
+                  </Select>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const newPetugas = data.petugas.filter(
+                        (_, i) => i !== index,
+                      );
+                      setData('petugas', newPetugas);
+                    }}
+                    className="border-red-500 text-red-500 hover:border-red-600 hover:bg-red-600 hover:text-white"
+                    outline={true}
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={() => setData('petugas', [...data.petugas, ''])}
+                outline={true}
+              >
+                Tambah Petugas
+              </Button>
+            </div>
           </div>
 
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
