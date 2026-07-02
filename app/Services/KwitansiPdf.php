@@ -100,7 +100,7 @@ class KwitansiPdf extends FPDF
 
         $this->Cell(30, 6, 'Pembayaran', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(40, 6, $this->pembayaran->pemeriksaan->jenis_bayar, 0, 1);
+        $this->Cell(40, 6, $this->pembayaran->pemeriksaan->jenisPasien?->nama ?? $this->pembayaran->pemeriksaan->jenis_pasien, 0, 1);
 
         $this->SetX(10);
         $this->Cell(30, 6, 'Alamat', 0, 0);
@@ -122,12 +122,23 @@ class KwitansiPdf extends FPDF
 
         $this->SetFont('Arial', '', 10);
 
-        foreach ($this->pembayaran->pemeriksaan->detailPemeriksaan as $index => $detail) {
+        $items = $this->pembayaran->pemeriksaan->layananOrder;
+
+        if ($items->isEmpty()) {
+            $items = $this->pembayaran->pemeriksaan->detailPemeriksaan->map(function ($detail) {
+                return (object) [
+                    'nama_snapshot' => $detail->jenisLayanan->nama,
+                    'harga' => $detail->harga,
+                ];
+            });
+        }
+
+        foreach ($items as $index => $item) {
             $this->Cell(10, 7, $index + 1, 1, 0, 'C');
-            $this->Cell(80, 7, $detail->jenisLayanan->nama, 1);
-            $this->Cell(30, 7, number_format($detail->harga, 2, ',', '.'), 1, 0, 'R');
+            $this->Cell(80, 7, $item->nama_snapshot, 1);
+            $this->Cell(30, 7, number_format($item->harga, 2, ',', '.'), 1, 0, 'R');
             $this->Cell(20, 7, '1', 1, 0, 'C');
-            $this->Cell(40, 7, number_format($detail->harga, 2, ',', '.'), 1, 1, 'R');
+            $this->Cell(40, 7, number_format($item->harga, 2, ',', '.'), 1, 1, 'R');
         }
 
         // Baris kosong
