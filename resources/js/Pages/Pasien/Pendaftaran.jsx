@@ -3,8 +3,11 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Button, Modal, ModalBody, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Pendaftaran({ tanggal, pemeriksaan }) {
+export default function Pendaftaran({ tanggal, tanggal_akhir, pemeriksaan }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
+  const [cariTanggalTerakhirDaftar, setCariTanggalTerakhirDaftar] = useState(
+    tanggal_akhir || '',
+  );
   const [openModalDelete, setOpenModalDelete] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [prosesDelete, setProsesDelete] = useState(false);
@@ -59,10 +62,19 @@ export default function Pendaftaran({ tanggal, pemeriksaan }) {
                 value={cariTanggalDaftar}
                 onChange={(e) => setCariTanggalDaftar(e.target.value)}
               />
+              <TextInput
+                type="date"
+                className="min-w-[15rem]"
+                value={cariTanggalTerakhirDaftar}
+                onChange={(e) => setCariTanggalTerakhirDaftar(e.target.value)}
+              />
               <Button
                 onClick={() =>
                   router.get(
-                    route('pemeriksaan.index', { tanggal: cariTanggalDaftar }),
+                    route('pendaftaran', {
+                      tanggal: cariTanggalDaftar,
+                      tanggal_akhir: cariTanggalTerakhirDaftar,
+                    }),
                   )
                 }
               >
@@ -94,7 +106,7 @@ export default function Pendaftaran({ tanggal, pemeriksaan }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md sm:rounded-b-lg dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">

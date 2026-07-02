@@ -29,10 +29,12 @@ class PemeriksaanController extends Controller
     {
         //
         $tanggal = $request->tanggal ?? date('Y-m-d');
+        $tanggal_akhir = $request->tanggal_akhir ?? date('Y-m-d');
         return Inertia::render('Pemeriksaan/Index', [
             'tanggal' => $tanggal,
+            'tanggal_akhir' => $tanggal_akhir,
             'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan'])
-                ->whereDate('tanggal_pendaftaran', $tanggal)
+                ->whereBetween('tanggal_pendaftaran', [$tanggal, $tanggal_akhir])
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),
         ]);

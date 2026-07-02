@@ -3,9 +3,11 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Button, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Index({ tanggal, pemeriksaan }) {
+export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
-
+  const [cariTanggalTerakhirDaftar, setCariTanggalTerakhirDaftar] = useState(
+    tanggal_akhir || '',
+  );
   /*
     Fungsi untuk menghitung umur berdasarkan tanggal lahir
     Input: tanggalLahir (string dalam format 'YYYY-MM-DD')
@@ -37,10 +39,19 @@ export default function Index({ tanggal, pemeriksaan }) {
                 value={cariTanggalDaftar}
                 onChange={(e) => setCariTanggalDaftar(e.target.value)}
               />
+              <TextInput
+                type="date"
+                className="min-w-[15rem]"
+                value={cariTanggalTerakhirDaftar}
+                onChange={(e) => setCariTanggalTerakhirDaftar(e.target.value)}
+              />
               <Button
                 onClick={() =>
                   router.get(
-                    route('pemeriksaan.index', { tanggal: cariTanggalDaftar }),
+                    route('pemeriksaan.index', {
+                      tanggal: cariTanggalDaftar,
+                      tanggal_akhir: cariTanggalTerakhirDaftar,
+                    }),
                   )
                 }
               >
