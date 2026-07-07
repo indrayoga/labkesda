@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Pemeriksaan;
 use Carbon\Carbon;
 use FPDF;
+use Indrayoga\Bday\Bday;
 
 class FormulirPengambilanSamplePdf extends FPDF
 {
@@ -138,6 +139,12 @@ class FormulirPengambilanSamplePdf extends FPDF
         $this->SetFont('Arial', '', 9);
         $this->Text($left + 33, $y + 3.5, ':');
         $this->Text($left + 37, $y + 3.5, ($this->pemeriksaan->pasien->tempat_lahir ?? '') . ', ' . $this->formatDate($this->pemeriksaan->pasien->tanggal_lahir ?? null));
+
+        $usia = Bday::age($this->pemeriksaan->pasien->tanggal_lahir ?? null);
+        $this->writeLabel($midX + 2, $y, 'Usia', 'Age');
+        $this->SetFont('Arial', '', 9);
+        $this->Text($midX + 33, $y + 3.5, ':');
+        $this->Text($midX + 37, $y + 3.5, $usia->years() . ' Tahun' . ' ' . $usia->months() . ' Bulan' . ' ');
 
         // Row 2: Nomor Identitas / Jenis Sampel
         $y += $rowHeight;

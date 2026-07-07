@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ItemPemeriksaan;
+use App\Models\Pemeriksaan;
 use App\Models\PemeriksaanReferenceRange;
 
 class ItemPemeriksaanService
@@ -64,6 +65,20 @@ class ItemPemeriksaanService
 
         // Build recursively from parent_id = null
         return self::buildChildren(null, $byParent);
+    }
+
+    public static function getTreeByPemeriksaan(Pemeriksaan $pemeriksaan): array
+    {
+        $itemPemeriksaan = ItemPemeriksaan::whereHas('jenisLayanan', function ($query) use ($pemeriksaan) {
+            $query->whereIn('jenis_layanan.id', $pemeriksaan->detailPemeriksaan->pluck('jenis_layanan_id'));
+        })->with(['referenceRanges', 'parent'])->get();
+
+        $pemeriksaanItems = [];
+        foreach ($itemPemeriksaan as $item) {
+            $pemeriksaanItems[] = self::getTreeById($item->id);
+        }
+
+        return $pemeriksaanItems;
     }
 
     /**

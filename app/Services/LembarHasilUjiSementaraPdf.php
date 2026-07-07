@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Indrayoga\Bday\Bday;
-
 class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
 {
     protected float $resultTableX = 10.0;
@@ -70,12 +68,6 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
         $this->Ln(5);
         $this->SetFont('Arial', 'B', 11);
         $this->Cell(0, 5, 'LEMBAR HASIL UJI SEMENTARA', 0, 1, 'C');
-
-        // $this->SetFont('Arial', 'I', 9);
-        // $this->Cell(0, 4, 'Temporary Laboratory Examination Result', 0, 1, 'C');
-        // $this->SetFont('Arial', 'B', 9);
-        // $this->Cell(0, 4, 'No.Register Lab ' . $this->pemeriksaan->no_registrasi, 0, 1, 'C');
-
         $this->Ln(5);
     }
 
@@ -204,7 +196,6 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
     protected function fillBlankResultRowsUntil(float $bottomY): void
     {
         $lineHeight = 5;
-        $tableWidth = array_sum($this->resultTableWidths);
 
         while ($this->GetY() < $bottomY - 0.1) {
             $rowHeight = min($lineHeight, $bottomY - $this->GetY());
@@ -273,19 +264,126 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
         $this->addTemporaryResultPageHeader();
     }
 
-    protected function resultTable()
+    protected function formatReferenceRangesFromArray(array $ranges): string
     {
-        $results = $this->pemeriksaan->hasilPemeriksaan()
+        if ($ranges === []) {
+            return '-';
+        }
+
+        $singleRange = count($ranges) === 1;
+        $formattedRanges = [];
+
+        foreach ($ranges as $range) {
+            $genderLabel = $range['jenis_kelamin'] ?? null;
+            $genderLabel = $genderLabel ? $genderLabel . ': ' : '';
+            if ($singleRange && strtoupper((string) ($range['jenis_kelamin'] ?? '')) === 'ALL') {
+                $genderLabel = '';
+            }
+
+            if (($range['value_type'] ?? null) === 'kualitatif') {
+                $formattedRanges[] = $genderLabel . ($range['kualitatif_value'] ?? '-');
+                continue;
+            }
+
+            $hasMin = array_key_exists('min_value', $range) && $range['min_value'] !== null;
+            $hasMax = array_key_exists('max_value', $range) && $range['max_value'] !== null;
+            $operatorMin = $range['operator_min'] ?? '';
+            $operatorMax = $range['operator_max'] ?? '';
+            $stripOperators = $hasMin
+                && $hasMax
+                && in_array($operatorMin, ['>=', '>'], true)
+                && in_array($operatorMax, ['<=', '<'], true);
+
+            $minValue = $hasMin ? ($stripOperators ? '' : $operatorMin) . $range['min_value'] : '';
+            $maxValue = $hasMax ? ($stripOperators ? '' : $operatorMax) . $range['max_value'] : '';
+            $separator = $minValue && $maxValue ? ' - ' : '';
+
+            $formattedRanges[] = trim($genderLabel . $minValue . $separator . $maxValue);
+        }
+
+        return implode(' | ', $formattedRanges);
+    }
+
+    protected function appendTemporaryTreeRows(
+        array $items,
+        array &$rows,
+        array $savedResults,
+        array &$renderedIds,
+        int $depth = 0
+    ): void {
+        foreach ($items as $item) {
+            $isGroup = !empty($item['children']) && is_array($item['children']);
+            $showRow = !$isGroup
+                || !empty($item['satuan'])
+                || !empty($item['metode'])
+                || !empty($item['reference_ranges']);
+
+            $groupKey = 'group:' . ($item['id'] ?? '');
+            if ($isGroup && !isset($renderedIds[$groupKey])) {
+                $rows[] = [
+                    'type' => 'group',
+                    'label' => strtoupper((string) ($item['name'] ?? '')),
+                ];
+                $renderedIds[$groupKey] = true;
+            }
+
+            $itemId = $item['id'] ?? '';
+            $itemKey = 'item:' . $itemId;
+            if ($showRow && !isset($renderedIds[$itemKey])) {
+                $savedResult = $savedResults[$itemId] ?? null;
+                $hasilValue = $savedResult?->hasil ?? '';
+                if (($savedResult?->status ?? null) === 'tidak_normal') {
+                    $hasilValue = $hasilValue !== '' ? $hasilValue . ' *' : '*';
+                }
+
+                $indent = $depth > 0 ? str_repeat('  ', $depth) . '- ' : '';
+                $rows[] = [
+                    'type' => 'result',
+                    'cells' => [
+                        $indent . ($item['name'] ?? '-'),
+                        $hasilValue,
+                        $savedResult?->satuan ?? ($item['satuan'] ?? '-'),
+                        $savedResult?->nilai_rujukan ?: $this->formatReferenceRangesFromArray($item['reference_ranges'] ?? []),
+                        $savedResult?->metode ?? ($item['metode'] ?? '-'),
+                    ],
+                ];
+                $renderedIds[$itemKey] = true;
+            }
+
+            if ($isGroup) {
+                $this->appendTemporaryTreeRows(
+                    $item['children'],
+                    $rows,
+                    $savedResults,
+                    $renderedIds,
+                    $depth + 1
+                );
+            }
+        }
+    }
+
+    protected function getTemporaryResultRows(): array
+    {
+        $savedResults = $this->pemeriksaan->hasilPemeriksaan()
             ->with(['itemPemeriksaan.parent', 'itemPemeriksaan.referenceRanges'])
             ->get()
-            ->sortBy(function ($hasil) {
-                $parent = $hasil->itemPemeriksaan?->parent;
-                $parentOrder = $parent?->urut ?? 0;
-                $itemOrder = $hasil->itemPemeriksaan?->urut ?? 0;
-                $parentName = $parent?->nama ?? '';
+            ->keyBy('item_pemeriksaan_id')
+            ->all();
 
-                return sprintf('%04d-%s-%04d', $parentOrder, $parentName, $itemOrder);
-            });
+        $rows = [];
+        $renderedIds = [];
+        $pemeriksaanItems = ItemPemeriksaanService::getTreeByPemeriksaan($this->pemeriksaan);
+
+        foreach ($pemeriksaanItems as $items) {
+            $this->appendTemporaryTreeRows($items, $rows, $savedResults, $renderedIds);
+        }
+
+        return $rows;
+    }
+
+    protected function resultTable()
+    {
+        $rows = $this->getTemporaryResultRows();
 
         $tableStartY = $this->GetY();
         $this->drawTemporaryResultHeader($this->resultTableX, $tableStartY);
@@ -302,47 +400,27 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
         $this->SetFont('Arial', '', 8);
         $this->SetXY($this->resultTableX, $tableStartY + 8);
 
-        $currentGroup = null;
         $startPage = $this->PageNo();
 
-        foreach ($results as $hasil) {
-            $item = $hasil->itemPemeriksaan;
-            if (!$item) {
-                continue;
-            }
-
-            $groupName = $item->parent?->nama;
-            if ($groupName && $groupName !== $currentGroup) {
-                $currentGroup = $groupName;
-
+        foreach ($rows as $row) {
+            if (($row['type'] ?? null) === 'group') {
                 $this->ensureTemporaryTableFits(6);
-
                 $this->SetFillColor(245, 245, 245);
                 $this->Cell(
                     array_sum($this->resultTableWidths),
                     6,
-                    $this->sanitizeText(strtoupper($groupName)),
+                    $this->sanitizeText($row['label'] ?? ''),
                     1,
                     1,
                     'L',
                     true
                 );
-            }
 
-            $nilaiRujukan = $hasil->nilai_rujukan ?: $this->formatReferenceRanges($item);
-            $hasilValue = $hasil->hasil ?? '';
-            if ($hasil->status === 'tidak_normal') {
-                $hasilValue = $hasilValue !== '' ? $hasilValue . ' *' : '*';
+                continue;
             }
 
             $this->drawTemporaryResultRow(
-                [
-                    $item->nama ?? '-',
-                    $hasilValue,
-                    $hasil->satuan ?? $item->satuan ?? '-',
-                    $nilaiRujukan,
-                    $hasil->metode ?? $item->metode ?? '-',
-                ],
+                $row['cells'] ?? ['-', '', '-', '-', '-'],
                 ['L', 'C', 'C', 'C', 'L']
             );
         }
@@ -358,7 +436,6 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
 
     public function patientInfo()
     {
-        $umur = Bday::age($this->pemeriksaan->pasien->tanggal_lahir);
         $leftItems = [
             [
                 'No. Register',
@@ -370,7 +447,7 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
             ],
             [
                 'Umur',
-                $umur->years() . ' thn ' . $umur->months() . ' bln ',
+                $this->pemeriksaan->pasien->umur ?? '',
             ],
             [
                 'Alamat',
@@ -405,9 +482,9 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
         $y = $this->GetY();
 
         foreach ($leftItems as $index => $leftItem) {
-            $rowHeight = $index === 5 ? 14 : 7;
+            $rowHeight = 7;
 
-            [$labelLeft,  $valueLeft] = $leftItem;
+            [$labelLeft, $valueLeft] = $leftItem;
             [$labelRight, $valueRight] = $rightItems[$index];
 
             $this->writeBilingualLabel($leftX, $y, $labelLeft);
@@ -422,21 +499,11 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
             $this->writeBilingualLabel($rightX, $y, $labelRight);
             $this->SetFont('Arial', '', 9);
             $this->Text($rightX + $labelWidth, $y + 3.5, ':');
-
-            if ($index === 5) {
-                $this->SetXY($rightX + $labelWidth + $colonWidth, $y + 1);
-                $this->MultiCell(
-                    $valueWidth,
-                    4,
-                    $this->sanitizeText($valueRight)
-                );
-            } else {
-                $this->Text(
-                    $rightX + $labelWidth + $colonWidth,
-                    $y + 3.5,
-                    $this->sanitizeText($valueRight)
-                );
-            }
+            $this->Text(
+                $rightX + $labelWidth + $colonWidth,
+                $y + 3.5,
+                $this->sanitizeText($valueRight)
+            );
 
             $y += $rowHeight;
             $this->SetXY($leftX, $y);

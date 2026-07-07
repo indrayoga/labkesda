@@ -97,14 +97,7 @@ class PemeriksaanController extends Controller
      */
     public function show(Pemeriksaan $pemeriksaan)
     {
-        // ambil item pemeriksaan terkait dan jenis layanannya
-        $itemPemeriksaan = ItemPemeriksaan::whereHas('jenisLayanan', function ($query) use ($pemeriksaan) {
-            $query->whereIn('jenis_layanan.id', $pemeriksaan->detailPemeriksaan->pluck('jenis_layanan_id'));
-        })->with(['referenceRanges', 'parent'])->get();
-        $pemeriksaanItems = [];
-        foreach ($itemPemeriksaan as $item) {
-            $pemeriksaanItems[] = ItemPemeriksaanService::getTreeById($item->id);
-        }
+        $pemeriksaanItems = ItemPemeriksaanService::getTreeByPemeriksaan($pemeriksaan);
         // dd(\json_encode($pemeriksaanItems));
         return Inertia::render('Pemeriksaan/Show', [
             'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan', 'petugasPemeriksaan.user']),
