@@ -24,6 +24,7 @@ class PemeriksaanRegistrasiService
             'jenis_pasien' => 'required|string|exists:jenis_pasien,kode',
             'tanggal_pendaftaran' => 'required|date',
             'jam_pendaftaran' => 'required',
+            'tanggal_periksa' => 'required|date',
             'diagnosa' => 'required|string',
             'hasil_dikirim_ke_pasien' => 'nullable|boolean',
             'hasil_dikirim_ke_dokter' => 'nullable|boolean',

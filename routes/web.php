@@ -101,6 +101,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/fetch-jenis-layanan-with-tarif-by-jenis-pasien', [JenisLayananController::class, 'jenisLayananWithTarifByJenisPasien'])->name('jenis-layanan.jenis-pasien');
     Route::get('/fetch-item-paket-pemeriksaan/{paketPemeriksaan}', [PaketPemeriksaanController::class, 'items'])->name('paket-pemeriksaan.items');
+
+    Route::get('/konfigurasi', [\App\Http\Controllers\KonfigurasiController::class, 'index'])->name('konfigurasi.index');
+    Route::post('/konfigurasi', [\App\Http\Controllers\KonfigurasiController::class, 'updateAll'])->name('konfigurasi.updateAll');
 });
 
 require __DIR__ . '/auth.php';

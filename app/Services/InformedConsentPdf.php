@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Pemeriksaan;
 use Carbon\Carbon;
 use FPDF;
+use Indrayoga\Bday\Bday;
 
 class InformedConsentPdf extends FPDF
 {
@@ -115,6 +116,11 @@ class InformedConsentPdf extends FPDF
         $this->Cell(5, 6, ':', 0, 0);
         $this->Cell(0, 6, $this->pemeriksaan->pasien->tempat_lahir . ', ' . Carbon::parse($this->pemeriksaan->pasien->tanggal_lahir)->format('d/m/Y'), 0, 1);
 
+        $usia = Bday::age($this->pemeriksaan->pasien->tanggal_lahir);
+        $this->Cell(30, 6, 'Usia', 0, 0);
+        $this->Cell(5, 6, ':', 0, 0);
+        $this->Cell(0, 6, $usia->years() . ' tahun' . ' ' . $usia->months() . ' bulan', 0, 1);
+
         $this->Cell(30, 6, 'Alamat/No. Telp', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
         $this->MultiCell(0, 6, $this->pemeriksaan->pasien->alamat . ' ' . $this->pemeriksaan->pasien->kelurahan->nama . ' ' . $this->pemeriksaan->pasien->kecamatan->nama . ' / ' . $this->pemeriksaan->pasien->no_telepon);
@@ -145,6 +151,10 @@ class InformedConsentPdf extends FPDF
         $this->Cell(30, 6, 'Tanggal lahir', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
         $this->Cell(0, 6, Carbon::parse($this->pemeriksaan->pasien->tanggal_lahir)->format('d/m/Y'), 0, 1);
+
+        $this->Cell(30, 6, 'Usia', 0, 0);
+        $this->Cell(5, 6, ':', 0, 0);
+        $this->Cell(0, 6, $usia->years() . ' tahun' . ' ' . $usia->months() . ' bulan', 0, 1);
 
         $this->Cell(30, 6, 'Alamat/No. Telp', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);

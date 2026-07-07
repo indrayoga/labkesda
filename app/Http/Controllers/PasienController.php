@@ -110,11 +110,15 @@ class PasienController extends Controller
             $kategoriLayanan[$layanan->kategoriLayanan->nama][] = $layanan;
         }
 
+        // ambil id spesien terakhir dari tabel konfigurasi
+        $idSpesimenTerakhir = DB::table('konfigurasi')->where('nama', 'id_spesimen')->value('nilai');
+
         return Inertia::render('Pasien/PendaftaranLaboratorium', [
             'pasien' => $pasien,
             'dokter' => Dokter::all(),
             'jenisPasien' => JenisPasien::orderByRaw('urut IS NULL, urut ASC')->get(),
             'kategoriLayanans' => $kategoriLayanan,
+            'idSpesimenTerakhir' => $idSpesimenTerakhir + 1, // increment id spesimen terakhir by 1
             'paketLayanan' => PaketPemeriksaan::with('jenisLayanan')->where('jenis_lab', 'klinis')->get(),
         ]);
     }
@@ -156,6 +160,7 @@ class PasienController extends Controller
                 'jenis_pasien' => $validated['jenis_pasien'],
                 'tanggal_pendaftaran' => $validated['tanggal_pendaftaran'],
                 'jam_pendaftaran' => $validated['jam_pendaftaran'],
+                'tanggal_periksa' => $validated['tanggal_periksa'],
                 'diagnosa' => $validated['diagnosa'],
                 'hasil_dikirim_ke_pasien' => $validated['hasil_dikirim_ke_pasien'] ?? false,
                 'hasil_dikirim_ke_dokter' => $validated['hasil_dikirim_ke_dokter'] ?? false,

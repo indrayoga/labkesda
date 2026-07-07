@@ -50,6 +50,11 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
 
         $this->Line(10, 40, 200, 40);
 
+        $this->Ln(5);
+        $this->SetFont('Arial', 'B', 11);
+        $this->Cell(0, 5, 'LEMBAR HASIL UJI SEMENTARA', 0, 1, 'C');
+        $this->Ln(5);
+
         $boxX = 177;
         $boxY = 41;
         $boxWidth = 23;
@@ -64,16 +69,11 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
         $this->SetFont('Arial', 'B', 11);
         $this->SetXY($boxX, $boxY + $labelHeight + 1.5);
         $this->Cell($boxWidth, 5, $this->sanitizeText($this->formatLabNumber()), 0, 0, 'C');
-
-        $this->Ln(5);
-        $this->SetFont('Arial', 'B', 11);
-        $this->Cell(0, 5, 'LEMBAR HASIL UJI SEMENTARA', 0, 1, 'C');
-        $this->Ln(5);
     }
 
     protected function formatLabNumber(): string
     {
-        $registrationNumber = (string) ($this->pemeriksaan->nomor_sampel ?? '');
+        $registrationNumber = (string) ($this->pemeriksaan->id_spesimen ?? '');
         if (preg_match('/(\d{4})$/', $registrationNumber, $matches) === 1) {
             return $matches[1];
         }
@@ -450,8 +450,8 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
                 $this->pemeriksaan->pasien->umur ?? '',
             ],
             [
-                'Alamat',
-                $this->pemeriksaan->pasien->alamat ?? '',
+                'Jenis Kelamin',
+                $this->pemeriksaan->pasien->jenis_kelamin ?? '',
             ],
         ];
 
@@ -469,14 +469,14 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
                 $this->pemeriksaan->pembayaran?->jenisPembayaran?->nama ?? '',
             ],
             [
-                '',
-                '',
+                'Alamat',
+                $this->pemeriksaan->pasien->alamat ?? '',
             ],
         ];
 
         $leftX = 10;
-        $rightX = 105;
-        $labelWidth = 38;
+        $rightX = 95;
+        $labelWidth = 30;
         $colonWidth = 3;
         $valueWidth = 54;
         $y = $this->GetY();
@@ -499,12 +499,23 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
             $this->writeBilingualLabel($rightX, $y, $labelRight);
             $this->SetFont('Arial', '', 9);
             $this->Text($rightX + $labelWidth, $y + 3.5, ':');
-            $this->Text(
-                $rightX + $labelWidth + $colonWidth,
-                $y + 3.5,
-                $this->sanitizeText($valueRight)
-            );
 
+            if ($index == 3) {
+                $this->SetXY($rightX + $labelWidth + $colonWidth, $y);
+                $this->MultiCell(
+                    $valueWidth + 15,
+                    5,
+                    $this->sanitizeText($valueRight),
+                    0,
+                    'L'
+                );
+            } else {
+                $this->Text(
+                    $rightX + $labelWidth + $colonWidth,
+                    $y + 3.5,
+                    $this->sanitizeText($valueRight)
+                );
+            }
             $y += $rowHeight;
             $this->SetXY($leftX, $y);
         }
