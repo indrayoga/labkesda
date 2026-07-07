@@ -318,6 +318,16 @@ export default function LabkesdaLayout({ header, children }) {
                         </span>
                       </Link>
                     </li>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('konfigurasi.index')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Konfigurasi
+                        </span>
+                      </Link>
+                    </li>
                   </SidebarItemGroup>
                 </SidebarItems>
               </div>
