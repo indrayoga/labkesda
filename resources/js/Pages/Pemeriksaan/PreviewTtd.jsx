@@ -1,5 +1,5 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import {
   Button,
@@ -202,6 +202,14 @@ export default function PreviewTtd({ pemeriksaan }) {
     [pemeriksaan.id],
   );
 
+  const signedPdfFileName = useMemo(() => {
+    const registrationNumber = pemeriksaan.no_registrasi
+      ? String(pemeriksaan.no_registrasi).replace(/[^A-Za-z0-9._-]+/g, '-')
+      : `pemeriksaan-${pemeriksaan.id}`;
+
+    return `hasil-pemeriksaan-${registrationNumber}.pdf`;
+  }, [pemeriksaan.id, pemeriksaan.no_registrasi]);
+
   const pdfUrl = generatedPdfUrl || defaultPdfUrl;
 
   useEffect(() => {
@@ -218,8 +226,9 @@ export default function PreviewTtd({ pemeriksaan }) {
     setActiveStampId(null);
     setQrImage('');
     setSavedCredential(null);
+    setGeneratedPdfUrl('');
     setIsDraggingStamp(false);
-  }, [pdfUrl]);
+  }, [pemeriksaan.id]);
 
   useEffect(() => {
     let active = true;
@@ -445,10 +454,15 @@ export default function PreviewTtd({ pemeriksaan }) {
         placementsCount: placements.length,
         payload: qrPayload,
       });
+      setQrPositions([]);
+      setActiveStampId(null);
+      setIsDraggingStamp(false);
       setIsPickMode(false);
       setOpenModalCredential(false);
     } catch (error) {
-      alert(error.message || 'Gagal generate QR code. Silakan coba lagi.');
+      alert(
+        'Terjadi kesalahan saat menandatangani PDF. Silakan periksa kredensial Anda dan coba lagi atau Gagal generate QR code. Silakan coba lagi.',
+      );
     } finally {
       setIsGeneratingQr(false);
     }
@@ -590,10 +604,32 @@ export default function PreviewTtd({ pemeriksaan }) {
           </div>
         </div>
 
-        {savedCredential && qrPositions.length > 0 && (
+        {savedCredential && (
           <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-800">
-            Berhasil simpan tanda tangan pada {savedCredential.placementsCount}{' '}
-            posisi dengan NIK {savedCredential.nik}.
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Berhasil simpan tanda tangan pada{' '}
+                {savedCredential.placementsCount} posisi dengan NIK{' '}
+                {savedCredential.nik}.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {generatedPdfUrl && (
+                  <a href={generatedPdfUrl} download={signedPdfFileName}>
+                    <Button
+                      size="sm"
+                      className="bg-green-700 font-semibold text-white hover:bg-green-800 focus:ring-green-500"
+                    >
+                      Download PDF
+                    </Button>
+                  </a>
+                )}
+                <Link href={route('pemeriksaan.show', pemeriksaan.id)}>
+                  <Button size="sm" color="light">
+                    Kembali ke Hasil Pemeriksaan
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -417,12 +417,19 @@ class PemeriksaanController extends Controller
                 ];
             }
 
-            $signedPdfContent = app(EsignBsreV2Service::class)->signPdf(
-                $tempFilePath,
-                $validated['nik'],
-                $validated['passphrase'],
-                $signatureOptions
-            );
+            try {
+                $signedPdfContent = app(EsignBsreV2Service::class)->signPdf(
+                    $tempFilePath,
+                    $validated['nik'],
+                    $validated['passphrase'],
+                    $signatureOptions
+                );
+            } catch (\Exception $e) {
+                Log::error('Error saat menandatangani PDF: ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'Terjadi kesalahan saat menandatangani PDF. Silakan periksa kredensial Anda dan coba lagi.',
+                ], 500);
+            }
             // save signed pdf
             $file_tte = $filename . '-signed.pdf';
             $signedPdfPath = storage_path('app/private/' . $file_tte);
