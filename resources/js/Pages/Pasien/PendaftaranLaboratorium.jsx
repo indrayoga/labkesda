@@ -91,6 +91,16 @@ export default function PendaftaranLaboratorium({
     pasien_tidak_puasa: pemeriksaan?.pasien_tidak_puasa || false,
     pasien_puasa_jam: pemeriksaan?.pasien_puasa_jam || 0,
     persiapan_pasien: pemeriksaan?.persiapan_pasien || '',
+    penanggung_jawab: pemeriksaan?.penanggung_jawab || '',
+    tempat_lahir_penanggung_jawab:
+      pemeriksaan?.tempat_lahir_penanggung_jawab || '',
+    tanggal_lahir_penanggung_jawab:
+      pemeriksaan?.tanggal_lahir_penanggung_jawab || '',
+    alamat_penanggung_jawab: pemeriksaan?.alamat_penanggung_jawab || '',
+    telepon_penanggung_jawab: pemeriksaan?.telepon_penanggung_jawab || '',
+    hubungan_penanggung_jawab: pemeriksaan?.hubungan_penanggung_jawab || '',
+    jenis_kelamin_penanggung_jawab:
+      pemeriksaan?.jenis_kelamin_penanggung_jawab || '',
     id_spesimen: pemeriksaan?.id_spesimen || idSpesimenTerakhir || '',
     items: buildInitialSelectedItems(pemeriksaan, paketLayanan).map((item) => ({
       tipe: item.tipe,
@@ -692,6 +702,217 @@ export default function PendaftaranLaboratorium({
                       placeholder="Masukkan diagnosa pasien"
                     />
                     <InputError className="mt-2" message={errors.diagnosa} />
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Penanggung Jawab
+                    </h3>
+
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <div>
+                        <Label
+                          htmlFor="penanggung_jawab"
+                          color={errors.penanggung_jawab ? 'failure' : 'gray'}
+                        >
+                          Nama Penanggung Jawab
+                        </Label>
+                        <TextInput
+                          id="penanggung_jawab"
+                          type="text"
+                          value={data.penanggung_jawab}
+                          onChange={(e) =>
+                            setData('penanggung_jawab', e.target.value)
+                          }
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                        <InputError
+                          className="mt-2"
+                          message={errors.penanggung_jawab}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="hubungan_penanggung_jawab"
+                          color={
+                            errors.hubungan_penanggung_jawab
+                              ? 'failure'
+                              : 'gray'
+                          }
+                        >
+                          Hubungan Pasien dengan Penangung Jawab
+                        </Label>
+                        <Select
+                          id="hubungan_penanggung_jawab"
+                          value={data.hubungan_penanggung_jawab}
+                          onChange={(e) =>
+                            setData('hubungan_penanggung_jawab', e.target.value)
+                          }
+                          color={
+                            errors.hubungan_penanggung_jawab
+                              ? 'failure'
+                              : 'gray'
+                          }
+                        >
+                          <option value="">Pilih Hubungan</option>
+                          <option value="suami">Suami</option>
+                          <option value="istri">Istri</option>
+                          <option value="ayah">Ayah</option>
+                          <option value="ibu">Ibu</option>
+                          <option value="anak">Anak</option>
+                          <option value="keluarga">Keluarga</option>
+                        </Select>
+                        <InputError
+                          className="mt-2"
+                          message={errors.hubungan_penanggung_jawab}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="tempat_lahir_penanggung_jawab"
+                          color={
+                            errors.tempat_lahir_penanggung_jawab
+                              ? 'failure'
+                              : 'gray'
+                          }
+                        >
+                          Tempat Lahir
+                        </Label>
+                        <TextInput
+                          id="tempat_lahir_penanggung_jawab"
+                          type="text"
+                          value={data.tempat_lahir_penanggung_jawab}
+                          onChange={(e) =>
+                            setData(
+                              'tempat_lahir_penanggung_jawab',
+                              e.target.value,
+                            )
+                          }
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                        <InputError
+                          className="mt-2"
+                          message={errors.tempat_lahir_penanggung_jawab}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="tanggal_lahir_penanggung_jawab"
+                          color={
+                            errors.tanggal_lahir_penanggung_jawab
+                              ? 'failure'
+                              : 'gray'
+                          }
+                        >
+                          Tanggal Lahir
+                        </Label>
+                        <TextInput
+                          id="tanggal_lahir_penanggung_jawab"
+                          type="date"
+                          value={data.tanggal_lahir_penanggung_jawab}
+                          onChange={(e) =>
+                            setData(
+                              'tanggal_lahir_penanggung_jawab',
+                              e.target.value,
+                            )
+                          }
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                        <InputError
+                          className="mt-2"
+                          message={errors.tanggal_lahir_penanggung_jawab}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="telepon_penanggung_jawab"
+                          color={
+                            errors.telepon_penanggung_jawab ? 'failure' : 'gray'
+                          }
+                        >
+                          No. Telepon
+                        </Label>
+                        <TextInput
+                          id="telepon_penanggung_jawab"
+                          type="text"
+                          value={data.telepon_penanggung_jawab}
+                          onChange={(e) =>
+                            setData('telepon_penanggung_jawab', e.target.value)
+                          }
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                        <InputError
+                          className="mt-2"
+                          message={errors.telepon_penanggung_jawab}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          htmlFor="jenis_kelamin_penanggung_jawab"
+                          color={
+                            errors.jenis_kelamin_penanggung_jawab
+                              ? 'failure'
+                              : 'gray'
+                          }
+                        >
+                          Jenis Kelamin
+                        </Label>
+                        <Select
+                          id="jenis_kelamin_penanggung_jawab"
+                          className="mt-1"
+                          value={data.jenis_kelamin_penanggung_jawab}
+                          onChange={(e) =>
+                            setData(
+                              'jenis_kelamin_penanggung_jawab',
+                              e.target.value,
+                            )
+                          }
+                          color={
+                            errors.jenis_kelamin_penanggung_jawab
+                              ? 'failure'
+                              : 'gray'
+                          }
+                          disabled={processing}
+                        >
+                          <option value="">Pilih Jenis Kelamin</option>
+                          <option value="Laki-laki">Laki-laki</option>
+                          <option value="Perempuan">Perempuan</option>
+                        </Select>
+                        <InputError
+                          className="mt-2"
+                          message={errors.jenis_kelamin_penanggung_jawab}
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label
+                          htmlFor="alamat_penanggung_jawab"
+                          color={
+                            errors.alamat_penanggung_jawab ? 'failure' : 'gray'
+                          }
+                        >
+                          Alamat
+                        </Label>
+                        <Textarea
+                          id="alamat_penanggung_jawab"
+                          rows="2"
+                          value={data.alamat_penanggung_jawab}
+                          onChange={(e) =>
+                            setData('alamat_penanggung_jawab', e.target.value)
+                          }
+                          className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                        <InputError
+                          className="mt-2"
+                          message={errors.alamat_penanggung_jawab}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Kondisi Pasien */}

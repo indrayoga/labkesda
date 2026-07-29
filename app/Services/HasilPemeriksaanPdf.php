@@ -492,46 +492,68 @@ class HasilPemeriksaanPdf extends FPDF
     protected function signatureSection()
     {
         $this->Ln(2);
-        $tanggalTtd = $this->pemeriksaan->tanggal_hasil_selesai ?? now();
-        $this->SetFont('Arial', '', 9);
-        $this->Cell(120, 3, '', 0, 0, 'L');
-        $this->Cell(95, 3, 'Balikpapan, ' . $this->formatDateLongId($tanggalTtd), 0, 1, 'L');
-
         $petugas = $this->pemeriksaan->petugasPemeriksaan()->with('user')->get();
+        $pemeriksa = $petugas->first()?->user->name ?? '(............................)';
 
-        $this->SetFont('Arial', 'B', 9);
-        $this->Cell(120, 6, 'Petugas', 0, 0, 'L');
-        $this->Cell(95, 6, 'Authorized by', 0, 1, 'L');
-        $this->SetFont('Arial', '', 9);
+        $leftX = 10;
+        $rightX = 120;
 
         $startY = $this->GetY();
-        $rightX = 105;
 
-        // Authorized by section
-        $this->SetXY($rightX, $startY);
-        $this->Cell(95, 6, '', 0, 1, 'C'); // Placeholder for vertical alignment
-        $this->Ln(16);
-        $this->Cell(95, 6, '', 0, 0, 'C');
-        $this->Cell(95, 6, '(............................)', 0, 1, 'C');
+        // Pemeriksa
+        $this->SetX($leftX);
+        $this->SetFont('Arial', '', 9);
+        $this->Cell(30, 5, 'Pemeriksa', 0, 0, 'L');
+        $this->Cell(5, 5, ':', 0, 0, 'C');
+        $this->Cell(0, 5, $this->sanitizeText($pemeriksa), 0, 1, 'L');
+        $this->SetX($leftX);
+        $this->SetFont('Arial', 'I', 8);
+        $this->Cell(0, 5, 'Analytical by', 0, 1, 'L');
 
-        // Petugas table
-        $this->SetXY(10, $startY);
-        if ($petugas->count() > 0) {
-            $this->SetFont('Arial', 'B', 8);
-            $this->Cell(65, 6, 'Nama', 1, 0, 'C');
-            $this->Cell(30, 6, 'Paraf', 1, 1, 'C');
+        $this->Ln(1); // Reduced spacing
 
-            $this->SetFont('Arial', '', 8);
-            $lineHeight = 8;
-            $maxPetugas = 3; // Limit to 3 petugas to avoid page overflow
-            foreach ($petugas->take($maxPetugas) as $index => $p) {
-                $this->Cell(65, $lineHeight, $this->sanitizeText($p->user->name), 1, 0, 'L');
-                $this->Cell(30, $lineHeight, ($index + 1) . '.', 1, 1, 'C');
-            }
-        } else {
-            $this->Cell(95, 6, '(............................)', 0, 0, 'C');
+        // Divalidasi oleh
+        $this->SetX($leftX);
+        $this->SetFont('Arial', '', 9);
+        $this->Cell(30, 5, 'Divalidasi oleh', 0, 0, 'L');
+        $this->Cell(5, 5, ':', 0, 0, 'C');
+        $petugasValidasi = $this->pemeriksaan->petugasValidasi()->with('user')->get();
+        $validator = $petugasValidasi->first()?->user->name ?? '(........................)';
+        $this->Cell(0, 5, $this->sanitizeText($validator), 0, 1, 'L');
+        $this->SetX($leftX);
+        $this->SetFont('Arial', 'I', 8);
+        $this->Cell(0, 5, 'Validated by', 0, 1, 'L');
+
+        // Notes Section moved here
+        $this->Ln(2);
+        $this->SetX($leftX);
+        $this->SetFont('Arial', '', 8);
+        $this->Cell(0, 5, 'Catatan:', 0, 1);
+        // ambil keterangan dari pemeriksaan, dan split berdasarkan enter 
+        $keteranganLines = explode("\n", $this->pemeriksaan->keterangan ?? '');
+        foreach ($keteranganLines as $line) {
+            $this->SetX($leftX);
+            $this->Cell(0, 4, '- ' . $line, 0, 1);
         }
+        $this->SetX($leftX);
+        $this->Cell(0, 4, '- spesimen layak diperiksa', 0, 1);
+        $this->SetX($leftX);
+        $this->Cell(0, 4, '- tanda * untuk hasil abnormal', 0, 1);
 
+        // Right side for signature date and authorization
+        $this->SetY($startY); // Reset Y to align with top of pemeriksa
+        $tanggalTtd = $this->pemeriksaan->tanggal_hasil_selesai ?? now();
+        $this->SetFont('Arial', '', 9);
+        $this->SetX($rightX);
+        $this->Cell(0, 5, 'Balikpapan, ' . $this->formatDateLongId($tanggalTtd), 0, 1, 'L');
+
+        $this->SetX($rightX);
+        $this->SetFont('Arial', 'B', 9);
+        $this->Cell(0, 6, 'Authorized by', 0, 1, 'L');
+        $this->Ln(20); // Space for signature
+        $this->SetX($rightX);
+        $this->SetFont('Arial', '', 9);
+        // $this->Cell(0, 6, '(............................)', 0, 1, 'L');
 
         $this->Ln(2);
     }
@@ -572,7 +594,6 @@ class HasilPemeriksaanPdf extends FPDF
         $this->patientInfo();
         $this->resultTable();
         $this->signatureSection();
-        $this->notesSection();
         $this->drawQrAtSelectedPosition();
     }
 }

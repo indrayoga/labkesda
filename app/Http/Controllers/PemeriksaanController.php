@@ -75,6 +75,13 @@ class PemeriksaanController extends Controller
                 'pasien_tidak_puasa' => $validated['pasien_tidak_puasa'] ?? false,
                 'pasien_puasa_jam' => $validated['pasien_puasa_jam'] ?? 0,
                 'persiapan_pasien' => $validated['persiapan_pasien'] ?? '',
+                'penanggung_jawab' => $validated['penanggung_jawab'] ?? null,
+                'tempat_lahir_penanggung_jawab' => $validated['tempat_lahir_penanggung_jawab'] ?? null,
+                'tanggal_lahir_penanggung_jawab' => $validated['tanggal_lahir_penanggung_jawab'] ?? null,
+                'alamat_penanggung_jawab' => $validated['alamat_penanggung_jawab'] ?? null,
+                'telepon_penanggung_jawab' => $validated['telepon_penanggung_jawab'] ?? null,
+                'hubungan_penanggung_jawab' => $validated['hubungan_penanggung_jawab'] ?? null,
+                'jenis_kelamin_penanggung_jawab' => $validated['jenis_kelamin_penanggung_jawab'] ?? null,
                 'petugas_pendaftaran_id' => Auth::user()->id,
             ]);
 
@@ -101,7 +108,7 @@ class PemeriksaanController extends Controller
         $pemeriksaanItems = ItemPemeriksaanService::getTreeByPemeriksaan($pemeriksaan);
         // dd(\json_encode($pemeriksaanItems));
         return Inertia::render('Pemeriksaan/Show', [
-            'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan', 'petugasPemeriksaan.user']),
+            'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan', 'petugasPemeriksaan.user', 'petugasValidasi.user']),
             'pemeriksaanItems' => $pemeriksaanItems,
             'analisLab' => User::where('role', 'analis_lab')->get(),
         ]);
@@ -147,6 +154,12 @@ class PemeriksaanController extends Controller
                 'pasien_tidak_puasa' => $validated['pasien_tidak_puasa'] ?? false,
                 'pasien_puasa_jam' => $validated['pasien_puasa_jam'] ?? 0,
                 'persiapan_pasien' => $validated['persiapan_pasien'] ?? '',
+                'penanggung_jawab' => $validated['penanggung_jawab'] ?? null,
+                'tempat_lahir_penanggung_jawab' => $validated['tempat_lahir_penanggung_jawab'] ?? null,
+                'tanggal_lahir_penanggung_jawab' => $validated['tanggal_lahir_penanggung_jawab'] ?? null,
+                'alamat_penanggung_jawab' => $validated['alamat_penanggung_jawab'] ?? null,
+                'telepon_penanggung_jawab' => $validated['telepon_penanggung_jawab'] ?? null,
+                'hubungan_penanggung_jawab' => $validated['hubungan_penanggung_jawab'] ?? null,
             ]);
 
             $registrasiService->syncItems($pemeriksaan, $validated['items'], $validated['jenis_pasien']);
@@ -180,6 +193,8 @@ class PemeriksaanController extends Controller
             'hasil_pemeriksaan.*.hasil' => 'required|string',
             'petugas' => 'nullable|array',
             'petugas.*' => 'required|exists:users,id',
+            'petugas_validasi' => 'nullable|array',
+            'petugas_validasi.*' => 'required|exists:users,id',
         ]);
 
         try {
@@ -203,6 +218,18 @@ class PemeriksaanController extends Controller
                     if ($user && $user->role === 'analis_lab') {
                         $pemeriksaan->petugasPemeriksaan()->create([
                             'user_id' => $petugasId,
+                        ]);
+                    }
+                }
+            }
+
+            if ($request->has('petugas_validasi')) {
+                $pemeriksaan->petugasValidasi()->delete();
+                foreach ($request->petugas_validasi as $petugasValidasiId) {
+                    $user = \App\Models\User::find($petugasValidasiId);
+                    if ($user && $user->role === 'analis_lab') {
+                        $pemeriksaan->petugasValidasi()->create([
+                            'user_id' => $petugasValidasiId,
                         ]);
                     }
                 }
@@ -250,6 +277,8 @@ class PemeriksaanController extends Controller
 
         $pemeriksaan->layananOrder()->delete();
         $pemeriksaan->detailPemeriksaan()->delete();
+        $pemeriksaan->petugasPemeriksaan()->delete();
+        $pemeriksaan->petugasValidasi()->delete();
         $pemeriksaan->delete();
 
         return redirect()->route('pemeriksaan.index');
@@ -290,6 +319,7 @@ class PemeriksaanController extends Controller
     public function printHasilPemeriksaan(Pemeriksaan $pemeriksaan)
     {
         // Check apakah sudah ada file ttd, jika ada tampilkan yang sudah ttd, jika belum buat pdf baru
+        // dd($pemeriksaan->file_tte);
         if ($pemeriksaan->file_tte) {
             $filePath = storage_path('app/' . $pemeriksaan->file_tte);
             if (file_exists($filePath)) {

@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Pemeriksaan::class, 'petugas_pemeriksaan', 'user_id', 'pemeriksaan_id');
     }
+
+    public function pemeriksaanValidasi()
+    {
+        return $this->belongsToMany(Pemeriksaan::class, 'petugas_validasi', 'user_id', 'pemeriksaan_id');
+    }
 }

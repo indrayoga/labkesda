@@ -6,9 +6,12 @@ use App\Models\Pemeriksaan;
 use Carbon\Carbon;
 use FPDF;
 use Indrayoga\Bday\Bday;
+use Indrayoga\Bday\ValueObjects\Age;
 
 class InformedConsentPdf extends FPDF
 {
+    protected bool $usesPenanggungJawab = false;
+
     public function __construct(
         protected Pemeriksaan $pemeriksaan
     ) {
@@ -91,8 +94,97 @@ class InformedConsentPdf extends FPDF
         }
     }
 
+    protected function hasPenanggungJawab(): bool
+    {
+        return !empty($this->pemeriksaan->penanggung_jawab);
+    }
+
+    protected function getPersetujuanPihakPertama(): array
+    {
+        if ($this->hasPenanggungJawab()) {
+            return [
+                'nama' => $this->pemeriksaan->penanggung_jawab,
+                'jenis_kelamin' => $this->pemeriksaan->jenis_kelamin_penanggung_jawab,
+                'tempat_lahir' => $this->pemeriksaan->tempat_lahir_penanggung_jawab,
+                'tanggal_lahir' => $this->pemeriksaan->tanggal_lahir_penanggung_jawab,
+                'alamat' => $this->pemeriksaan->alamat_penanggung_jawab,
+                'telepon' => $this->pemeriksaan->telepon_penanggung_jawab,
+            ];
+        }
+
+        $pasien = $this->pemeriksaan->pasien;
+
+        return [
+            'nama' => $pasien->nama,
+            'jenis_kelamin' => $pasien->jenis_kelamin,
+            'tempat_lahir' => $pasien->tempat_lahir,
+            'tanggal_lahir' => $pasien->tanggal_lahir,
+            'alamat' => trim($pasien->alamat . ' ' . $pasien->kelurahan->nama . ' ' . $pasien->kecamatan->nama),
+            'telepon' => $pasien->no_telepon,
+        ];
+    }
+
+    protected function getPersetujuanPihakKedua(): array
+    {
+        $pasien = $this->pemeriksaan->pasien;
+
+        return [
+            'nama' => $pasien->nama,
+            'jenis_kelamin' => $pasien->jenis_kelamin,
+            'tanggal_lahir' => $pasien->tanggal_lahir,
+            'alamat' => trim($pasien->alamat . ' ' . $pasien->kelurahan->nama . ' ' . $pasien->kecamatan->nama),
+            'telepon' => $pasien->no_telepon,
+        ];
+    }
+
+    protected function formatTanggalLahir(?string $tempatLahir, $tanggalLahir): string
+    {
+        if (empty($tanggalLahir)) {
+            return (string) ($tempatLahir ?? '');
+        }
+
+        $tanggal = Carbon::parse($tanggalLahir)->format('d/m/Y');
+
+        if (!empty($tempatLahir)) {
+            return $tempatLahir . ', ' . $tanggal;
+        }
+
+        return $tanggal;
+    }
+
+    protected function renderGender(?string $jenisKelamin = null): void
+    {
+        $this->checkbox(140, $this->GetY() + 1, $jenisKelamin === 'Laki-laki');
+        $this->Cell(20, 6, '', 0, 0);
+        $this->Cell(25, 6, 'Laki-laki', 0, 0);
+
+        $this->checkbox(165, $this->GetY() + 1, $jenisKelamin === 'Perempuan');
+        $this->Cell(1, 6, '', 0, 0);
+        $this->Cell(20, 6, 'Perempuan', 0, 1);
+    }
+
+    protected function renderUsiaLine($tanggalLahir): void
+    {
+        $this->Cell(30, 6, 'Usia', 0, 0);
+        $this->Cell(5, 6, ':', 0, 0);
+
+        if (empty($tanggalLahir)) {
+            $this->Cell(0, 6, '-', 0, 1);
+
+            return;
+        }
+
+        /** @var Age $usia */
+        $usia = Bday::age($tanggalLahir);
+        $this->Cell(0, 6, $usia->years() . ' tahun ' . $usia->months() . ' bulan', 0, 1);
+    }
+
     function sectionPersetujuan()
     {
+        $pihakPertama = $this->getPersetujuanPihakPertama();
+        $pihakKedua = $this->getPersetujuanPihakKedua();
+        $this->usesPenanggungJawab = $this->hasPenanggungJawab();
+
         $this->SetFont('Arial', 'B', 11);
         $this->Cell(0, 6, 'B. PERSETUJUAN', 0, 1);
 
@@ -102,28 +194,18 @@ class InformedConsentPdf extends FPDF
         // Nama + gender
         $this->Cell(30, 6, 'Nama', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(80, 6, $this->pemeriksaan->pasien->nama, 0, 0);
-
-        $this->checkbox(140, $this->GetY() + 1, $this->pemeriksaan->pasien->jenis_kelamin === 'Laki-laki');
-        $this->Cell(20, 6, '', 0, 0);
-        $this->Cell(25, 6, 'Laki-laki', 0, 0);
-
-        $this->checkbox(165, $this->GetY() + 1, $this->pemeriksaan->pasien->jenis_kelamin === 'Perempuan');
-        $this->Cell(1, 6, '', 0, 0);
-        $this->Cell(20, 6, 'Perempuan', 0, 1);
+        $this->Cell(80, 6, $pihakPertama['nama'], 0, 0);
+        $this->renderGender($pihakPertama['jenis_kelamin']);
 
         $this->Cell(30, 6, 'Tempat/Tanggal lahir', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(0, 6, $this->pemeriksaan->pasien->tempat_lahir . ', ' . Carbon::parse($this->pemeriksaan->pasien->tanggal_lahir)->format('d/m/Y'), 0, 1);
+        $this->Cell(0, 6, $this->formatTanggalLahir($pihakPertama['tempat_lahir'], $pihakPertama['tanggal_lahir']), 0, 1);
 
-        $usia = Bday::age($this->pemeriksaan->pasien->tanggal_lahir);
-        $this->Cell(30, 6, 'Usia', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(0, 6, $usia->years() . ' tahun' . ' ' . $usia->months() . ' bulan', 0, 1);
+        $this->renderUsiaLine($pihakPertama['tanggal_lahir']);
 
         $this->Cell(30, 6, 'Alamat/No. Telp', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->MultiCell(0, 6, $this->pemeriksaan->pasien->alamat . ' ' . $this->pemeriksaan->pasien->kelurahan->nama . ' ' . $this->pemeriksaan->pasien->kecamatan->nama . ' / ' . $this->pemeriksaan->pasien->no_telepon);
+        $this->MultiCell(0, 6, trim(($pihakPertama['alamat'] ?? '') . ' / ' . ($pihakPertama['telepon'] ?? '')));
 
         $this->Ln(2);
 
@@ -138,27 +220,18 @@ class InformedConsentPdf extends FPDF
         // Data kedua
         $this->Cell(30, 6, 'Nama', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(80, 6, $this->pemeriksaan->pasien->nama, 0, 0);
-
-        $this->checkbox(140, $this->GetY() + 1, $this->pemeriksaan->pasien->jenis_kelamin === 'Laki-laki');
-        $this->Cell(20, 6, '', 0, 0);
-        $this->Cell(25, 6, 'Laki-laki', 0, 0);
-
-        $this->checkbox(165, $this->GetY() + 1, $this->pemeriksaan->pasien->jenis_kelamin === 'Perempuan');
-        $this->Cell(1, 6, '', 0, 0);
-        $this->Cell(20, 6, 'Perempuan', 0, 1);
+        $this->Cell(80, 6, $pihakKedua['nama'], 0, 0);
+        $this->renderGender($pihakKedua['jenis_kelamin']);
 
         $this->Cell(30, 6, 'Tanggal lahir', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(0, 6, Carbon::parse($this->pemeriksaan->pasien->tanggal_lahir)->format('d/m/Y'), 0, 1);
+        $this->Cell(0, 6, $this->formatTanggalLahir(null, $pihakKedua['tanggal_lahir']), 0, 1);
 
-        $this->Cell(30, 6, 'Usia', 0, 0);
-        $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(0, 6, $usia->years() . ' tahun' . ' ' . $usia->months() . ' bulan', 0, 1);
+        $this->renderUsiaLine($pihakKedua['tanggal_lahir']);
 
         $this->Cell(30, 6, 'Alamat/No. Telp', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->MultiCell(0, 6, $this->pemeriksaan->pasien->alamat . ' ' . $this->pemeriksaan->pasien->kelurahan->nama . ' ' . $this->pemeriksaan->pasien->kecamatan->nama . ' / ' . $this->pemeriksaan->pasien->no_telepon);
+        $this->MultiCell(0, 6, trim(($pihakKedua['alamat'] ?? '') . ' / ' . ($pihakKedua['telepon'] ?? '')));
         $this->Ln(3);
 
         $this->MultiCell(
@@ -191,7 +264,7 @@ class InformedConsentPdf extends FPDF
         $this->Cell(64, 25, '', 1, 1);
 
         $this->Cell(63, 7, 'Petugas', 1, 0, 'C');
-        $this->Cell(63, 7, 'Pasien / Keluarga pasien*', 1, 0, 'C');
+        $this->Cell(63, 7, $this->usesPenanggungJawab ? 'Penanggung Jawab' : 'Pasien / Keluarga pasien*', 1, 0, 'C');
         $this->Cell(64, 7, '(.......................)', 1, 1, 'C');
     }
 }

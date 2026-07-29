@@ -167,6 +167,13 @@ class PasienController extends Controller
                 'pasien_tidak_puasa' => $validated['pasien_tidak_puasa'] ?? false,
                 'pasien_puasa_jam' => $validated['pasien_puasa_jam'] ?? 0,
                 'persiapan_pasien' => $validated['persiapan_pasien'] ?? '',
+                'penanggung_jawab' => $validated['penanggung_jawab'] ?? null,
+                'tempat_lahir_penanggung_jawab' => $validated['tempat_lahir_penanggung_jawab'] ?? null,
+                'tanggal_lahir_penanggung_jawab' => $validated['tanggal_lahir_penanggung_jawab'] ?? null,
+                'alamat_penanggung_jawab' => $validated['alamat_penanggung_jawab'] ?? null,
+                'telepon_penanggung_jawab' => $validated['telepon_penanggung_jawab'] ?? null,
+                'hubungan_penanggung_jawab' => $validated['hubungan_penanggung_jawab'] ?? null,
+                'jenis_kelamin_penanggung_jawab' => $validated['jenis_kelamin_penanggung_jawab'] ?? null,
             ]);
 
             $registrasiService->syncItems($pemeriksaan, $validated['items'], $validated['jenis_pasien']);

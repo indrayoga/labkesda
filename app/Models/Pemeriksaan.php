@@ -100,4 +100,9 @@ class Pemeriksaan extends Model
     {
         return $this->hasMany(PetugasPemeriksaan::class);
     }
+
+    public function petugasValidasi()
+    {
+        return $this->hasMany(\App\Models\PetugasValidasi::class);
+    }
 }

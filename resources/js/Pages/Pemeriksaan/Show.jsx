@@ -168,6 +168,8 @@ export default function Show({ pemeriksaan, pemeriksaanItems, analisLab }) {
           status: h.status,
         })) || [],
       petugas: pemeriksaan.petugas_pemeriksaan?.map((p) => p.user_id) || [],
+      petugas_validasi:
+        pemeriksaan.petugas_validasi?.map((p) => p.user_id) || [],
     });
 
   const handleChangeHasil = (itemId, value) => {
@@ -214,6 +216,9 @@ export default function Show({ pemeriksaan, pemeriksaanItems, analisLab }) {
     post(route('pemeriksaan.update-hasil-pemeriksaan', pemeriksaan.id), {
       onSuccess: () => {
         alert('Hasil pemeriksaan berhasil disimpan.');
+      },
+      onError: () => {
+        alert('Terjadi kesalahan saat menyimpan hasil pemeriksaan.');
       },
     });
   };
@@ -546,6 +551,57 @@ export default function Show({ pemeriksaan, pemeriksaanItems, analisLab }) {
                 outline={true}
               >
                 Tambah Petugas
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <span aria-hidden="true">&#9989;</span>
+              <span>Petugas Validasi</span>
+            </div>
+            <div className="mt-4 space-y-2">
+              {data.petugas_validasi.map((petugasId, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Select
+                    className="flex-1"
+                    value={petugasId}
+                    onChange={(e) => {
+                      const newPetugasValidasi = [...data.petugas_validasi];
+                      newPetugasValidasi[index] = e.target.value;
+                      setData('petugas_validasi', newPetugasValidasi);
+                    }}
+                  >
+                    <option value="">Pilih Petugas Validasi</option>
+                    {analisLab.map((analis) => (
+                      <option key={analis.id} value={analis.id}>
+                        {analis.name}
+                      </option>
+                    ))}
+                  </Select>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const newPetugasValidasi = data.petugas_validasi.filter(
+                        (_, i) => i !== index,
+                      );
+                      setData('petugas_validasi', newPetugasValidasi);
+                    }}
+                    className="border-red-500 text-red-500 hover:border-red-600 hover:bg-red-600 hover:text-white"
+                    outline={true}
+                  >
+                    Hapus
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={() =>
+                  setData('petugas_validasi', [...data.petugas_validasi, ''])
+                }
+                outline={true}
+              >
+                Tambah Petugas Validasi
               </Button>
             </div>
           </div>
