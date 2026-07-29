@@ -80,7 +80,7 @@ class KwitansiPdf extends FPDF
 
         $this->Cell(30, 6, 'No. Sampel', 0, 0);
         $this->Cell(5, 6, ':', 0, 0);
-        $this->Cell(40, 6, '', 0, 1);
+        $this->Cell(40, 6, $this->pembayaran->pemeriksaan->nomor_sampel, 0, 1);
 
         $this->SetX(10);
         $this->Cell(30, 6, 'Kelamin', 0, 0);

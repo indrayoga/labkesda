@@ -109,7 +109,6 @@ class HasilPemeriksaanPdf extends FPDF
             if ($range->value_type === 'kualitatif') {
                 return $genderLabel . ($range->kualitatif_value ?? '-');
             }
-
             $hasMin = $range->min_value !== null;
             $hasMax = $range->max_value !== null;
             $operatorMin = $range->operator_min ?? '';
@@ -125,7 +124,8 @@ class HasilPemeriksaanPdf extends FPDF
             $maxValue = $hasMax
                 ? ($stripOperators ? '' : $operatorMax) . $range->max_value
                 : '';
-            $separator = $minValue && $maxValue ? ' - ' : '';
+            // fix bug $minValue and $maxValue being empty strings when the value is 0, which is a valid reference range value.
+            $separator = $minValue !== '' && $maxValue !== '' ? ' - ' : '';
 
             return trim($genderLabel . $minValue . $separator . $maxValue);
         })->implode(' | ');

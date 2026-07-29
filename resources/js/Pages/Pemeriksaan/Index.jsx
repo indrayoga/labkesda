@@ -1,13 +1,34 @@
 import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { Button, TextInput } from 'flowbite-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  TabItem,
+  Tabs,
+  TextInput,
+} from 'flowbite-react';
 import { useState } from 'react';
 
 export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
+  const { auth } = usePage().props;
   const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
   const [cariTanggalTerakhirDaftar, setCariTanggalTerakhirDaftar] = useState(
     tanggal_akhir || '',
   );
+
+  // Detail modal
+  const [openModalDetail, setOpenModalDetail] = useState(false);
+  const [selectedPemeriksaan, setSelectedPemeriksaan] = useState(null);
+
+  // Sampling modal
+  const [openModalSampling, setOpenModalSampling] = useState(false);
+  const [selectedSamplingId, setSelectedSamplingId] = useState(null);
+  const [tanggalSampling, setTanggalSampling] = useState('');
+  const [jamSampling, setJamSampling] = useState('');
+  const [prosesSampling, setProsesSampling] = useState(false);
+
   /*
     Fungsi untuk menghitung umur berdasarkan tanggal lahir
     Input: tanggalLahir (string dalam format 'YYYY-MM-DD')
@@ -24,6 +45,58 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
       month += 12;
     }
     return `${age} tahun ${month} bulan`;
+  };
+
+  const badgeStatusPeriksa = (status) => {
+    const map = {
+      Menunggu: 'bg-yellow-100 text-yellow-800',
+      Proses: 'bg-blue-100 text-blue-800',
+      Selesai: 'bg-green-100 text-green-800',
+    };
+    return map[status] ?? 'bg-gray-100 text-gray-800';
+  };
+
+  const badgeStatusBayar = (status) => {
+    if (!status) return null;
+    const map = {
+      Lunas: 'bg-green-100 text-green-800',
+      Belum: 'bg-red-100 text-red-800',
+    };
+    return map[status] ?? 'bg-gray-100 text-gray-800';
+  };
+
+  const openDetail = (p) => {
+    setSelectedPemeriksaan(p);
+    setOpenModalDetail(true);
+  };
+
+  const openSamplingModal = (p) => {
+    setSelectedSamplingId(p.id);
+
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    setTanggalSampling(
+      p.tanggal_sampling || new Date().toISOString().split('T')[0],
+    );
+    setJamSampling(p.jam_sampling || `${hours}:${minutes}:${seconds}`);
+    setOpenModalSampling(true);
+  };
+
+  const submitSampling = () => {
+    setProsesSampling(true);
+    router.patch(
+      route('pemeriksaan.update-sampling', selectedSamplingId),
+      { tanggal_sampling: tanggalSampling, jam_sampling: jamSampling },
+      {
+        onSuccess: () => {
+          setProsesSampling(false);
+          setOpenModalSampling(false);
+        },
+        onError: () => setProsesSampling(false),
+      },
+    );
   };
 
   return (
@@ -83,7 +156,7 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-visible bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
+        <div className="relative hidden overflow-visible bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg md:block">
           <div className="min-h-16 overflow-x-auto overflow-y-visible pb-16">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
@@ -131,6 +204,9 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
                     Jenis Pasien
                   </th>
                   <th scope="col" className="px-4 py-3">
+                    Status
+                  </th>
+                  <th scope="col" className="px-4 py-3">
                     Pilihan
                   </th>
                 </tr>
@@ -139,7 +215,7 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
                 {pemeriksaan.data.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="11"
+                      colSpan="13"
                       className="px-4 py-2 text-center text-gray-500 dark:text-gray-400"
                     >
                       Tidak ada data pemeriksaan.
@@ -185,9 +261,37 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
                           .join(', ')}
                       </td>
                       <td className="px-4 py-2">{p.jenis_pasien}</td>
-                      <td className="relative z-20 flex items-center gap-2 overflow-visible text-nowrap px-4 py-2">
+                      <td className="px-4 py-2">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${badgeStatusPeriksa(p.status_periksa)}`}
+                          >
+                            {p.status_periksa || 'Menunggu'}
+                          </span>
+                          {p.status_bayar && (
+                            <span
+                              className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${badgeStatusBayar(p.status_bayar)}`}
+                            >
+                              {p.status_bayar}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="relative z-20 flex items-center gap-1 overflow-visible text-nowrap px-4 py-2">
+                        <button
+                          onClick={() => openDetail(p)}
+                          className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-800 hover:bg-gray-300"
+                        >
+                          Detail
+                        </button>
+                        <button
+                          onClick={() => openSamplingModal(p)}
+                          className="rounded bg-orange-500 px-2 py-1 text-xs text-white hover:bg-orange-600"
+                        >
+                          Sampling
+                        </button>
                         <details className="relative">
-                          <summary className="cursor-pointer list-none rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600">
+                          <summary className="cursor-pointer list-none rounded bg-blue-500 px-2 py-1 text-xs text-white hover:bg-blue-600">
                             Form Consent
                           </summary>
                           <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded border border-gray-200 bg-white shadow-lg">
@@ -212,7 +316,7 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
                         </details>
                         <Link
                           href={route('pemeriksaan.show', p.id)}
-                          className="rounded bg-primary-600 px-3 py-1 text-white hover:bg-primary-700"
+                          className="rounded bg-primary-600 px-2 py-1 text-xs text-white hover:bg-primary-700"
                         >
                           Hasil Pemeriksaan
                         </Link>
@@ -252,7 +356,384 @@ export default function Index({ tanggal, tanggal_akhir, pemeriksaan }) {
             </div>
           </div>
         </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden">
+          {pemeriksaan.data.length === 0 ? (
+            <div className="bg-white px-4 py-8 text-center text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400 sm:rounded-b-lg">
+              Tidak ada data pemeriksaan.
+            </div>
+          ) : (
+            <div className="space-y-3 py-3">
+              {pemeriksaan.data.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-600 dark:bg-gray-800"
+                >
+                  <div className="mb-2 flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {p.pasien.nama}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {p.no_registrasi}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className={`rounded px-2 py-0.5 text-xs font-medium ${badgeStatusPeriksa(p.status_periksa)}`}
+                      >
+                        {p.status_periksa || 'Menunggu'}
+                      </span>
+                      {p.status_bayar && (
+                        <span
+                          className={`rounded px-2 py-0.5 text-xs font-medium ${badgeStatusBayar(p.status_bayar)}`}
+                        >
+                          {p.status_bayar}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mb-3 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                    <p>
+                      <span className="font-medium">Tanggal:</span>{' '}
+                      {new Date(p.tanggal_pendaftaran).toLocaleDateString()}{' '}
+                      {p.jam_pendaftaran}
+                    </p>
+                    <p>
+                      <span className="font-medium">ID Spesimen:</span>{' '}
+                      {p.id_spesimen || '-'}
+                    </p>
+                    <p>
+                      <span className="font-medium">
+                        {p.pasien.jenis_kelamin}
+                      </span>{' '}
+                      &bull; {hitungUmur(p.pasien.tanggal_lahir)} &bull;{' '}
+                      {p.pasien.no_telepon}
+                    </p>
+                    <p>
+                      <span className="font-medium">Dokter:</span>{' '}
+                      {p.dokter.nama}
+                    </p>
+                    <p>
+                      <span className="font-medium">Pemeriksaan:</span>{' '}
+                      {p.detail_pemeriksaan
+                        .map((dp) => dp.jenis_layanan.nama)
+                        .join(', ')}
+                    </p>
+                    <p>
+                      <span className="font-medium">Jenis Pasien:</span>{' '}
+                      {p.jenis_pasien}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openDetail(p)}
+                      className="rounded bg-gray-200 px-3 py-1 text-xs text-gray-800 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+                    >
+                      Detail
+                    </button>
+                    <button
+                      onClick={() => openSamplingModal(p)}
+                      className="rounded bg-orange-500 px-3 py-1 text-xs text-white hover:bg-orange-600"
+                    >
+                      Update Sampling
+                    </button>
+                    <details className="relative">
+                      <summary className="cursor-pointer list-none rounded bg-blue-500 px-3 py-1 text-xs text-white hover:bg-blue-600">
+                        Form Consent
+                      </summary>
+                      <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded border border-gray-200 bg-white shadow-lg">
+                        <a
+                          href={route('pemeriksaan.form-consent', p.id)}
+                          target="_blank"
+                          className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Form Consent
+                        </a>
+                        <a
+                          href={route(
+                            'pemeriksaan.formulir-pengambilan-sample',
+                            p.id,
+                          )}
+                          target="_blank"
+                          className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Form Consent Narkoba
+                        </a>
+                      </div>
+                    </details>
+                    <Link
+                      href={route('pemeriksaan.show', p.id)}
+                      className="rounded bg-primary-600 px-3 py-1 text-xs text-white hover:bg-primary-700"
+                    >
+                      Hasil Pemeriksaan
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-col gap-2 border-t bg-gray-50 px-4 py-3 dark:border-gray-600 dark:bg-gray-700 sm:flex-row sm:items-center sm:justify-between sm:rounded-b-lg">
+            <span className="text-sm text-gray-700 dark:text-gray-400">
+              Menampilkan{' '}
+              <span className="font-semibold">{pemeriksaan.from}</span> sampai{' '}
+              <span className="font-semibold">{pemeriksaan.to}</span> dari total{' '}
+              <span className="font-semibold">{pemeriksaan.total}</span> entri
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {pemeriksaan.links.map((link, index) => (
+                <Link
+                  href={link.url || '#'}
+                  key={index}
+                  className={`rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 ${
+                    link.active
+                      ? 'bg-primary-600 text-gray-700 hover:bg-primary-700 hover:text-white'
+                      : ''
+                  }`}
+                >
+                  <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Detail Modal */}
+      <Modal
+        dismissible
+        size="2xl"
+        show={openModalDetail}
+        onClose={() => setOpenModalDetail(false)}
+      >
+        <ModalHeader>Detail Pemeriksaan</ModalHeader>
+        <ModalBody>
+          {selectedPemeriksaan && (
+            <Tabs>
+              <TabItem title="Data Pasien">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    No. RM
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.no_rm || '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    NIK
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.nik || '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Nama
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.nama}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Jenis Kelamin
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.jenis_kelamin}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Tanggal Lahir
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.tanggal_lahir
+                      ? new Date(
+                          selectedPemeriksaan.pasien.tanggal_lahir,
+                        ).toLocaleDateString('id-ID')
+                      : '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Umur
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {hitungUmur(selectedPemeriksaan.pasien.tanggal_lahir)}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    No. Telepon
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.no_telepon || '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Alamat
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.alamat || '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Pekerjaan
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.pasien.pekerjaan || '-'}
+                  </dd>
+                </dl>
+              </TabItem>
+              <TabItem title="Data Pendaftaran">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    No. Registrasi
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.no_registrasi}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    ID Spesimen
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.id_spesimen || '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Tanggal Pendaftaran
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {new Date(
+                      selectedPemeriksaan.tanggal_pendaftaran,
+                    ).toLocaleDateString('id-ID')}{' '}
+                    {selectedPemeriksaan.jam_pendaftaran}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Dokter
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.dokter.nama}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Jenis Pasien
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.jenis_pasien}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Diagnosa
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.diagnosa || '-'}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Status Periksa
+                  </dt>
+                  <dd>
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs font-medium ${badgeStatusPeriksa(selectedPemeriksaan.status_periksa)}`}
+                    >
+                      {selectedPemeriksaan.status_periksa || 'Menunggu'}
+                    </span>
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Status Bayar
+                  </dt>
+                  <dd>
+                    {selectedPemeriksaan.status_bayar ? (
+                      <span
+                        className={`rounded px-2 py-0.5 text-xs font-medium ${badgeStatusBayar(selectedPemeriksaan.status_bayar)}`}
+                      >
+                        {selectedPemeriksaan.status_bayar}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </dd>
+                  <dt className="font-medium text-gray-600 dark:text-gray-400">
+                    Tanggal Sampling
+                  </dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {selectedPemeriksaan.tanggal_sampling
+                      ? new Date(
+                          selectedPemeriksaan.tanggal_sampling,
+                        ).toLocaleDateString('id-ID') +
+                        (selectedPemeriksaan.jam_sampling
+                          ? ' ' + selectedPemeriksaan.jam_sampling
+                          : '')
+                      : '-'}
+                  </dd>
+                </dl>
+              </TabItem>
+              <TabItem title="Item Pemeriksaan">
+                {selectedPemeriksaan.detail_pemeriksaan.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Tidak ada item pemeriksaan.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedPemeriksaan.detail_pemeriksaan.map((dp) => (
+                      <li
+                        key={dp.id}
+                        className="flex items-center justify-between rounded border border-gray-100 px-3 py-2 text-sm dark:border-gray-600"
+                      >
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {dp.jenis_layanan.nama}
+                        </span>
+                        {dp.harga != null && (
+                          <span className="text-gray-500 dark:text-gray-400">
+                            Rp {Number(dp.harga).toLocaleString('id-ID')}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </TabItem>
+            </Tabs>
+          )}
+        </ModalBody>
+      </Modal>
+
+      {/* Sampling Modal */}
+      <Modal
+        dismissible
+        size="md"
+        show={openModalSampling}
+        onClose={() => setOpenModalSampling(false)}
+      >
+        <ModalHeader>Update Waktu Sampling</ModalHeader>
+        <ModalBody>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tanggal Sampling
+              </label>
+              <TextInput
+                type="date"
+                value={tanggalSampling}
+                onChange={(e) => setTanggalSampling(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Jam Sampling
+              </label>
+              <TextInput
+                type="time"
+                value={jamSampling}
+                onChange={(e) => setJamSampling(e.target.value)}
+                step="1"
+                required
+              />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Petugas sampling akan otomatis diisi berdasarkan akun yang sedang
+              login.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={submitSampling} disabled={prosesSampling}>
+                {prosesSampling ? 'Menyimpan...' : 'Simpan'}
+              </Button>
+              <Button
+                color="alternative"
+                onClick={() => setOpenModalSampling(false)}
+              >
+                Batal
+              </Button>
+            </div>
+          </div>
+        </ModalBody>
+      </Modal>
     </LabkesdaLayout>
   );
 }

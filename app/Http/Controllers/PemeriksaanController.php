@@ -200,16 +200,31 @@ class PemeriksaanController extends Controller
         try {
             DB::beginTransaction();
             // Update data pemeriksaan
-            $pemeriksaan->update([
-                'nomor_sampel' => $request->nomor_sampel,
-                'tanggal_sampling' => $request->tanggal_sampling,
-                'jam_sampling' => $request->jam_sampling,
-                'tanggal_sampel_diterima' => $request->tanggal_sampel_diterima,
-                'jam_sampel_diterima' => $request->jam_sampel_diterima,
-                'tanggal_hasil_selesai' => $request->tanggal_hasil_selesai,
-                'jam_hasil_selesai' => $request->jam_hasil_selesai,
-                'keterangan' => $request->keterangan,
-            ]);
+            // update status periksa jadi selesai 
+            // jika tanggal dan jam hasil selesai sudah terisi, maka tidak boleh diubah lagi
+            if (empty($pemeriksaan->tanggal_hasil_selesai) && empty($pemeriksaan->jam_hasil_selesai)) {
+                $pemeriksaan->update([
+                    'nomor_sampel' => $request->nomor_sampel,
+                    'tanggal_sampling' => $request->tanggal_sampling,
+                    'jam_sampling' => $request->jam_sampling,
+                    'tanggal_sampel_diterima' => $request->tanggal_sampel_diterima,
+                    'jam_sampel_diterima' => $request->jam_sampel_diterima,
+                    'tanggal_hasil_selesai' => $request->tanggal_hasil_selesai,
+                    'jam_hasil_selesai' => $request->jam_hasil_selesai,
+                    'keterangan' => $request->keterangan,
+                    'status_periksa' => 'selesai',
+                ]);
+            } else {
+                $pemeriksaan->update([
+                    'nomor_sampel' => $request->nomor_sampel,
+                    'tanggal_sampling' => $request->tanggal_sampling,
+                    'jam_sampling' => $request->jam_sampling,
+                    'tanggal_sampel_diterima' => $request->tanggal_sampel_diterima,
+                    'jam_sampel_diterima' => $request->jam_sampel_diterima,
+                    'keterangan' => $request->keterangan,
+                    'status_periksa' => 'selesai',
+                ]);
+            }
 
             if ($request->has('petugas')) {
                 $pemeriksaan->petugasPemeriksaan()->delete();
@@ -263,6 +278,22 @@ class PemeriksaanController extends Controller
             Log::error('Error saat memperbarui hasil pemeriksaan: ' . $e->getMessage());
             return back()->withErrors('Terjadi kesalahan saat memperbarui hasil pemeriksaan.');
         }
+    }
+
+    public function updateSampling(Request $request, Pemeriksaan $pemeriksaan)
+    {
+        $request->validate([
+            'tanggal_sampling' => 'required|date',
+            'jam_sampling' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+        ]);
+
+        $pemeriksaan->update([
+            'tanggal_sampling' => $request->tanggal_sampling,
+            'jam_sampling' => $request->jam_sampling,
+            'petugas_sampling_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Waktu sampling berhasil diperbarui.');
     }
 
     /**

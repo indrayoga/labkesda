@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('pendaftaran-laboratorium/{pasien}', [PasienController::class, 'pendaftaranLaboratorium'])->name('pendaftaran-laboratorium');
 
     Route::resource('/pemeriksaan', PemeriksaanController::class);
+    Route::patch('pemeriksaan/{pemeriksaan}/update-sampling', [PemeriksaanController::class, 'updateSampling'])->name('pemeriksaan.update-sampling');
     Route::post('pemeriksaan/{pemeriksaan}/update-hasil-pemeriksaan', [PemeriksaanController::class, 'updateHasilPemeriksaan'])->name('pemeriksaan.update-hasil-pemeriksaan');
     Route::get('pemeriksaan/form-consent/{pemeriksaan}', [PemeriksaanController::class, 'printInformedConsent'])->name('pemeriksaan.form-consent');
     Route::get('pemeriksaan/form-pengambilan-sample/{pemeriksaan}', [PemeriksaanController::class, 'printFormulirPengambilanSample'])->name('pemeriksaan.formulir-pengambilan-sample');
