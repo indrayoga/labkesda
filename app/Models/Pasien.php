@@ -17,7 +17,21 @@ class Pasien extends Model
     protected $table = 'pasien';
     protected $keyType = 'string';
     public $incrementing = false;
-    public $fillable = ['nik', 'nama', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'no_telepon', 'kecamatan_id', 'kelurahan_id', 'alamat', 'pekerjaan'];
+    public $fillable = [
+        'nik',
+        'nama',
+        'jenis_kelamin',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'no_telepon',
+        'kecamatan_id',
+        'kelurahan_id',
+        'alamat',
+        'pekerjaan',
+        'luar_wilayah',
+        'kecamatan_luar_wilayah',
+        'kelurahan_luar_wilayah'
+    ];
     protected $appends = ['umur'];
 
     protected static function boot()

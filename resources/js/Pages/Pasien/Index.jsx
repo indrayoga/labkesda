@@ -49,6 +49,9 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
       kelurahan_id: p.kelurahan_id,
       alamat: p.alamat,
       pekerjaan: p.pekerjaan,
+      luar_wilayah: p.luar_wilayah,
+      kecamatan_luar_wilayah: p.kecamatan_luar_wilayah,
+      kelurahan_luar_wilayah: p.kelurahan_luar_wilayah,
     });
     setSelectedPasien(p);
     setOpenModalTambah(true);
@@ -71,6 +74,9 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
       kelurahan_id: '',
       alamat: '',
       pekerjaan: '',
+      luar_wilayah: false,
+      kecamatan_luar_wilayah: '',
+      kelurahan_luar_wilayah: '',
     });
     setSelectedPasien(null);
   };
@@ -95,6 +101,9 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
     kelurahan_id: '',
     alamat: '',
     pekerjaan: '',
+    luar_wilayah: false,
+    kecamatan_luar_wilayah: '',
+    kelurahan_luar_wilayah: '',
   });
 
   const submit = (e) => {
@@ -114,6 +123,24 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
           resetData();
         },
       });
+    }
+  };
+
+  const submitAndRegister = (e) => {
+    e.preventDefault();
+    if (selectedPasien) {
+      put(
+        route('pasien.update', {
+          pasien: selectedPasien.id,
+          register: true,
+        }),
+      );
+    } else {
+      post(
+        route('pasien.store', {
+          register: true,
+        }),
+      );
     }
   };
 
@@ -202,7 +229,7 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md sm:rounded-b-lg dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
@@ -288,7 +315,14 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
                       </td>
                       <td className="px-4 py-2">{p.no_telepon}</td>
                       <td className="px-4 py-2">
-                        {p.alamat}, {p.kelurahan.nama}, {p.kecamatan.nama}
+                        {p.alamat},{' '}
+                        {p.kelurahan
+                          ? p.kelurahan.nama
+                          : p.kelurahan_luar_wilayah}
+                        ,{' '}
+                        {p.kecamatan
+                          ? p.kecamatan.nama
+                          : p.kecamatan_luar_wilayah}
                       </td>
                       <td className="text-nowrap px-4 py-2">{p.pekerjaan}</td>
                       <td className="flex items-center gap-2 text-nowrap px-4 py-2">
@@ -428,6 +462,14 @@ export default function Index({ pasien, kecamatans, kelurahans }) {
             disabled={processing}
           >
             Simpan
+          </Button>
+
+          <Button
+            className={`ml-3 bg-blue-500 text-white ${processing ? 'cursor-not-allowed opacity-50' : ''}`}
+            onClick={submitAndRegister}
+            disabled={processing}
+          >
+            Simpan dan Daftarkan
           </Button>
         </ModalFooter>
       </Modal>

@@ -76,14 +76,31 @@ class PasienController extends Controller
             'tempat_lahir' => 'required|string',
             'tanggal_lahir' => 'required|date',
             'no_telepon' => 'required|string',
-            'kecamatan_id' => 'required|exists:kecamatan,id',
-            'kelurahan_id' => 'required|exists:kelurahan,id',
+            'luar_wilayah' => 'required|boolean',
+            'kecamatan_id' => 'required_if:luar_wilayah,false',
+            'kelurahan_id' => 'required_if:luar_wilayah,false',
+            'kecamatan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
+            'kelurahan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
             'alamat' => 'required|string',
             'pekerjaan' => 'required|string',
         ]);
+        if ($request->luar_wilayah) {
+            $request->merge([
+                'kecamatan_id' => null,
+                'kelurahan_id' => null,
+            ]);
+        } else {
+            $request->merge([
+                'kecamatan_luar_wilayah' => null,
+                'kelurahan_luar_wilayah' => null,
+            ]);
+        }
 
-        Pasien::create($request->all());
+        $pasien = Pasien::create($request->all());
 
+        if ($request->has('register') && $request->register) {
+            return redirect()->route('pendaftaran-laboratorium', ['pasien' => $pasien->id]);
+        }
         return redirect()->route('pasien.index');
     }
 
@@ -115,7 +132,7 @@ class PasienController extends Controller
 
         return Inertia::render('Pasien/PendaftaranLaboratorium', [
             'pasien' => $pasien,
-            'dokter' => Dokter::all(),
+            'dokter' => Dokter::orderBy('nama')->get(),
             'jenisPasien' => JenisPasien::orderByRaw('urut IS NULL, urut ASC')->get(),
             'kategoriLayanans' => $kategoriLayanan,
             'idSpesimenTerakhir' => $idSpesimenTerakhir + 1, // increment id spesimen terakhir by 1
@@ -210,13 +227,31 @@ class PasienController extends Controller
             'tempat_lahir' => 'required|string',
             'tanggal_lahir' => 'required|date',
             'no_telepon' => 'required|string',
-            'kecamatan_id' => 'required|exists:kecamatan,id',
-            'kelurahan_id' => 'required|exists:kelurahan,id',
+            'luar_wilayah' => 'required|boolean',
+            'kecamatan_id' => 'required_if:luar_wilayah,false',
+            'kelurahan_id' => 'required_if:luar_wilayah,false',
+            'kecamatan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
+            'kelurahan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
             'alamat' => 'required|string',
             'pekerjaan' => 'required|string',
         ]);
 
+        if ($request->luar_wilayah) {
+            $request->merge([
+                'kecamatan_id' => null,
+                'kelurahan_id' => null,
+            ]);
+        } else {
+            $request->merge([
+                'kecamatan_luar_wilayah' => null,
+                'kelurahan_luar_wilayah' => null,
+            ]);
+        }
         $pasien->update($request->all());
+
+        if ($request->has('register') && $request->register) {
+            return redirect()->route('pendaftaran-laboratorium', ['pasien' => $pasien->id]);
+        }
 
         return redirect()->route('pasien.index');
     }

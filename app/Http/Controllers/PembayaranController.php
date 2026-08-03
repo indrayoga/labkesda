@@ -21,12 +21,15 @@ class PembayaranController extends Controller
     public function index(Request $request)
     {
         //
-        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $tanggal_awal = $request->tanggal_awal ?? date('Y-m-d');
+        $tanggal_akhir = $request->tanggal_akhir ?? date('Y-m-d');
         return Inertia::render('Pembayaran/Index', [
-            'tanggal' => $tanggal,
+            'tanggal_awal' => $tanggal_awal,
+            'tanggal_akhir' => $tanggal_akhir,
             'jenis_pembayaran' => JenisPembayaran::all(),
             'pemeriksaan' => Pemeriksaan::with(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'layananOrder'])
-                ->whereDate('tanggal_pendaftaran', $tanggal)
+                ->whereDate('tanggal_pendaftaran', '>=', $tanggal_awal)
+                ->whereDate('tanggal_pendaftaran', '<=', $tanggal_akhir)
                 ->whereNull('status_bayar')
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),
@@ -50,11 +53,14 @@ class PembayaranController extends Controller
     public function kwitansi(Request $request)
     {
         //
-        $tanggal = $request->tanggal ?? date('Y-m-d');
+        $tanggal_awal = $request->tanggal_awal ?? date('Y-m-d');
+        $tanggal_akhir = $request->tanggal_akhir ?? date('Y-m-d');
         return Inertia::render('Pembayaran/SudahBayar', [
-            'tanggal' => $tanggal,
+            'tanggal_awal' => $tanggal_awal,
+            'tanggal_akhir' => $tanggal_akhir,
             'pembayaran' => Pembayaran::with(['pasien', 'customer', 'dokter', 'jenisPembayaran', 'pemeriksaan.detailPemeriksaan.jenisLayanan', 'pemeriksaan.layananOrder', 'pemeriksaanLingkungan.detailPemeriksaanLingkungan.jenisLayanan'])
-                ->whereDate('tanggal_bayar', $tanggal)
+                ->whereDate('tanggal_bayar', '>=', $tanggal_awal)
+                ->whereDate('tanggal_bayar', '<=', $tanggal_akhir)
                 ->orderBy('created_at', 'asc')
                 ->paginate(10),
         ]);

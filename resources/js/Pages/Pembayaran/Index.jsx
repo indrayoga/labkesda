@@ -13,9 +13,19 @@ import {
 } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function Index({ tanggal, pemeriksaan, jenis_pembayaran }) {
+export default function Index({
+  tanggal_awal,
+  tanggal_akhir,
+  pemeriksaan,
+  jenis_pembayaran,
+}) {
   const { auth } = usePage().props;
-  const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
+  const [cariTanggalAwalDaftar, setCariTanggalAwalDaftar] = useState(
+    tanggal_awal || '',
+  );
+  const [cariTanggalAkhirDaftar, setCariTanggalAkhirDaftar] = useState(
+    tanggal_akhir || '',
+  );
   const [openModalBayar, setOpenModalBayar] = useState(false);
   const [selectedPemeriksaan, setSelectedPemeriksaan] = useState(null);
   const [prosesBayar, setProsesBayar] = useState(false);
@@ -118,14 +128,21 @@ export default function Index({ tanggal, pemeriksaan, jenis_pembayaran }) {
               <TextInput
                 type="date"
                 className="min-w-[15rem]"
-                value={cariTanggalDaftar}
-                onChange={(e) => setCariTanggalDaftar(e.target.value)}
+                value={cariTanggalAwalDaftar}
+                onChange={(e) => setCariTanggalAwalDaftar(e.target.value)}
+              />
+              <TextInput
+                type="date"
+                className="min-w-[15rem]"
+                value={cariTanggalAkhirDaftar}
+                onChange={(e) => setCariTanggalAkhirDaftar(e.target.value)}
               />
               <Button
                 onClick={() =>
                   router.get(
                     route('pembayaran.index', {
-                      tanggal: cariTanggalDaftar,
+                      tanggal_awal: cariTanggalAwalDaftar,
+                      tanggal_akhir: cariTanggalAkhirDaftar,
                     }),
                   )
                 }

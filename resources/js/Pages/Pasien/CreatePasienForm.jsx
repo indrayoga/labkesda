@@ -124,83 +124,6 @@ export default function CreatePasienForm({
         </div>
         <div>
           <Label
-            htmlFor="kecamatan_id"
-            color={errors.kecamatan_id ? 'failure' : 'gray'}
-          >
-            Kecamatan
-          </Label>
-          <Select
-            id="kecamatan_id"
-            className="mt-1"
-            value={data.kecamatan_id}
-            disabled={processing}
-            onChange={(e) => {
-              setData({
-                ...data,
-                kecamatan_id: e.target.value,
-                kelurahan_id: '',
-              });
-            }}
-            color={errors.kecamatan_id ? 'failure' : 'gray'}
-          >
-            <option value="">Pilih Kecamatan</option>
-            {kecamatans.map((kecamatan) => (
-              <option key={kecamatan.id} value={kecamatan.id}>
-                {kecamatan.nama}
-              </option>
-            ))}
-          </Select>
-          <InputError className="mt-2" message={errors.kecamatan_id} />
-        </div>
-        <div>
-          <Label
-            htmlFor="kelurahan_id"
-            color={errors.kelurahan_id ? 'failure' : 'gray'}
-          >
-            Kelurahan
-          </Label>
-          <Select
-            id="kelurahan_id"
-            className="mt-1"
-            value={data.kelurahan_id}
-            onChange={(e) => setData('kelurahan_id', e.target.value)}
-            disabled={!data.kecamatan_id || processing}
-            color={errors.kelurahan_id ? 'failure' : 'gray'}
-          >
-            <option value="">Pilih Kelurahan</option>
-            {data.kecamatan_id &&
-              kelurahans
-                .filter(
-                  (kelurahan) =>
-                    kelurahan.no_kec ==
-                    kecamatans.find((kec) => kec.id == data.kecamatan_id)
-                      .no_kec,
-                )
-                .map((kelurahan) => (
-                  <option key={kelurahan.id} value={kelurahan.id}>
-                    {kelurahan.nama}
-                  </option>
-                ))}
-          </Select>
-          <InputError className="mt-2" message={errors.kelurahan_id} />
-        </div>
-        <div>
-          <Label htmlFor="alamat" color={errors.alamat ? 'failure' : 'gray'}>
-            Alamat
-          </Label>
-          <Textarea
-            id="alamat"
-            className="mt-1"
-            value={data.alamat}
-            onChange={(e) => setData('alamat', e.target.value)}
-            autoComplete="alamat"
-            color={errors.alamat ? 'failure' : 'gray'}
-            disabled={processing}
-          />
-          <InputError className="mt-2" message={errors.alamat} />
-        </div>
-        <div>
-          <Label
             htmlFor="pekerjaan"
             color={errors.pekerjaan ? 'failure' : 'gray'}
           >
@@ -217,6 +140,166 @@ export default function CreatePasienForm({
           />
           <InputError className="mt-2" message={errors.pekerjaan} />
         </div>
+        <fieldset className="rounded-lg border border-gray-300 p-4 md:col-span-2">
+          <legend className="px-2 text-sm font-semibold text-gray-700">
+            Lokasi
+          </legend>
+
+          <div className="space-y-6">
+            <div>
+              <Label
+                htmlFor="alamat"
+                color={errors.alamat ? 'failure' : 'gray'}
+              >
+                Alamat
+              </Label>
+              <Textarea
+                id="alamat"
+                className="mt-1"
+                value={data.alamat}
+                onChange={(e) => setData('alamat', e.target.value)}
+                autoComplete="alamat"
+                color={errors.alamat ? 'failure' : 'gray'}
+                disabled={processing}
+              />
+              <InputError className="mt-2" message={errors.alamat} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <Label
+                  htmlFor="kecamatan_id"
+                  color={errors.kecamatan_id ? 'failure' : 'gray'}
+                >
+                  Kecamatan
+                </Label>
+                <Select
+                  id="kecamatan_id"
+                  className="mt-1"
+                  value={data.kecamatan_id}
+                  disabled={data.luar_wilayah || processing}
+                  onChange={(e) => {
+                    setData({
+                      ...data,
+                      kecamatan_id: e.target.value,
+                      kelurahan_id: '',
+                    });
+                  }}
+                  color={errors.kecamatan_id ? 'failure' : 'gray'}
+                >
+                  <option value="">Pilih Kecamatan</option>
+                  {kecamatans.map((kecamatan) => (
+                    <option key={kecamatan.id} value={kecamatan.id}>
+                      {kecamatan.nama}
+                    </option>
+                  ))}
+                </Select>
+                <InputError className="mt-2" message={errors.kecamatan_id} />
+              </div>
+
+              <div>
+                <Label
+                  htmlFor="kelurahan_id"
+                  color={errors.kelurahan_id ? 'failure' : 'gray'}
+                >
+                  Kelurahan
+                </Label>
+                <Select
+                  id="kelurahan_id"
+                  className="mt-1"
+                  value={data.kelurahan_id}
+                  onChange={(e) => setData('kelurahan_id', e.target.value)}
+                  disabled={
+                    data.luar_wilayah || !data.kecamatan_id || processing
+                  }
+                  color={errors.kelurahan_id ? 'failure' : 'gray'}
+                >
+                  <option value="">Pilih Kelurahan</option>
+                  {data.kecamatan_id &&
+                    kelurahans
+                      .filter(
+                        (kelurahan) =>
+                          kelurahan.no_kec ==
+                          kecamatans.find((kec) => kec.id == data.kecamatan_id)
+                            .no_kec,
+                      )
+                      .map((kelurahan) => (
+                        <option key={kelurahan.id} value={kelurahan.id}>
+                          {kelurahan.nama}
+                        </option>
+                      ))}
+                </Select>
+                <InputError className="mt-2" message={errors.kelurahan_id} />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4">
+              <div className="mb-4 flex items-center gap-2">
+                <input
+                  id="luar_wilayah"
+                  type="checkbox"
+                  checked={data.luar_wilayah || false}
+                  onChange={(e) => setData('luar_wilayah', e.target.checked)}
+                  disabled={processing}
+                  className="h-4 w-4 cursor-pointer rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                />
+                <Label htmlFor="luar_wilayah" className="!m-0 cursor-pointer">
+                  Luar Wilayah
+                </Label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <Label
+                    htmlFor="kecamatan_luar_wilayah"
+                    color={errors.kecamatan_luar_wilayah ? 'failure' : 'gray'}
+                  >
+                    Kecamatan Luar Wilayah
+                  </Label>
+                  <TextInput
+                    id="kecamatan_luar_wilayah"
+                    className="mt-1"
+                    value={data.kecamatan_luar_wilayah || ''}
+                    onChange={(e) =>
+                      setData('kecamatan_luar_wilayah', e.target.value)
+                    }
+                    disabled={!data.luar_wilayah || processing}
+                    placeholder="Masukkan nama kecamatan"
+                    color={errors.kecamatan_luar_wilayah ? 'failure' : 'gray'}
+                  />
+                  <InputError
+                    className="mt-2"
+                    message={errors.kecamatan_luar_wilayah}
+                  />
+                </div>
+
+                <div>
+                  <Label
+                    htmlFor="kelurahan_luar_wilayah"
+                    color={errors.kelurahan_luar_wilayah ? 'failure' : 'gray'}
+                  >
+                    Kelurahan Luar Wilayah
+                  </Label>
+                  <TextInput
+                    id="kelurahan_luar_wilayah"
+                    className="mt-1"
+                    value={data.kelurahan_luar_wilayah || ''}
+                    onChange={(e) =>
+                      setData('kelurahan_luar_wilayah', e.target.value)
+                    }
+                    disabled={!data.luar_wilayah || processing}
+                    placeholder="Masukkan nama kelurahan"
+                    color={errors.kelurahan_luar_wilayah ? 'failure' : 'gray'}
+                  />
+                  <InputError
+                    className="mt-2"
+                    message={errors.kelurahan_luar_wilayah}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
       </div>
 
       {/* <div className="mt-6 flex justify-end">

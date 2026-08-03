@@ -3,8 +3,17 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Button, TextInput } from 'flowbite-react';
 import { useState } from 'react';
 
-export default function SudahBayar({ tanggal, pembayaran }) {
-  const [cariTanggalDaftar, setCariTanggalDaftar] = useState(tanggal || '');
+export default function SudahBayar({
+  tanggal_awal,
+  tanggal_akhir,
+  pembayaran,
+}) {
+  const [cariTanggalAwalDaftar, setCariTanggalAwalDaftar] = useState(
+    tanggal_awal || '',
+  );
+  const [cariTanggalAkhirDaftar, setCariTanggalAkhirDaftar] = useState(
+    tanggal_akhir || '',
+  );
 
   /*
     Fungsi untuk menghitung umur berdasarkan tanggal lahir
@@ -34,14 +43,21 @@ export default function SudahBayar({ tanggal, pembayaran }) {
               <TextInput
                 type="date"
                 className="min-w-[15rem]"
-                value={cariTanggalDaftar}
-                onChange={(e) => setCariTanggalDaftar(e.target.value)}
+                value={cariTanggalAwalDaftar}
+                onChange={(e) => setCariTanggalAwalDaftar(e.target.value)}
+              />
+              <TextInput
+                type="date"
+                className="min-w-[15rem]"
+                value={cariTanggalAkhirDaftar}
+                onChange={(e) => setCariTanggalAkhirDaftar(e.target.value)}
               />
               <Button
                 onClick={() =>
                   router.get(
                     route('pembayaran.kwitansi', {
-                      tanggal: cariTanggalDaftar,
+                      tanggal_awal: cariTanggalAwalDaftar,
+                      tanggal_akhir: cariTanggalAkhirDaftar,
                     }),
                   )
                 }
@@ -74,7 +90,7 @@ export default function SudahBayar({ tanggal, pembayaran }) {
             </div>
           </div>
         </div>
-        <div className="relative overflow-hidden bg-white shadow-md sm:rounded-b-lg dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-b-lg">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
               <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
