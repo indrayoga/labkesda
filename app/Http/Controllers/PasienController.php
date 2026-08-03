@@ -79,8 +79,8 @@ class PasienController extends Controller
             'luar_wilayah' => 'required|boolean',
             'kecamatan_id' => 'required_if:luar_wilayah,false',
             'kelurahan_id' => 'required_if:luar_wilayah,false',
-            'kecamatan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
-            'kelurahan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
+            'kecamatan_luar_wilayah' => 'required_if:luar_wilayah,true',
+            'kelurahan_luar_wilayah' => 'required_if:luar_wilayah,true',
             'alamat' => 'required|string',
             'pekerjaan' => 'required|string',
         ]);
@@ -230,8 +230,8 @@ class PasienController extends Controller
             'luar_wilayah' => 'required|boolean',
             'kecamatan_id' => 'required_if:luar_wilayah,false',
             'kelurahan_id' => 'required_if:luar_wilayah,false',
-            'kecamatan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
-            'kelurahan_luar_wilayah' => 'required_if:luar_wilayah,true|string',
+            'kecamatan_luar_wilayah' => 'required_if:luar_wilayah,true',
+            'kelurahan_luar_wilayah' => 'required_if:luar_wilayah,true',
             'alamat' => 'required|string',
             'pekerjaan' => 'required|string',
         ]);
