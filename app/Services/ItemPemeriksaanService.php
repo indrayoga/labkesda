@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ItemPemeriksaan;
 use App\Models\Pemeriksaan;
 use App\Models\PemeriksaanReferenceRange;
+use Illuminate\Support\Collection;
 
 class ItemPemeriksaanService
 {
@@ -69,13 +70,28 @@ class ItemPemeriksaanService
 
     public static function getTreeByPemeriksaan(Pemeriksaan $pemeriksaan): array
     {
-        $itemPemeriksaan = ItemPemeriksaan::whereHas('jenisLayanan', function ($query) use ($pemeriksaan) {
-            $query->whereIn('jenis_layanan.id', $pemeriksaan->detailPemeriksaan->pluck('jenis_layanan_id'));
-        })->with(['referenceRanges', 'parent'])->get();
-
         $pemeriksaanItems = [];
-        foreach ($itemPemeriksaan as $item) {
-            $pemeriksaanItems[] = self::getTreeById($item->id);
+        $detailPemeriksaans = $pemeriksaan->detailPemeriksaan()
+            ->with('jenisLayanan.itemPemeriksaan.referenceRanges')
+            ->get();
+
+        foreach ($detailPemeriksaans as $detailPemeriksaan) {
+            $itemPemeriksaan = $detailPemeriksaan->jenisLayanan?->itemPemeriksaan ?? collect();
+
+            foreach ($itemPemeriksaan as $item) {
+                $quantity = max(1, (int) ($detailPemeriksaan->qty ?? 1));
+
+                for ($index = 1; $index <= $quantity; $index++) {
+                    $pemeriksaanItems[] = self::getTreeById(
+                        $item->id,
+                        [
+                            'detail_pemeriksaan_id' => $detailPemeriksaan->id,
+                            'detail_qty' => $quantity,
+                            'item_ke' => $index,
+                        ]
+                    );
+                }
+            }
         }
 
         return $pemeriksaanItems;
@@ -87,10 +103,11 @@ class ItemPemeriksaanService
      * @param string $itemId
      * @return array
      */
-    public static function getTreeById(string $itemId): array
+    public static function getTreeById(string $itemId, array $context = []): array
     {
         $items = ItemPemeriksaan::query()
             ->select(['id', 'nama', 'satuan', 'metode', 'parent_id', 'urut', 'kategori_pemeriksaan_id'])
+            ->with(['referenceRanges', 'parent', 'kategoriPemeriksaan'])
             ->orderBy('urut')
             ->orderBy('nama')
             ->get();
@@ -107,7 +124,7 @@ class ItemPemeriksaanService
             return [];
         }
 
-        return [self::buildNode($rootItem, $byParent)];
+        return [self::buildNode($rootItem, $byParent, $context)];
     }
 
     /**
@@ -117,13 +134,13 @@ class ItemPemeriksaanService
      * @param array<string|null, array<ItemPemeriksaan>> $byParent
      * @return array
      */
-    protected static function buildChildren(?string $parentId, array $byParent): array
+    protected static function buildChildren(?string $parentId, array $byParent, array $context = []): array
     {
         $children = $byParent[$parentId] ?? [];
         $nodes = [];
 
         foreach ($children as $item) {
-            $nodes[] = self::buildNode($item, $byParent);
+            $nodes[] = self::buildNode($item, $byParent, $context);
         }
 
         return $nodes;
@@ -136,7 +153,7 @@ class ItemPemeriksaanService
      * @param array<string|null, array<ItemPemeriksaan>> $byParent
      * @return array
      */
-    protected static function buildNode(ItemPemeriksaan $item, array $byParent): array
+    protected static function buildNode(ItemPemeriksaan $item, array $byParent, array $context = []): array
     {
         $node = [
             'id' => $item->id,
@@ -148,6 +165,9 @@ class ItemPemeriksaanService
             'parent_name' => $item->parent?->nama ?? null,
             'kategori_pemeriksaan_id' => $item->kategori_pemeriksaan_id,
             'kategori_pemeriksaan_nama' => $item->kategoriPemeriksaan?->nama ?? null,
+            'detail_pemeriksaan_id' => $context['detail_pemeriksaan_id'] ?? null,
+            'detail_qty' => $context['detail_qty'] ?? 1,
+            'item_ke' => $context['item_ke'] ?? 1,
             'reference_ranges' => $item->referenceRanges->map(function ($range) {
                 return [
                     'id' => $range->id,
@@ -164,7 +184,7 @@ class ItemPemeriksaanService
             'used' => self::isItemUsed($item->id),
         ];
 
-        $children = self::buildChildren($item->id, $byParent);
+        $children = self::buildChildren($item->id, $byParent, $context);
         if (!empty($children)) {
             $node['children'] = $children;
         }

@@ -106,7 +106,7 @@ class PemeriksaanController extends Controller
     public function show(Pemeriksaan $pemeriksaan)
     {
         $pemeriksaanItems = ItemPemeriksaanService::getTreeByPemeriksaan($pemeriksaan);
-        // dd(\json_encode($pemeriksaanItems));
+
         return Inertia::render('Pemeriksaan/Show', [
             'pemeriksaan' => $pemeriksaan->load(['pasien', 'dokter', 'detailPemeriksaan.jenisLayanan', 'hasilPemeriksaan', 'petugasPemeriksaan.user', 'petugasValidasi.user']),
             'pemeriksaanItems' => $pemeriksaanItems,
@@ -190,6 +190,8 @@ class PemeriksaanController extends Controller
             'keterangan' => 'nullable|string',
             'hasil_pemeriksaan' => 'required|array',
             'hasil_pemeriksaan.*.item_pemeriksaan_id' => 'required|exists:item_pemeriksaan,id',
+            'hasil_pemeriksaan.*.detail_pemeriksaan_id' => 'nullable|exists:detail_pemeriksaan,id',
+            'hasil_pemeriksaan.*.item_ke' => 'nullable|integer|min:1',
             'hasil_pemeriksaan.*.hasil' => 'required|string',
             'petugas' => 'nullable|array',
             'petugas.*' => 'required|exists:users,id',
@@ -212,7 +214,7 @@ class PemeriksaanController extends Controller
                     'tanggal_hasil_selesai' => $request->tanggal_hasil_selesai,
                     'jam_hasil_selesai' => $request->jam_hasil_selesai,
                     'keterangan' => $request->keterangan,
-                    'status_periksa' => 'selesai',
+                    'status_periksa' => 'Selesai',
                 ]);
             } else {
                 $pemeriksaan->update([
@@ -222,7 +224,7 @@ class PemeriksaanController extends Controller
                     'tanggal_sampel_diterima' => $request->tanggal_sampel_diterima,
                     'jam_sampel_diterima' => $request->jam_sampel_diterima,
                     'keterangan' => $request->keterangan,
-                    'status_periksa' => 'selesai',
+                    'status_periksa' => 'Selesai',
                 ]);
             }
 
@@ -260,7 +262,9 @@ class PemeriksaanController extends Controller
                     ->with(['referenceRanges', 'parent'])->first();
 
                 $pemeriksaan->hasilPemeriksaan()->create([
+                    'detail_pemeriksaan_id' => $hasil['detail_pemeriksaan_id'] ?? null,
                     'item_pemeriksaan_id' => $hasil['item_pemeriksaan_id'],
+                    'item_ke' => max(1, (int) ($hasil['item_ke'] ?? 1)),
                     'hasil' => $hasil['hasil'],
                     'status' => $hasil['status'] ?? 'normal',
                     'satuan' => $itemPemeriksaan->satuan,
@@ -363,7 +367,7 @@ class PemeriksaanController extends Controller
             }
         }
 
-        $pdf = new HasilPemeriksaanPdf($pemeriksaan);
+        $pdf = new HasilPemeriksaanPdf($pemeriksaan->load(['hasilPemeriksaan.itemPemeriksaan.parent', 'detailPemeriksaan.jenisLayanan']));
         $pdf->generate();
 
         return response($pdf->Output('S'))
@@ -372,7 +376,7 @@ class PemeriksaanController extends Controller
 
     public function printLembarHasilUjiSementara(Pemeriksaan $pemeriksaan)
     {
-        $pdf = new LembarHasilUjiSementaraPdf($pemeriksaan);
+        $pdf = new LembarHasilUjiSementaraPdf($pemeriksaan->load(['hasilPemeriksaan.itemPemeriksaan.parent', 'detailPemeriksaan.jenisLayanan']));
         $pdf->generate();
 
         return response($pdf->Output('S'))

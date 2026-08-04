@@ -17,7 +17,7 @@ class PemeriksaanRegistrasiService
         $payload = array_merge($request->all(), ['items' => $items]);
 
         $validated = Validator::make($payload, [
-            'id_spesimen' => 'required|string',
+            'id_spesimen' => 'required',
             'pasien_id' => 'required|exists:pasien,id',
             'dokter_id' => 'required|exists:dokter,id',
             'email' => 'nullable|email',
@@ -42,9 +42,17 @@ class PemeriksaanRegistrasiService
             'items.*.tipe' => 'required|in:paket,layanan',
             'items.*.id' => 'required|string',
             'items.*.harga' => 'nullable|numeric|min:0',
+            'items.*.qty' => 'nullable|integer|min:1',
         ])->validate();
 
-        $validated['items'] = array_values($validated['items']);
+        $validated['items'] = collect($validated['items'])
+            ->values()
+            ->map(function (array $item) {
+                $item['qty'] = max(1, (int) ($item['qty'] ?? 1));
+
+                return $item;
+            })
+            ->all();
 
         return $validated;
     }
@@ -57,6 +65,8 @@ class PemeriksaanRegistrasiService
         $detailRows = [];
 
         foreach (array_values($items) as $index => $item) {
+            $quantity = max(1, (int) ($item['qty'] ?? 1));
+
             if (($item['tipe'] ?? null) === 'paket') {
                 $paket = PaketPemeriksaan::query()
                     ->with(['jenisLayanan.kategoriLayanan'])
@@ -80,19 +90,14 @@ class PemeriksaanRegistrasiService
                     $hargaLayanan = $this->resolveLayananPrice($layanan, $jenisPasien);
                     $hargaPaket += $hargaLayanan;
 
-                    if (!array_key_exists($layanan->id, $detailRows)) {
-                        $detailRows[$layanan->id] = [
-                            'jenis_layanan_id' => $layanan->id,
-                            'harga' => $hargaLayanan,
-                        ];
-                    }
+                    $this->accumulateDetailRow($detailRows, $layanan->id, $hargaLayanan, $quantity);
                 }
 
                 $pemeriksaan->layananOrder()->create([
                     'tipe' => 'paket',
                     'paket_pemeriksaan_id' => $paket->id,
                     'nama_snapshot' => $paket->nama,
-                    'harga' => $hargaPaket,
+                    'harga' => $hargaPaket * $quantity,
                     'urutan' => $index + 1,
                 ]);
 
@@ -113,21 +118,17 @@ class PemeriksaanRegistrasiService
             }
 
             $hargaLayanan = $this->resolveLayananPrice($layanan, $jenisPasien);
+            $subtotalLayanan = $hargaLayanan * $quantity;
 
             $pemeriksaan->layananOrder()->create([
                 'tipe' => 'layanan',
                 'jenis_layanan_id' => $layanan->id,
                 'nama_snapshot' => $layanan->nama,
-                'harga' => $hargaLayanan,
+                'harga' => $subtotalLayanan,
                 'urutan' => $index + 1,
             ]);
 
-            if (!array_key_exists($layanan->id, $detailRows)) {
-                $detailRows[$layanan->id] = [
-                    'jenis_layanan_id' => $layanan->id,
-                    'harga' => $hargaLayanan,
-                ];
-            }
+            $this->accumulateDetailRow($detailRows, $layanan->id, $hargaLayanan, $quantity);
         }
 
         foreach ($detailRows as $detailRow) {
@@ -153,10 +154,25 @@ class PemeriksaanRegistrasiService
                     'tipe' => 'layanan',
                     'id' => $layanan['id'] ?? null,
                     'harga' => $layanan['harga'] ?? null,
+                    'qty' => $layanan['qty'] ?? 1,
                 ];
             })
             ->values()
             ->all();
+    }
+
+    private function accumulateDetailRow(array &$detailRows, string $layananId, int $hargaSatuan, int $quantity): void
+    {
+        if (!array_key_exists($layananId, $detailRows)) {
+            $detailRows[$layananId] = [
+                'jenis_layanan_id' => $layananId,
+                'harga' => 0,
+                'qty' => 0,
+            ];
+        }
+
+        $detailRows[$layananId]['harga'] += $hargaSatuan * $quantity;
+        $detailRows[$layananId]['qty'] += $quantity;
     }
 
     private function resolveLayananPrice(JenisLayanan $layanan, string $jenisPasien): int

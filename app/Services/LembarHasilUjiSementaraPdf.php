@@ -328,19 +328,27 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
             }
 
             $itemId = $item['id'] ?? '';
-            $itemKey = 'item:' . $itemId;
+            $detailPemeriksaanId = $item['detail_pemeriksaan_id'] ?? '';
+            $itemKe = (int) ($item['item_ke'] ?? 1);
+            $itemKey = 'item:' . $itemId . ':' . $detailPemeriksaanId . ':' . $itemKe;
             if ($showRow && !isset($renderedIds[$itemKey])) {
-                $savedResult = $savedResults[$itemId] ?? null;
+                $savedResult = $savedResults[$itemKey] ?? null;
                 $hasilValue = $savedResult?->hasil ?? '';
                 if (($savedResult?->status ?? null) === 'tidak_normal') {
                     $hasilValue = $hasilValue !== '' ? $hasilValue . ' *' : '*';
                 }
 
                 $indent = $depth > 0 ? str_repeat('  ', $depth) . '- ' : '';
+                $detailQty = max(1, (int) ($item['detail_qty'] ?? 1));
+                $parameterLabel = $indent . ($item['name'] ?? '-');
+                if ($detailQty > 1) {
+                    $parameterLabel .= ' (' . $itemKe . '/' . $detailQty . ')';
+                }
+
                 $rows[] = [
                     'type' => 'result',
                     'cells' => [
-                        $indent . ($item['name'] ?? '-'),
+                        $parameterLabel,
                         $hasilValue,
                         $savedResult?->satuan ?? ($item['satuan'] ?? '-'),
                         $savedResult?->nilai_rujukan ?: $this->formatReferenceRangesFromArray($item['reference_ranges'] ?? []),
@@ -365,9 +373,18 @@ class LembarHasilUjiSementaraPdf extends HasilPemeriksaanPdf
     protected function getTemporaryResultRows(): array
     {
         $savedResults = $this->pemeriksaan->hasilPemeriksaan()
-            ->with(['itemPemeriksaan.parent', 'itemPemeriksaan.referenceRanges'])
+            ->with(['detailPemeriksaan', 'itemPemeriksaan.parent', 'itemPemeriksaan.referenceRanges'])
             ->get()
-            ->keyBy('item_pemeriksaan_id')
+            ->mapWithKeys(function ($hasil) {
+                $key = 'item:'
+                    . ($hasil->item_pemeriksaan_id ?? '')
+                    . ':'
+                    . ($hasil->detail_pemeriksaan_id ?? '')
+                    . ':'
+                    . (int) ($hasil->item_ke ?? 1);
+
+                return [$key => $hasil];
+            })
             ->all();
 
         $rows = [];

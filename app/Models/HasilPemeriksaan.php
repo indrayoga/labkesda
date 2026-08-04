@@ -27,6 +27,11 @@ class HasilPemeriksaan extends Model
         return $this->belongsTo(Pemeriksaan::class);
     }
 
+    public function detailPemeriksaan()
+    {
+        return $this->belongsTo(DetailPemeriksaan::class, 'detail_pemeriksaan_id');
+    }
+
     public function itemPemeriksaan()
     {
         return $this->belongsTo(ItemPemeriksaan::class);

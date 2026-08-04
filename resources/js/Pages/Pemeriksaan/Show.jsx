@@ -3,6 +3,24 @@ import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Button, Select, Textarea, TextInput } from 'flowbite-react';
 
+const buildResultKey = (itemPemeriksaanId, detailPemeriksaanId, itemKe = 1) =>
+  [itemPemeriksaanId, detailPemeriksaanId || 'detail', itemKe].join('::');
+
+const findResultEntry = (
+  hasil = [],
+  itemPemeriksaanId,
+  detailPemeriksaanId,
+  itemKe = 1,
+) =>
+  hasil.find(
+    (entry) =>
+      buildResultKey(
+        entry.item_pemeriksaan_id,
+        entry.detail_pemeriksaan_id,
+        entry.item_ke ?? 1,
+      ) === buildResultKey(itemPemeriksaanId, detailPemeriksaanId, itemKe),
+  );
+
 const formatReferenceRanges = (ranges = []) => {
   if (!ranges.length) {
     return '-';
@@ -39,24 +57,39 @@ const PemeriksaanRows = ({
   onChangeStatus = () => {},
 }) => {
   return items.map((item) => {
+    const resultEntry = findResultEntry(
+      hasil,
+      item.id,
+      item.detail_pemeriksaan_id,
+      item.item_ke,
+    );
     const isGroup = Array.isArray(item.children) && item.children.length > 0;
     const showRow =
       !isGroup || item.satuan || item.metode || item.reference_ranges?.length;
+    const itemLabelSuffix =
+      Number(item.detail_qty || 1) > 1
+        ? ` (${item.item_ke}/${item.detail_qty})`
+        : '';
 
     return (
-      <div key={item.id}>
+      <div
+        key={buildResultKey(item.id, item.detail_pemeriksaan_id, item.item_ke)}
+      >
         {isGroup && (
           <div className="grid grid-cols-12 items-center bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
             <div className="col-span-12 flex items-center gap-2">
               <span className="text-slate-400" aria-hidden="true">
                 ▸
               </span>
-              <span>{item.name}</span>
+              <span>
+                {item.name}
+                {itemLabelSuffix}
+              </span>
             </div>
           </div>
         )}
 
-        {showRow == true && (
+        {showRow === true && (
           <div className="grid grid-cols-12 items-center px-4 py-3 text-sm text-slate-700">
             <div className="col-span-3 font-medium text-slate-900">
               <div
@@ -68,24 +101,58 @@ const PemeriksaanRows = ({
                     └
                   </span>
                 )}
-                <span>{item.name}</span>
+                <div>
+                  <div>{item.name}</div>
+                  {/* {itemLabelSuffix && (
+                    <div className="text-xs font-normal text-slate-500">
+                      Pengulangan ke-{item.item_ke} dari {item.detail_qty}
+                    </div>
+                  )} */}
+                </div>
               </div>
             </div>
             <div className="col-span-2">
               <TextInput
                 type="text"
-                value={
-                  hasil.find((h) => h.item_pemeriksaan_id === item.id)?.hasil ??
-                  ''
+                value={resultEntry?.hasil ?? ''}
+                onChange={(e) =>
+                  onChangeHasil(
+                    item.id,
+                    item.detail_pemeriksaan_id,
+                    item.item_ke,
+                    e.target.value,
+                  )
                 }
-                onChange={(e) => onChangeHasil(item.id, e.target.value)}
               />
               <InputError
                 message={
                   errors &&
-                  errors.find((err) => err.item_pemeriksaan_id === item.id)
-                    ? errors.find((err) => err.item_pemeriksaan_id === item.id)
-                        .hasil
+                  errors.find(
+                    (err) =>
+                      buildResultKey(
+                        err.item_pemeriksaan_id,
+                        err.detail_pemeriksaan_id,
+                        err.item_ke ?? 1,
+                      ) ===
+                      buildResultKey(
+                        item.id,
+                        item.detail_pemeriksaan_id,
+                        item.item_ke,
+                      ),
+                  )
+                    ? errors.find(
+                        (err) =>
+                          buildResultKey(
+                            err.item_pemeriksaan_id,
+                            err.detail_pemeriksaan_id,
+                            err.item_ke ?? 1,
+                          ) ===
+                          buildResultKey(
+                            item.id,
+                            item.detail_pemeriksaan_id,
+                            item.item_ke,
+                          ),
+                      ).hasil
                     : ''
                 }
                 className="mt-2"
@@ -102,11 +169,15 @@ const PemeriksaanRows = ({
             </div>
             <div className="col-span-1">
               <Select
-                value={
-                  hasil.find((h) => h.item_pemeriksaan_id === item.id)
-                    ?.status ?? ''
+                value={resultEntry?.status ?? ''}
+                onChange={(e) =>
+                  onChangeStatus(
+                    item.id,
+                    item.detail_pemeriksaan_id,
+                    item.item_ke,
+                    e.target.value,
+                  )
                 }
-                onChange={(e) => onChangeStatus(item.id, e.target.value)}
               >
                 <option value="">Pilih</option>
                 <option value="normal">Normal</option>
@@ -115,9 +186,32 @@ const PemeriksaanRows = ({
               <InputError
                 message={
                   errors &&
-                  errors.find((err) => err.item_pemeriksaan_id === item.id)
-                    ? errors.find((err) => err.item_pemeriksaan_id === item.id)
-                        .status
+                  errors.find(
+                    (err) =>
+                      buildResultKey(
+                        err.item_pemeriksaan_id,
+                        err.detail_pemeriksaan_id,
+                        err.item_ke ?? 1,
+                      ) ===
+                      buildResultKey(
+                        item.id,
+                        item.detail_pemeriksaan_id,
+                        item.item_ke,
+                      ),
+                  )
+                    ? errors.find(
+                        (err) =>
+                          buildResultKey(
+                            err.item_pemeriksaan_id,
+                            err.detail_pemeriksaan_id,
+                            err.item_ke ?? 1,
+                          ) ===
+                          buildResultKey(
+                            item.id,
+                            item.detail_pemeriksaan_id,
+                            item.item_ke,
+                          ),
+                      ).status
                     : ''
                 }
                 className="mt-2"
@@ -140,73 +234,108 @@ const PemeriksaanRows = ({
 };
 
 export default function Show({ pemeriksaan, pemeriksaanItems, analisLab }) {
-  const { data, setData, post, processing, errors, recentlySuccessful, reset } =
-    useForm({
-      nomor_sampel: pemeriksaan.nomor_sampel || '',
-      tanggal_sampling:
-        pemeriksaan.tanggal_sampling || new Date().toISOString().split('T')[0],
-      jam_sampling:
-        pemeriksaan.jam_sampling ||
-        new Date().toISOString().split('T')[1].substring(0, 5),
-      tanggal_sampel_diterima:
-        pemeriksaan.tanggal_sampel_diterima ||
-        new Date().toISOString().split('T')[0],
-      jam_sampel_diterima:
-        pemeriksaan.jam_sampel_diterima ||
-        new Date().toISOString().split('T')[1].substring(0, 5),
-      tanggal_hasil_selesai:
-        pemeriksaan.tanggal_hasil_selesai ||
-        new Date().toISOString().split('T')[0],
-      jam_hasil_selesai:
-        pemeriksaan.jam_hasil_selesai ||
-        new Date().toISOString().split('T')[1].substring(0, 5),
-      keterangan: pemeriksaan.keterangan || '',
-      hasil_pemeriksaan:
-        pemeriksaan.hasil_pemeriksaan?.map((h) => ({
-          item_pemeriksaan_id: h.item_pemeriksaan_id,
-          hasil: h.hasil,
-          status: h.status,
-        })) || [],
-      petugas: pemeriksaan.petugas_pemeriksaan?.map((p) => p.user_id) || [],
-      petugas_validasi:
-        pemeriksaan.petugas_validasi?.map((p) => p.user_id) || [],
-    });
+  const { data, setData, post, processing, errors } = useForm({
+    nomor_sampel: pemeriksaan.nomor_sampel || '',
+    tanggal_sampling:
+      pemeriksaan.tanggal_sampling || new Date().toISOString().split('T')[0],
+    jam_sampling:
+      pemeriksaan.jam_sampling ||
+      new Date().toISOString().split('T')[1].substring(0, 5),
+    tanggal_sampel_diterima:
+      pemeriksaan.tanggal_sampel_diterima ||
+      new Date().toISOString().split('T')[0],
+    jam_sampel_diterima:
+      pemeriksaan.jam_sampel_diterima ||
+      new Date().toISOString().split('T')[1].substring(0, 5),
+    tanggal_hasil_selesai:
+      pemeriksaan.tanggal_hasil_selesai ||
+      new Date().toISOString().split('T')[0],
+    jam_hasil_selesai:
+      pemeriksaan.jam_hasil_selesai ||
+      new Date().toISOString().split('T')[1].substring(0, 5),
+    keterangan: pemeriksaan.keterangan || '',
+    hasil_pemeriksaan:
+      pemeriksaan.hasil_pemeriksaan?.map((h) => ({
+        detail_pemeriksaan_id: h.detail_pemeriksaan_id,
+        item_pemeriksaan_id: h.item_pemeriksaan_id,
+        item_ke: h.item_ke ?? 1,
+        hasil: h.hasil,
+        status: h.status,
+      })) || [],
+    petugas: pemeriksaan.petugas_pemeriksaan?.map((p) => p.user_id) || [],
+    petugas_validasi: pemeriksaan.petugas_validasi?.map((p) => p.user_id) || [],
+  });
 
-  const handleChangeHasil = (itemId, value) => {
+  const handleChangeHasil = (itemId, detailPemeriksaanId, itemKe, value) => {
+    const entryKey = buildResultKey(itemId, detailPemeriksaanId, itemKe);
     const existing = data.hasil_pemeriksaan.find(
-      (h) => h.item_pemeriksaan_id === itemId,
+      (h) =>
+        buildResultKey(
+          h.item_pemeriksaan_id,
+          h.detail_pemeriksaan_id,
+          h.item_ke ?? 1,
+        ) === entryKey,
     );
+
     if (existing) {
       setData(
         'hasil_pemeriksaan',
         data.hasil_pemeriksaan.map((h) =>
-          h.item_pemeriksaan_id === itemId ? { ...h, hasil: value } : h,
+          buildResultKey(
+            h.item_pemeriksaan_id,
+            h.detail_pemeriksaan_id,
+            h.item_ke ?? 1,
+          ) === entryKey
+            ? { ...h, hasil: value }
+            : h,
         ),
       );
     } else {
       setData('hasil_pemeriksaan', [
         ...data.hasil_pemeriksaan,
-        { item_pemeriksaan_id: itemId, hasil: value },
+        {
+          detail_pemeriksaan_id: detailPemeriksaanId,
+          item_pemeriksaan_id: itemId,
+          item_ke: itemKe,
+          hasil: value,
+        },
       ]);
     }
-    console.log(data);
   };
 
-  const handleChangeStatus = (itemId, status) => {
+  const handleChangeStatus = (itemId, detailPemeriksaanId, itemKe, status) => {
+    const entryKey = buildResultKey(itemId, detailPemeriksaanId, itemKe);
     const existing = data.hasil_pemeriksaan.find(
-      (h) => h.item_pemeriksaan_id === itemId,
+      (h) =>
+        buildResultKey(
+          h.item_pemeriksaan_id,
+          h.detail_pemeriksaan_id,
+          h.item_ke ?? 1,
+        ) === entryKey,
     );
+
     if (existing) {
       setData(
         'hasil_pemeriksaan',
         data.hasil_pemeriksaan.map((h) =>
-          h.item_pemeriksaan_id === itemId ? { ...h, status: status } : h,
+          buildResultKey(
+            h.item_pemeriksaan_id,
+            h.detail_pemeriksaan_id,
+            h.item_ke ?? 1,
+          ) === entryKey
+            ? { ...h, status }
+            : h,
         ),
       );
     } else {
       setData('hasil_pemeriksaan', [
         ...data.hasil_pemeriksaan,
-        { item_pemeriksaan_id: itemId, status: status },
+        {
+          detail_pemeriksaan_id: detailPemeriksaanId,
+          item_pemeriksaan_id: itemId,
+          item_ke: itemKe,
+          status,
+        },
       ]);
     }
   };
@@ -480,8 +609,13 @@ export default function Show({ pemeriksaan, pemeriksaanItems, analisLab }) {
               </div>
               <div className="divide-y divide-slate-100">
                 {pemeriksaanItems.length > 0 &&
-                  pemeriksaanItems.map((item) => (
+                  pemeriksaanItems.map((item, index) => (
                     <PemeriksaanRows
+                      key={buildResultKey(
+                        item[0]?.id || `group-${index}`,
+                        item[0]?.detail_pemeriksaan_id,
+                        item[0]?.item_ke,
+                      )}
                       items={item}
                       hasil={data.hasil_pemeriksaan}
                       errors={errors?.hasil_pemeriksaan}

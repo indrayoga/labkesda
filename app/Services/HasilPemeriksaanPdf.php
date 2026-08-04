@@ -405,15 +405,17 @@ class HasilPemeriksaanPdf extends FPDF
     protected function resultTable()
     {
         $results = $this->pemeriksaan->hasilPemeriksaan()
-            ->with(['itemPemeriksaan.parent', 'itemPemeriksaan.referenceRanges'])
+            ->with(['detailPemeriksaan', 'itemPemeriksaan.parent', 'itemPemeriksaan.referenceRanges'])
             ->get()
             ->sortBy(function ($hasil) {
                 $parent = $hasil->itemPemeriksaan?->parent;
                 $parentOrder = $parent?->urut ?? 0;
                 $itemOrder = $hasil->itemPemeriksaan?->urut ?? 0;
                 $parentName = $parent?->nama ?? '';
+                $detailId = $hasil->detail_pemeriksaan_id ?? '';
+                $itemKe = (int) ($hasil->item_ke ?? 1);
 
-                return sprintf('%04d-%s-%04d', $parentOrder, $parentName, $itemOrder);
+                return sprintf('%04d-%s-%04d-%s-%04d', $parentOrder, $parentName, $itemOrder, $detailId, $itemKe);
             });
 
         $this->SetFillColor(230, 230, 230);
@@ -454,10 +456,15 @@ class HasilPemeriksaanPdf extends FPDF
             if ($hasil->status === 'tidak_normal') {
                 $hasilValue = $hasilValue !== '' ? $hasilValue . ' *' : '*';
             }
+            $detailQty = max(1, (int) ($hasil->detailPemeriksaan?->qty ?? 1));
+            $parameterLabel = $item->nama ?? '-';
+            if ($detailQty > 1) {
+                $parameterLabel .= ' (' . ((int) ($hasil->item_ke ?? 1)) . '/' . $detailQty . ')';
+            }
 
             $this->tableRow(
                 [
-                    $item->nama ?? '-',
+                    $parameterLabel,
                     $hasilValue,
                     $hasil->satuan ?? $item->satuan ?? '-',
                     $nilaiRujukan,
@@ -477,6 +484,7 @@ class HasilPemeriksaanPdf extends FPDF
         $this->Cell(0, 5, 'Catatan:', 0, 1);
         $this->Cell(0, 4, '- spesimen layak diperiksa', 0, 1);
         $this->Cell(0, 4, '- tanda * untuk hasil abnormal', 0, 1);
+        $this->Cell(0, 4, '- angka dalam kurung menunjukkan pengulangan hasil sesuai qty pemeriksaan', 0, 1);
         $this->Ln(2);
     }
 
@@ -539,6 +547,8 @@ class HasilPemeriksaanPdf extends FPDF
         $this->Cell(0, 4, '- spesimen layak diperiksa', 0, 1);
         $this->SetX($leftX);
         $this->Cell(0, 4, '- tanda * untuk hasil abnormal', 0, 1);
+        $this->SetX($leftX);
+        $this->Cell(0, 4, '- angka dalam kurung menunjukkan pengulangan hasil sesuai qty pemeriksaan', 0, 1);
 
         // Right side for signature date and authorization
         $this->SetY($startY); // Reset Y to align with top of pemeriksa

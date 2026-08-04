@@ -4,7 +4,7 @@ import LabkesdaLayout from '@/Layouts/LabkesdaLayout';
 import { Head, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { Button, Checkbox, Label, Select, Textarea } from 'flowbite-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const flattenLayananMap = (kategoriLayanans) => {
   const map = {};
@@ -18,39 +18,148 @@ const flattenLayananMap = (kategoriLayanans) => {
   return map;
 };
 
-const buildInitialSelectedItems = (pemeriksaan, paketLayanan) => {
+const normalizeQuantity = (value) => {
+  const parsedValue = Number.parseInt(value, 10);
+
+  if (Number.isNaN(parsedValue) || parsedValue < 1) {
+    return 1;
+  }
+
+  return parsedValue;
+};
+
+const formatCurrency = (value) =>
+  `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+
+const resolvePackageChildren = (paket, layananMap = {}) =>
+  (paket?.jenis_layanan || []).map((child) => layananMap[child.id] || child);
+
+const calculateChildrenUnitPrice = (children = []) =>
+  children.reduce((total, child) => total + (Number(child.harga) || 0), 0);
+
+const createSelectedItem = ({
+  tipe,
+  id,
+  nama,
+  hargaSatuan,
+  qty = 1,
+  children = [],
+  kategori = '',
+}) => {
+  const normalizedQuantity = normalizeQuantity(qty);
+  const normalizedUnitPrice = Number(hargaSatuan) || 0;
+
+  return {
+    tipe,
+    id,
+    nama,
+    kategori,
+    qty: normalizedQuantity,
+    hargaSatuan: normalizedUnitPrice,
+    harga: normalizedUnitPrice * normalizedQuantity,
+    children,
+  };
+};
+
+const syncSelectedItemPricing = (item, layananMap) => {
+  const normalizedQuantity = normalizeQuantity(item.qty);
+
+  if (item.tipe === 'paket') {
+    const nextChildren = (item.children || []).map(
+      (child) => layananMap[child.id] || child,
+    );
+    const hargaSatuan = calculateChildrenUnitPrice(nextChildren);
+
+    return {
+      ...item,
+      qty: normalizedQuantity,
+      children: nextChildren,
+      hargaSatuan,
+      harga: hargaSatuan * normalizedQuantity,
+    };
+  }
+
+  const nextLayanan = layananMap[item.id];
+  const fallbackUnitPrice =
+    Number(item.hargaSatuan) ||
+    Math.round((Number(item.harga) || 0) / normalizedQuantity);
+  const hargaSatuan = Number(nextLayanan?.harga) || fallbackUnitPrice || 0;
+
+  return {
+    ...item,
+    qty: normalizedQuantity,
+    nama: nextLayanan?.nama || item.nama,
+    hargaSatuan,
+    harga: hargaSatuan * normalizedQuantity,
+  };
+};
+
+const buildInitialSelectedItems = (
+  pemeriksaan,
+  paketLayanan,
+  kategoriLayanans,
+) => {
+  const layananMap = flattenLayananMap(kategoriLayanans);
+  const detailMap = new Map(
+    (pemeriksaan?.detail_pemeriksaan || []).map((detail) => [
+      detail.jenis_layanan_id,
+      detail,
+    ]),
+  );
+
   if (pemeriksaan?.layanan_order?.length) {
     return pemeriksaan.layanan_order.map((item) => {
       if (item.tipe === 'paket') {
         const paket = (paketLayanan || []).find(
           (currentPaket) => currentPaket.id === item.paket_pemeriksaan_id,
         );
+        const children = resolvePackageChildren(paket, layananMap);
+        const hargaSatuan = calculateChildrenUnitPrice(children);
+        const inferredQuantity =
+          hargaSatuan > 0 && Number(item.harga) > 0
+            ? Math.max(1, Math.round(Number(item.harga) / hargaSatuan))
+            : 1;
 
-        return {
+        return createSelectedItem({
           tipe: 'paket',
           id: item.paket_pemeriksaan_id,
           nama: item.nama_snapshot,
-          harga: item.harga || 0,
-          children: paket?.jenis_layanan || [],
-        };
+          hargaSatuan,
+          qty: inferredQuantity,
+          children,
+          kategori: 'Paket pemeriksaan',
+        });
       }
 
-      return {
+      const detail = detailMap.get(item.jenis_layanan_id);
+      const quantity = normalizeQuantity(detail?.qty ?? 1);
+      const totalPrice = Number(item.harga ?? detail?.harga) || 0;
+      const unitPrice = quantity > 0 ? Math.round(totalPrice / quantity) : 0;
+
+      return createSelectedItem({
         tipe: 'layanan',
         id: item.jenis_layanan_id,
         nama: item.nama_snapshot,
-        harga: item.harga || 0,
-      };
+        hargaSatuan: unitPrice,
+        qty: quantity,
+      });
     });
   }
 
   return (
-    pemeriksaan?.detail_pemeriksaan?.map((detail) => ({
-      tipe: 'layanan',
-      id: detail.jenis_layanan_id,
-      nama: detail.jenis_layanan?.nama || '',
-      harga: detail.harga || 0,
-    })) || []
+    pemeriksaan?.detail_pemeriksaan?.map((detail) => {
+      const quantity = normalizeQuantity(detail.qty ?? 1);
+      const totalPrice = Number(detail.harga) || 0;
+      const unitPrice = quantity > 0 ? Math.round(totalPrice / quantity) : 0;
+
+      return createSelectedItem({
+        tipe: 'layanan',
+        id: detail.jenis_layanan_id,
+        nama: detail.jenis_layanan?.nama || '',
+        hargaSatuan: unitPrice,
+        qty: quantity,
+      });
+    }) || []
   );
 };
 
@@ -66,9 +175,15 @@ export default function PendaftaranLaboratorium({
   const [currentStep, setCurrentStep] = useState(1);
   const [jenisPasienQuery, setJenisPasienQuery] = useState('');
   const [showJenisPasienOptions, setShowJenisPasienOptions] = useState(false);
-  const [selectedItems, setSelectedItems] = useState(() =>
-    buildInitialSelectedItems(pemeriksaan, paketLayanan),
+  const [itemQuery, setItemQuery] = useState('');
+  const [itemTypeFilter, setItemTypeFilter] = useState('all');
+  const [showItemOptions, setShowItemOptions] = useState(false);
+  const initialSelectedItems = useMemo(
+    () =>
+      buildInitialSelectedItems(pemeriksaan, paketLayanan, kategoriLayanans),
+    [pemeriksaan, paketLayanan, kategoriLayanans],
   );
+  const [selectedItems, setSelectedItems] = useState(initialSelectedItems);
   const [listKategoriLayanans, setListKategoriLayanans] =
     useState(kategoriLayanans);
 
@@ -102,14 +217,77 @@ export default function PendaftaranLaboratorium({
     jenis_kelamin_penanggung_jawab:
       pemeriksaan?.jenis_kelamin_penanggung_jawab || '',
     id_spesimen: pemeriksaan?.id_spesimen || idSpesimenTerakhir || '',
-    items: buildInitialSelectedItems(pemeriksaan, paketLayanan).map((item) => ({
+    items: initialSelectedItems.map((item) => ({
       tipe: item.tipe,
       id: item.id,
       harga: item.harga,
+      qty: item.qty,
     })),
   });
 
   const layananMap = flattenLayananMap(listKategoriLayanans);
+  const selectedItemKeys = useMemo(
+    () => new Set(selectedItems.map((item) => `${item.tipe}-${item.id}`)),
+    [selectedItems],
+  );
+  const availableItems = useMemo(() => {
+    const paketItems = (paketLayanan || []).map((paket) => {
+      const children = resolvePackageChildren(paket, layananMap);
+
+      return createSelectedItem({
+        tipe: 'paket',
+        id: paket.id,
+        nama: paket.nama,
+        kategori: 'Paket pemeriksaan',
+        hargaSatuan: calculateChildrenUnitPrice(children),
+        children,
+      });
+    });
+
+    const layananItems = Object.entries(listKategoriLayanans || {}).flatMap(
+      ([namaKategori, layanans]) =>
+        (layanans || []).map((layanan) =>
+          createSelectedItem({
+            tipe: 'layanan',
+            id: layanan.id,
+            nama: layanan.nama,
+            kategori: namaKategori,
+            hargaSatuan: Number(layanan.harga) || 0,
+          }),
+        ),
+    );
+
+    return [...paketItems, ...layananItems];
+  }, [paketLayanan, listKategoriLayanans, layananMap]);
+  const filteredAvailableItems = useMemo(() => {
+    const query = itemQuery.trim().toLowerCase();
+
+    return availableItems
+      .filter(
+        (item) => itemTypeFilter === 'all' || item.tipe === itemTypeFilter,
+      )
+      .filter((item) => {
+        if (!query) return true;
+
+        return (
+          item.nama?.toLowerCase().includes(query) ||
+          item.kategori?.toLowerCase().includes(query) ||
+          String(item.id).toLowerCase().includes(query) ||
+          (item.children || []).some((child) =>
+            child.nama?.toLowerCase().includes(query),
+          )
+        );
+      })
+      .slice(0, 12);
+  }, [availableItems, itemQuery, itemTypeFilter]);
+  const totalSelectedPrice = useMemo(
+    () =>
+      selectedItems.reduce(
+        (total, item) => total + (Number(item.harga) || 0),
+        0,
+      ),
+    [selectedItems],
+  );
   const overlapWarnings = selectedItems
     .filter((item) => item.tipe === 'layanan')
     .filter((item) =>
@@ -157,30 +335,9 @@ export default function PendaftaranLaboratorium({
     const nextLayananMap = flattenLayananMap(listKategoriLayanans);
 
     setSelectedItems((prev) => {
-      const nextItems = prev.map((item) => {
-        if (item.tipe === 'paket') {
-          const nextChildren = (item.children || []).map(
-            (child) => nextLayananMap[child.id] || child,
-          );
-
-          return {
-            ...item,
-            children: nextChildren,
-            harga: nextChildren.reduce(
-              (total, child) => total + (Number(child.harga) || 0),
-              0,
-            ),
-          };
-        }
-
-        const nextLayanan = nextLayananMap[item.id];
-
-        return {
-          ...item,
-          nama: nextLayanan?.nama || item.nama,
-          harga: Number(nextLayanan?.harga) || 0,
-        };
-      });
+      const nextItems = prev.map((item) =>
+        syncSelectedItemPricing(item, nextLayananMap),
+      );
 
       setData(
         'items',
@@ -188,6 +345,7 @@ export default function PendaftaranLaboratorium({
           tipe: item.tipe,
           id: item.id,
           harga: item.harga,
+          qty: item.qty,
         })),
       );
 
@@ -259,13 +417,17 @@ export default function PendaftaranLaboratorium({
 
   const syncSelectedItems = (updater) => {
     setSelectedItems((prev) => {
-      const nextItems = updater(prev);
+      const nextItems = updater(prev).map((item) =>
+        syncSelectedItemPricing(item, layananMap),
+      );
+
       setData(
         'items',
         nextItems.map((item) => ({
           tipe: item.tipe,
           id: item.id,
           harga: item.harga,
+          qty: item.qty,
         })),
       );
 
@@ -273,60 +435,107 @@ export default function PendaftaranLaboratorium({
     });
   };
 
-  const handlePaketToggle = (paket) => {
+  const handleRemoveSelectedItem = (itemToRemove) => {
     syncSelectedItems((prev) => {
-      const exists = prev.some(
-        (item) => item.tipe === 'paket' && item.id === paket.id,
+      return prev.filter(
+        (item) =>
+          !(item.tipe === itemToRemove.tipe && item.id === itemToRemove.id),
       );
-
-      if (exists) {
-        return prev.filter(
-          (item) => !(item.tipe === 'paket' && item.id === paket.id),
-        );
-      }
-
-      const children = (paket.jenis_layanan || []).map(
-        (child) => layananMap[child.id] || child,
-      );
-
-      return [
-        ...prev,
-        {
-          tipe: 'paket',
-          id: paket.id,
-          nama: paket.nama,
-          harga: children.reduce(
-            (total, child) => total + (Number(child.harga) || 0),
-            0,
-          ),
-          children,
-        },
-      ];
     });
   };
 
-  const handleLayananToggle = (layanan) => {
+  const handleSelectedItemQuantityChange = (itemToUpdate, nextQuantity) => {
+    syncSelectedItems((prev) =>
+      prev.map((item) => {
+        if (item.tipe !== itemToUpdate.tipe || item.id !== itemToUpdate.id) {
+          return item;
+        }
+
+        return {
+          ...item,
+          qty: normalizeQuantity(nextQuantity),
+        };
+      }),
+    );
+  };
+
+  const addSelectedItem = (nextItem) => {
     syncSelectedItems((prev) => {
       const exists = prev.some(
-        (item) => item.tipe === 'layanan' && item.id === layanan.id,
+        (item) => item.tipe === nextItem.tipe && item.id === nextItem.id,
       );
 
       if (exists) {
-        return prev.filter(
-          (item) => !(item.tipe === 'layanan' && item.id === layanan.id),
-        );
+        return prev;
       }
 
-      return [
-        ...prev,
-        {
-          tipe: 'layanan',
-          id: layanan.id,
-          nama: layanan.nama,
-          harga: Number(layanan.harga) || 0,
-        },
-      ];
+      return [...prev, nextItem];
     });
+
+    setItemQuery('');
+    setShowItemOptions(false);
+  };
+
+  const buildPaketItem = (paket) => {
+    const children = resolvePackageChildren(paket, layananMap);
+
+    return createSelectedItem({
+      tipe: 'paket',
+      id: paket.id,
+      nama: paket.nama,
+      kategori: 'Paket pemeriksaan',
+      hargaSatuan: calculateChildrenUnitPrice(children),
+      children,
+    });
+  };
+
+  const buildLayananItem = (layanan, namaKategori = '') =>
+    createSelectedItem({
+      tipe: 'layanan',
+      id: layanan.id,
+      nama: layanan.nama,
+      kategori: namaKategori,
+      hargaSatuan: Number(layanan.harga) || 0,
+    });
+
+  const togglePaketSelection = (paket) => {
+    const itemKey = `paket-${paket.id}`;
+
+    if (selectedItemKeys.has(itemKey)) {
+      handleRemoveSelectedItem({ tipe: 'paket', id: paket.id });
+      return;
+    }
+
+    addSelectedItem(buildPaketItem(paket));
+  };
+
+  const toggleLayananSelection = (layanan, namaKategori = '') => {
+    const itemKey = `layanan-${layanan.id}`;
+
+    if (selectedItemKeys.has(itemKey)) {
+      handleRemoveSelectedItem({ tipe: 'layanan', id: layanan.id });
+      return;
+    }
+
+    addSelectedItem(buildLayananItem(layanan, namaKategori));
+  };
+
+  const handleSearchItemSelect = (item) => {
+    addSelectedItem(item);
+  };
+
+  const handleItemSearchCommit = () => {
+    if (!itemQuery.trim()) {
+      setShowItemOptions(false);
+      return;
+    }
+
+    if (filteredAvailableItems.length === 0) {
+      setShowItemOptions(false);
+      return;
+    }
+
+    handleSearchItemSelect(filteredAvailableItems[0]);
   };
 
   const handleSubmit = (e) => {
@@ -1048,168 +1257,443 @@ export default function PendaftaranLaboratorium({
               {/* Step 2: Pilih Layanan */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <h2 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-                    Pilih Layanan Laboratorium
-                  </h2>
-                  <div
-                    key={''}
-                    className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/50"
-                  >
-                    <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-white">
-                      Paket
-                    </h3>
-                    <div className="space-y-2">
-                      {paketLayanan && paketLayanan.length > 0 ? (
-                        paketLayanan.map((paket) => (
-                          <label
-                            key={paket.id}
-                            className="flex cursor-pointer items-start gap-3 rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                          >
-                            <Checkbox
-                              id={`layanan_${paket.id}`}
-                              type="checkbox"
-                              checked={selectedItems.some(
-                                (item) =>
-                                  item.tipe === 'paket' && item.id === paket.id,
-                              )}
-                              onChange={() => handlePaketToggle(paket)}
-                              className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-                            />
-                            <div className="flex flex-1 flex-col gap-1">
-                              <div className="flex flex-row justify-between">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-300">
-                                  {paket.nama}
-                                </div>
-                                <div className="mt-0.5 text-xs text-blue-600 dark:text-blue-400">
-                                  Rp{' '}
-                                  {(paket.jenis_layanan || [])
-                                    .reduce(
-                                      (total, child) =>
-                                        total +
-                                        (Number(layananMap[child.id]?.harga) ||
-                                          0),
-                                      0,
-                                    )
-                                    .toLocaleString('id-ID')}
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {(paket.jenis_layanan || []).length} layanan
-                                {(paket.jenis_layanan || []).length > 0
-                                  ? `: ${(paket.jenis_layanan || [])
-                                      .map((child) => child.nama)
-                                      .join(', ')}`
-                                  : ''}
-                              </div>
-                            </div>
-                          </label>
-                        ))
-                      ) : (
-                        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                          Tidak ada paket tersedia
-                        </div>
-                      )}
+                  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                        Pilih Layanan Laboratorium
+                      </h2>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Cari paket atau layanan, tambahkan ke tabel, lalu atur
+                        qty sesuai kebutuhan.
+                      </p>
+                    </div>
+                    <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                      {selectedItems.length} item terpilih
                     </div>
                   </div>
-                  {listKategoriLayanans &&
-                  Object.keys(listKategoriLayanans).length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {Object.entries(listKategoriLayanans).map(
-                        ([namaKategori, layanans]) => (
-                          <div
-                            key={namaKategori}
-                            className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/50"
-                          >
-                            <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-white">
-                              {namaKategori}
-                            </h3>
-                            <div className="space-y-2">
-                              {layanans?.map((layanan) => (
-                                <label
-                                  key={layanan.id}
-                                  className="flex cursor-pointer items-start gap-3 rounded-md p-1 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                                >
-                                  <Checkbox
-                                    id={`layanan_${layanan.id}`}
-                                    type="checkbox"
-                                    checked={selectedItems.some(
-                                      (item) =>
-                                        item.tipe === 'layanan' &&
-                                        item.id === layanan.id,
-                                    )}
-                                    onChange={() =>
-                                      handleLayananToggle(layanan)
-                                    }
-                                    className="mt-0.5 h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-                                  />
-                                  <div className="flex flex-1 flex-row justify-between">
-                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-300">
-                                      {layanan.nama}
-                                    </div>
-                                    {layanan.harga && (
-                                      <div className="mt-0.5 text-xs text-blue-600 dark:text-blue-400">
-                                        Rp{' '}
-                                        {parseInt(layanan.harga).toLocaleString(
-                                          'id-ID',
+
+                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/50">
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_200px]">
+                        <div className="relative">
+                          <Label htmlFor="item_query">
+                            Cari paket atau layanan
+                          </Label>
+                          <TextInput
+                            id="item_query"
+                            type="text"
+                            value={itemQuery}
+                            onFocus={() => setShowItemOptions(true)}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setShowItemOptions(false);
+                              }, 150);
+                            }}
+                            onChange={(e) => {
+                              setItemQuery(e.target.value);
+                              setShowItemOptions(true);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleItemSearchCommit();
+                              }
+                            }}
+                            placeholder="Ketik nama layanan, paket, atau kategori"
+                            autoComplete="off"
+                            className="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          />
+
+                          {showItemOptions && (
+                            <div className="absolute z-10 mt-2 max-h-80 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                              {filteredAvailableItems.length > 0 ? (
+                                filteredAvailableItems.map((item) => {
+                                  const itemKey = `${item.tipe}-${item.id}`;
+                                  const isSelected =
+                                    selectedItemKeys.has(itemKey);
+
+                                  return (
+                                    <button
+                                      key={itemKey}
+                                      type="button"
+                                      onMouseDown={(e) => e.preventDefault()}
+                                      onClick={() =>
+                                        handleSearchItemSelect(item)
+                                      }
+                                      disabled={isSelected}
+                                      className="flex w-full items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 dark:disabled:bg-gray-800"
+                                    >
+                                      <div>
+                                        <div className="font-medium text-gray-900 dark:text-white">
+                                          {item.nama}
+                                        </div>
+                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                                          {item.tipe === 'paket'
+                                            ? 'Paket pemeriksaan'
+                                            : item.kategori || 'Layanan'}
+                                        </div>
+                                        {item.tipe === 'paket' && (
+                                          <div className="mt-1 text-xs text-gray-400 dark:text-gray-300">
+                                            {(item.children || []).length}{' '}
+                                            layanan:{' '}
+                                            {(item.children || [])
+                                              .map((child) => child.nama)
+                                              .join(', ')}
+                                          </div>
                                         )}
                                       </div>
-                                    )}
-                                  </div>
-                                </label>
-                              ))}
+                                      <div className="text-right">
+                                        <div className="font-semibold text-blue-600 dark:text-blue-400">
+                                          {formatCurrency(item.hargaSatuan)}
+                                        </div>
+                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                                          {isSelected
+                                            ? 'Sudah dipilih'
+                                            : 'Tambah'}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })
+                              ) : (
+                                <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-300">
+                                  Tidak ada item yang cocok dengan pencarian.
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                      Tidak ada layanan tersedia
-                    </div>
-                  )}
+                          )}
+                        </div>
 
-                  {selectedItems.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-                        <p className="text-sm text-blue-800 dark:text-blue-300">
-                          <span className="font-semibold">
-                            {selectedItems.length}
-                          </span>{' '}
-                          item akan tampil di kwitansi
-                        </p>
-                        <div className="mt-3 space-y-2">
-                          {selectedItems.map((item) => (
-                            <div
-                              key={`${item.tipe}-${item.id}`}
-                              className="flex items-start justify-between gap-4 text-sm text-blue-900 dark:text-blue-200"
-                            >
-                              <div>
-                                <div className="font-medium">{item.nama}</div>
-                                {item.tipe === 'paket' && (
-                                  <div className="text-xs text-blue-700 dark:text-blue-300">
-                                    {(item.children || []).length} layanan
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-right font-semibold">
-                                Rp{' '}
-                                {Number(item.harga || 0).toLocaleString(
-                                  'id-ID',
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                        <div>
+                          <Label htmlFor="item_type_filter">
+                            Filter jenis item
+                          </Label>
+                          <Select
+                            id="item_type_filter"
+                            value={itemTypeFilter}
+                            onChange={(e) => setItemTypeFilter(e.target.value)}
+                          >
+                            <option value="all">Semua item</option>
+                            <option value="paket">Paket pemeriksaan</option>
+                            <option value="layanan">Layanan satuan</option>
+                          </Select>
                         </div>
                       </div>
 
+                      <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        Tekan Enter untuk menambahkan hasil teratas dari kotak
+                        pencarian. Gunakan panel di bawah jika ingin menelusuri
+                        berdasarkan paket atau kategori layanan.
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-5 dark:border-blue-800 dark:bg-blue-900/20">
+                      <h3 className="text-base font-semibold text-blue-900 dark:text-blue-200">
+                        Ringkasan Pilihan
+                      </h3>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                        <div className="rounded-lg bg-white/80 p-4 dark:bg-gray-800/70">
+                          <div className="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                            Total item
+                          </div>
+                          <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                            {selectedItems.length}
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-white/80 p-4 dark:bg-gray-800/70">
+                          <div className="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                            Estimasi nilai
+                          </div>
+                          <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                            {formatCurrency(totalSelectedPrice)}
+                          </div>
+                        </div>
+                      </div>
+
+                      {errors.items && (
+                        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+                          {errors.items}
+                        </div>
+                      )}
+
                       {overlapWarnings.length > 0 && (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                           Layanan satuan ini juga sudah tercakup di paket:{' '}
                           {Array.from(new Set(overlapWarnings)).join(', ')}
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                          Tabel Item Terpilih
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Qty akan disimpan ke detail pemeriksaan dan subtotal
+                          dihitung otomatis.
+                        </p>
+                      </div>
+                      <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        Total: {formatCurrency(totalSelectedPrice)}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700/50">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-200">
+                              Item
+                            </th>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-200">
+                              Jenis
+                            </th>
+                            <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-200">
+                              Harga Satuan
+                            </th>
+                            <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-200">
+                              Qty
+                            </th>
+                            <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-200">
+                              Subtotal
+                            </th>
+                            <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-200">
+                              Aksi
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                          {selectedItems.length > 0 ? (
+                            selectedItems.map((item) => (
+                              <tr
+                                key={`${item.tipe}-${item.id}`}
+                                className="align-top"
+                              >
+                                <td className="px-4 py-4">
+                                  <div className="font-medium text-gray-900 dark:text-white">
+                                    {item.nama}
+                                  </div>
+                                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                                    {item.tipe === 'paket'
+                                      ? `${(item.children || []).length} layanan dalam paket`
+                                      : item.kategori || 'Layanan pemeriksaan'}
+                                  </div>
+                                  {item.tipe === 'paket' &&
+                                    (item.children || []).length > 0 && (
+                                      <div className="mt-2 text-xs text-gray-500 dark:text-gray-300">
+                                        {(item.children || [])
+                                          .map((child) => child.nama)
+                                          .join(', ')}
+                                      </div>
+                                    )}
+                                </td>
+                                <td className="px-4 py-4 text-gray-600 dark:text-gray-300">
+                                  {item.tipe === 'paket'
+                                    ? 'Paket'
+                                    : item.kategori || 'Layanan'}
+                                </td>
+                                <td className="px-4 py-4 text-right font-medium text-gray-900 dark:text-white">
+                                  {formatCurrency(item.hargaSatuan)}
+                                </td>
+                                <td className="px-4 py-4">
+                                  <div className="mx-auto max-w-32 text-right">
+                                    <TextInput
+                                      type="number"
+                                      min="1"
+                                      value={item.qty}
+                                      onChange={(e) =>
+                                        handleSelectedItemQuantityChange(
+                                          item,
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-20 text-center"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-right font-semibold text-blue-700 dark:text-blue-300">
+                                  {formatCurrency(item.harga)}
+                                </td>
+                                <td className="px-4 py-4 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveSelectedItem(item)
+                                    }
+                                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                                  >
+                                    Hapus
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan="6"
+                                className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                              >
+                                Belum ada item dipilih. Gunakan pencarian di
+                                atas atau tambah dari daftar paket dan kategori.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    {/* <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                          Paket Pemeriksaan
+                        </h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Quick add
+                        </span>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
+                        {paketLayanan && paketLayanan.length > 0 ? (
+                          paketLayanan.map((paket) => {
+                            const itemKey = `paket-${paket.id}`;
+                            const isSelected = selectedItemKeys.has(itemKey);
+                            const children = resolvePackageChildren(
+                              paket,
+                              layananMap,
+                            );
+
+                            return (
+                              <div
+                                key={paket.id}
+                                className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {paket.nama}
+                                    </div>
+                                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                                      {children.length} layanan
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => togglePaketSelection(paket)}
+                                    className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                                      isSelected
+                                        ? 'border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                  >
+                                    {isSelected ? 'Dipilih' : 'Tambah'}
+                                  </button>
+                                </div>
+                                <div className="mt-3 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                                  {formatCurrency(
+                                    calculateChildrenUnitPrice(children),
+                                  )}
+                                </div>
+                                <div className="mt-2 text-xs text-gray-500 dark:text-gray-300">
+                                  {children
+                                    .map((child) => child.nama)
+                                    .join(', ')}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Tidak ada paket tersedia.
+                          </div>
+                        )}
+                      </div>
+                    </div> */}
+
+                    {/* <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                          Jelajahi per Kategori
+                        </h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Klik tambah untuk masukkan ke tabel
+                        </span>
+                      </div>
+
+                      {listKategoriLayanans &&
+                      Object.keys(listKategoriLayanans).length > 0 ? (
+                        <div className="mt-4 max-h-[34rem] space-y-4 overflow-y-auto pr-1">
+                          {Object.entries(listKategoriLayanans).map(
+                            ([namaKategori, layanans]) => (
+                              <div
+                                key={namaKategori}
+                                className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800"
+                              >
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <div>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {namaKategori}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-300">
+                                      {(layanans || []).length} layanan
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  {(layanans || []).map((layanan) => {
+                                    const itemKey = `layanan-${layanan.id}`;
+                                    const isSelected =
+                                      selectedItemKeys.has(itemKey);
+
+                                    return (
+                                      <div
+                                        key={layanan.id}
+                                        className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-3 dark:border-gray-700"
+                                      >
+                                        <div>
+                                          <div className="font-medium text-gray-900 dark:text-white">
+                                            {layanan.nama}
+                                          </div>
+                                          <div className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+                                            {formatCurrency(layanan.harga)}
+                                          </div>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            toggleLayananSelection(
+                                              layanan,
+                                              namaKategori,
+                                            )
+                                          }
+                                          className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                                            isSelected
+                                              ? 'border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                                          }`}
+                                        >
+                                          {isSelected ? 'Dipilih' : 'Tambah'}
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                          Tidak ada layanan tersedia untuk jenis pasien ini.
+                        </div>
+                      )}
+                    </div> */}
+                  </div>
 
                   {/* Navigation Buttons */}
                   <div className="flex justify-between">
