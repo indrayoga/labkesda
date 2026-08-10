@@ -6,6 +6,7 @@ use App\Http\Controllers\DokterController;
 use App\Http\Controllers\ItemPemeriksaanController;
 use App\Http\Controllers\JenisLayananController;
 use App\Http\Controllers\JenisPasienController;
+use App\Http\Controllers\laporanController;
 use App\Http\Controllers\PaketPemeriksaanController;
 use App\Http\Controllers\PemeriksaanLingkunganController;
 use App\Http\Controllers\PasienController;
@@ -98,6 +99,15 @@ Route::middleware('auth')->group(function () {
         Route::resource('/paket-pemeriksaan', PaketPemeriksaanController::class);
         Route::put('/paket-pemeriksaan/{paketPemeriksaan}/sync-items', [PaketPemeriksaanController::class, 'syncItems'])->name('paket-pemeriksaan.sync-items');
         Route::put('/jenis-layanan/{jenisLayanan}/sync-items', [JenisLayananController::class, 'syncItemPemeriksaan'])->name('jenis-layanan.sync-items');
+    });
+
+    Route::prefix('laporan')->group(function () {
+        Route::get('/pendaftaran-pasien/excel', [laporanController::class, 'exportPendaftaranPasienExcel'])->name('laporan.pendaftaran-pasien.export.excel');
+        Route::get('/pendaftaran-pasien/pdf', [laporanController::class, 'exportPendaftaranPasienPdf'])->name('laporan.pendaftaran-pasien.export.pdf');
+        Route::get('/pendaftaran-pasien', [laporanController::class, 'pendaftaranPasien'])->name('laporan.pendaftaran-pasien');
+        Route::get('/pemeriksaan-pasien/excel', [laporanController::class, 'exportPemeriksaanPasienExcel'])->name('laporan.pemeriksaan-pasien.export.excel');
+        Route::get('/pemeriksaan-pasien/pdf', [laporanController::class, 'exportPemeriksaanPasienPdf'])->name('laporan.pemeriksaan-pasien.export.pdf');
+        Route::get('/pemeriksaan-pasien', [laporanController::class, 'pemeriksaanPasien'])->name('laporan.pemeriksaan-pasien');
     });
 
     Route::get('/fetch-jenis-layanan-with-tarif-by-jenis-pasien', [JenisLayananController::class, 'jenisLayananWithTarifByJenisPasien'])->name('jenis-layanan.jenis-pasien');

@@ -1,4 +1,4 @@
-import { HelperText } from "flowbite-react";
+import { HelperText } from 'flowbite-react';
 
 export default function InputError({ message, className = '', ...props }) {
     return message ? (

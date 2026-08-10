@@ -13,9 +13,11 @@ import { useEffect, useState } from 'react';
 export default function LabkesdaLayout({ header, children }) {
   const user = usePage().props.auth.user;
   const [isOpen, setIsOpen] = useState(false);
+  const [isOpenLaporan, setIsOpenLaporan] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   const handleClose = () => setIsOpen(false);
+  const handleCloseLaporan = () => setIsOpenLaporan(false);
 
   const [showingNavigationDropdown, setShowingNavigationDropdown] =
     useState(false);
@@ -209,6 +211,19 @@ export default function LabkesdaLayout({ header, children }) {
                       Master Data
                     </div>
                   </li>
+                  <li className="block border-b dark:border-gray-700 lg:inline lg:border-b-0">
+                    <div
+                      onClick={() => setIsOpenLaporan(true)}
+                      className={`hand block cursor-pointer px-4 py-3 ${
+                        route().current('laporan.*') ||
+                        usePage().url.includes('laporan')
+                          ? 'border-b-2 border-primary-600 text-primary-600'
+                          : 'text-gray-500'
+                      } hover:text-primary-600 dark:border-primary-500 dark:text-primary-500`}
+                    >
+                      Laporan
+                    </div>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -325,6 +340,45 @@ export default function LabkesdaLayout({ header, children }) {
                       >
                         <span className="flex-1 whitespace-nowrap px-3">
                           Konfigurasi
+                        </span>
+                      </Link>
+                    </li>
+                  </SidebarItemGroup>
+                </SidebarItems>
+              </div>
+            </div>
+          </Sidebar>
+        </DrawerItems>
+      </Drawer>
+
+      <Drawer open={isOpenLaporan} onClose={handleCloseLaporan}>
+        <DrawerHeader title="LAPORAN" titleIcon={() => <></>} />
+        <DrawerItems>
+          <Sidebar
+            aria-label="Sidebar with multi-level dropdown example"
+            className="[&>div]:bg-transparent [&>div]:p-0"
+          >
+            <div className="flex h-full flex-col justify-between py-2">
+              <div>
+                <SidebarItems>
+                  <SidebarItemGroup>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('laporan.pendaftaran-pasien')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Laporan Pendaftaran Pasien
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="flex items-center justify-center rounded-lg p-2 text-base font-normal text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                        href={route('laporan.pemeriksaan-pasien')}
+                      >
+                        <span className="flex-1 whitespace-nowrap px-3">
+                          Laporan Pemeriksaan Pasien
                         </span>
                       </Link>
                     </li>

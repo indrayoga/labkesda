@@ -2,307 +2,398 @@ import InputError from '@/Components/InputError';
 import { Label, Select, Textarea, TextInput } from 'flowbite-react';
 
 export default function CreatePasienForm({
-  pasien,
-  kecamatans,
-  kelurahans,
-  data,
-  setData,
-  errors,
-  processing,
-  recentlySuccessful,
-  onClose,
-  onSubmit,
+    pasien,
+    kecamatans,
+    kelurahans,
+    data,
+    setData,
+    errors,
+    processing,
+    recentlySuccessful,
+    onClose,
+    onSubmit,
 }) {
-  return (
-    <form onSubmit={onSubmit}>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div>
-          <Label htmlFor="nik" color={errors.nik ? 'failure' : 'gray'}>
-            NIK
-          </Label>
-          <TextInput
-            id="nik"
-            className="mt-1"
-            value={data.nik}
-            onChange={(e) => setData('nik', e.target.value)}
-            autoFocus
-            autoComplete="nik"
-            color={errors.nik ? 'failure' : 'gray'}
-          />
-          <InputError className="mt-2" message={errors.nik} />
-        </div>
-        <div>
-          <Label htmlFor="nama" color={errors.nama ? 'failure' : 'gray'}>
-            Nama
-          </Label>
-          <TextInput
-            id="nama"
-            className="mt-1"
-            value={data.nama}
-            onChange={(e) => setData('nama', e.target.value)}
-            required
-            disabled={processing}
-            autoComplete="nama"
-            color={errors.nama ? 'failure' : 'gray'}
-          />
-          <InputError className="mt-2" message={errors.nama} />
-        </div>
-        <div>
-          <Label
-            htmlFor="jenis_kelamin"
-            color={errors.jenis_kelamin ? 'failure' : 'gray'}
-          >
-            Jenis Kelamin
-          </Label>
-          <Select
-            id="jenis_kelamin"
-            className="mt-1"
-            value={data.jenis_kelamin}
-            onChange={(e) => setData('jenis_kelamin', e.target.value)}
-            color={errors.jenis_kelamin ? 'failure' : 'gray'}
-            disabled={processing}
-          >
-            <option value="">Pilih Jenis Kelamin</option>
-            <option value="Laki-laki">Laki-laki</option>
-            <option value="Perempuan">Perempuan</option>
-          </Select>
-          <InputError className="mt-2" message={errors.jenis_kelamin} />
-        </div>
-        <div>
-          <Label
-            htmlFor="tempat_lahir"
-            color={errors.tempat_lahir ? 'failure' : 'gray'}
-          >
-            Tempat Lahir
-          </Label>
-          <TextInput
-            id="tempat_lahir"
-            className="mt-1"
-            value={data.tempat_lahir}
-            onChange={(e) => setData('tempat_lahir', e.target.value)}
-            disabled={processing}
-            autoComplete="tempat_lahir"
-            color={errors.tempat_lahir ? 'failure' : 'gray'}
-          />
-          <InputError className="mt-2" message={errors.tempat_lahir} />
-        </div>
-        <div>
-          <Label
-            htmlFor="tanggal_lahir"
-            color={errors.tanggal_lahir ? 'failure' : 'gray'}
-          >
-            Tanggal Lahir
-          </Label>
-          <TextInput
-            id="tanggal_lahir"
-            type="date"
-            className="mt-1"
-            value={data.tanggal_lahir}
-            onChange={(e) => setData('tanggal_lahir', e.target.value)}
-            disabled={processing}
-            color={errors.tanggal_lahir ? 'failure' : 'gray'}
-          />
-          <InputError className="mt-2" message={errors.tanggal_lahir} />
-        </div>
-        <div>
-          <Label
-            htmlFor="no_telepon"
-            color={errors.no_telepon ? 'failure' : 'gray'}
-          >
-            No. Telepon
-          </Label>
-          <TextInput
-            id="no_telepon"
-            className="mt-1"
-            value={data.no_telepon}
-            onChange={(e) => setData('no_telepon', e.target.value)}
-            autoComplete="no_telepon"
-            color={errors.no_telepon ? 'failure' : 'gray'}
-            disabled={processing}
-          />
-          <InputError className="mt-2" message={errors.no_telepon} />
-        </div>
-        <div>
-          <Label
-            htmlFor="pekerjaan"
-            color={errors.pekerjaan ? 'failure' : 'gray'}
-          >
-            Pekerjaan
-          </Label>
-          <TextInput
-            id="pekerjaan"
-            className="mt-1"
-            value={data.pekerjaan}
-            onChange={(e) => setData('pekerjaan', e.target.value)}
-            autoComplete="pekerjaan"
-            disabled={processing}
-            color={errors.pekerjaan ? 'failure' : 'gray'}
-          />
-          <InputError className="mt-2" message={errors.pekerjaan} />
-        </div>
-        <fieldset className="rounded-lg border border-gray-300 p-4 md:col-span-2">
-          <legend className="px-2 text-sm font-semibold text-gray-700">
-            Lokasi
-          </legend>
-
-          <div className="space-y-6">
-            <div>
-              <Label
-                htmlFor="alamat"
-                color={errors.alamat ? 'failure' : 'gray'}
-              >
-                Alamat
-              </Label>
-              <Textarea
-                id="alamat"
-                className="mt-1"
-                value={data.alamat}
-                onChange={(e) => setData('alamat', e.target.value)}
-                autoComplete="alamat"
-                color={errors.alamat ? 'failure' : 'gray'}
-                disabled={processing}
-              />
-              <InputError className="mt-2" message={errors.alamat} />
-            </div>
-
+    return (
+        <form onSubmit={onSubmit}>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <Label
-                  htmlFor="kecamatan_id"
-                  color={errors.kecamatan_id ? 'failure' : 'gray'}
-                >
-                  Kecamatan
-                </Label>
-                <Select
-                  id="kecamatan_id"
-                  className="mt-1"
-                  value={data.kecamatan_id}
-                  disabled={data.luar_wilayah || processing}
-                  onChange={(e) => {
-                    setData({
-                      ...data,
-                      kecamatan_id: e.target.value,
-                      kelurahan_id: '',
-                    });
-                  }}
-                  color={errors.kecamatan_id ? 'failure' : 'gray'}
-                >
-                  <option value="">Pilih Kecamatan</option>
-                  {kecamatans.map((kecamatan) => (
-                    <option key={kecamatan.id} value={kecamatan.id}>
-                      {kecamatan.nama}
-                    </option>
-                  ))}
-                </Select>
-                <InputError className="mt-2" message={errors.kecamatan_id} />
-              </div>
+                <div>
+                    <Label
+                        htmlFor="nik"
+                        color={errors.nik ? 'failure' : 'gray'}
+                    >
+                        NIK
+                    </Label>
+                    <TextInput
+                        id="nik"
+                        className="mt-1"
+                        value={data.nik}
+                        onChange={(e) => setData('nik', e.target.value)}
+                        autoFocus
+                        autoComplete="nik"
+                        color={errors.nik ? 'failure' : 'gray'}
+                    />
+                    <InputError className="mt-2" message={errors.nik} />
+                </div>
+                <div>
+                    <Label
+                        htmlFor="nama"
+                        color={errors.nama ? 'failure' : 'gray'}
+                    >
+                        Nama
+                    </Label>
+                    <TextInput
+                        id="nama"
+                        className="mt-1"
+                        value={data.nama}
+                        onChange={(e) => setData('nama', e.target.value)}
+                        required
+                        disabled={processing}
+                        autoComplete="nama"
+                        color={errors.nama ? 'failure' : 'gray'}
+                    />
+                    <InputError className="mt-2" message={errors.nama} />
+                </div>
+                <div>
+                    <Label
+                        htmlFor="jenis_kelamin"
+                        color={errors.jenis_kelamin ? 'failure' : 'gray'}
+                    >
+                        Jenis Kelamin
+                    </Label>
+                    <Select
+                        id="jenis_kelamin"
+                        className="mt-1"
+                        value={data.jenis_kelamin}
+                        onChange={(e) =>
+                            setData('jenis_kelamin', e.target.value)
+                        }
+                        color={errors.jenis_kelamin ? 'failure' : 'gray'}
+                        disabled={processing}
+                    >
+                        <option value="">Pilih Jenis Kelamin</option>
+                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Perempuan">Perempuan</option>
+                    </Select>
+                    <InputError
+                        className="mt-2"
+                        message={errors.jenis_kelamin}
+                    />
+                </div>
+                <div>
+                    <Label
+                        htmlFor="tempat_lahir"
+                        color={errors.tempat_lahir ? 'failure' : 'gray'}
+                    >
+                        Tempat Lahir
+                    </Label>
+                    <TextInput
+                        id="tempat_lahir"
+                        className="mt-1"
+                        value={data.tempat_lahir}
+                        onChange={(e) =>
+                            setData('tempat_lahir', e.target.value)
+                        }
+                        disabled={processing}
+                        autoComplete="tempat_lahir"
+                        color={errors.tempat_lahir ? 'failure' : 'gray'}
+                    />
+                    <InputError
+                        className="mt-2"
+                        message={errors.tempat_lahir}
+                    />
+                </div>
+                <div>
+                    <Label
+                        htmlFor="tanggal_lahir"
+                        color={errors.tanggal_lahir ? 'failure' : 'gray'}
+                    >
+                        Tanggal Lahir
+                    </Label>
+                    <TextInput
+                        id="tanggal_lahir"
+                        type="date"
+                        className="mt-1"
+                        value={data.tanggal_lahir}
+                        onChange={(e) =>
+                            setData('tanggal_lahir', e.target.value)
+                        }
+                        disabled={processing}
+                        color={errors.tanggal_lahir ? 'failure' : 'gray'}
+                    />
+                    <InputError
+                        className="mt-2"
+                        message={errors.tanggal_lahir}
+                    />
+                </div>
+                <div>
+                    <Label
+                        htmlFor="no_telepon"
+                        color={errors.no_telepon ? 'failure' : 'gray'}
+                    >
+                        No. Telepon
+                    </Label>
+                    <TextInput
+                        id="no_telepon"
+                        className="mt-1"
+                        value={data.no_telepon}
+                        onChange={(e) => setData('no_telepon', e.target.value)}
+                        autoComplete="no_telepon"
+                        color={errors.no_telepon ? 'failure' : 'gray'}
+                        disabled={processing}
+                    />
+                    <InputError className="mt-2" message={errors.no_telepon} />
+                </div>
+                <div>
+                    <Label
+                        htmlFor="pekerjaan"
+                        color={errors.pekerjaan ? 'failure' : 'gray'}
+                    >
+                        Pekerjaan
+                    </Label>
+                    <TextInput
+                        id="pekerjaan"
+                        className="mt-1"
+                        value={data.pekerjaan}
+                        onChange={(e) => setData('pekerjaan', e.target.value)}
+                        autoComplete="pekerjaan"
+                        disabled={processing}
+                        color={errors.pekerjaan ? 'failure' : 'gray'}
+                    />
+                    <InputError className="mt-2" message={errors.pekerjaan} />
+                </div>
+                <fieldset className="rounded-lg border border-gray-300 p-4 md:col-span-2">
+                    <legend className="px-2 text-sm font-semibold text-gray-700">
+                        Lokasi
+                    </legend>
 
-              <div>
-                <Label
-                  htmlFor="kelurahan_id"
-                  color={errors.kelurahan_id ? 'failure' : 'gray'}
-                >
-                  Kelurahan
-                </Label>
-                <Select
-                  id="kelurahan_id"
-                  className="mt-1"
-                  value={data.kelurahan_id}
-                  onChange={(e) => setData('kelurahan_id', e.target.value)}
-                  disabled={
-                    data.luar_wilayah || !data.kecamatan_id || processing
-                  }
-                  color={errors.kelurahan_id ? 'failure' : 'gray'}
-                >
-                  <option value="">Pilih Kelurahan</option>
-                  {data.kecamatan_id &&
-                    kelurahans
-                      .filter(
-                        (kelurahan) =>
-                          kelurahan.no_kec ==
-                          kecamatans.find((kec) => kec.id == data.kecamatan_id)
-                            .no_kec,
-                      )
-                      .map((kelurahan) => (
-                        <option key={kelurahan.id} value={kelurahan.id}>
-                          {kelurahan.nama}
-                        </option>
-                      ))}
-                </Select>
-                <InputError className="mt-2" message={errors.kelurahan_id} />
-              </div>
+                    <div className="space-y-6">
+                        <div>
+                            <Label
+                                htmlFor="alamat"
+                                color={errors.alamat ? 'failure' : 'gray'}
+                            >
+                                Alamat
+                            </Label>
+                            <Textarea
+                                id="alamat"
+                                className="mt-1"
+                                value={data.alamat}
+                                onChange={(e) =>
+                                    setData('alamat', e.target.value)
+                                }
+                                autoComplete="alamat"
+                                color={errors.alamat ? 'failure' : 'gray'}
+                                disabled={processing}
+                            />
+                            <InputError
+                                className="mt-2"
+                                message={errors.alamat}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div>
+                                <Label
+                                    htmlFor="kecamatan_id"
+                                    color={
+                                        errors.kecamatan_id ? 'failure' : 'gray'
+                                    }
+                                >
+                                    Kecamatan
+                                </Label>
+                                <Select
+                                    id="kecamatan_id"
+                                    className="mt-1"
+                                    value={data.kecamatan_id}
+                                    disabled={data.luar_wilayah || processing}
+                                    onChange={(e) => {
+                                        setData({
+                                            ...data,
+                                            kecamatan_id: e.target.value,
+                                            kelurahan_id: '',
+                                        });
+                                    }}
+                                    color={
+                                        errors.kecamatan_id ? 'failure' : 'gray'
+                                    }
+                                >
+                                    <option value="">Pilih Kecamatan</option>
+                                    {kecamatans.map((kecamatan) => (
+                                        <option
+                                            key={kecamatan.id}
+                                            value={kecamatan.id}
+                                        >
+                                            {kecamatan.nama}
+                                        </option>
+                                    ))}
+                                </Select>
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.kecamatan_id}
+                                />
+                            </div>
+
+                            <div>
+                                <Label
+                                    htmlFor="kelurahan_id"
+                                    color={
+                                        errors.kelurahan_id ? 'failure' : 'gray'
+                                    }
+                                >
+                                    Kelurahan
+                                </Label>
+                                <Select
+                                    id="kelurahan_id"
+                                    className="mt-1"
+                                    value={data.kelurahan_id}
+                                    onChange={(e) =>
+                                        setData('kelurahan_id', e.target.value)
+                                    }
+                                    disabled={
+                                        data.luar_wilayah ||
+                                        !data.kecamatan_id ||
+                                        processing
+                                    }
+                                    color={
+                                        errors.kelurahan_id ? 'failure' : 'gray'
+                                    }
+                                >
+                                    <option value="">Pilih Kelurahan</option>
+                                    {data.kecamatan_id &&
+                                        kelurahans
+                                            .filter(
+                                                (kelurahan) =>
+                                                    kelurahan.no_kec ==
+                                                    kecamatans.find(
+                                                        (kec) =>
+                                                            kec.id ==
+                                                            data.kecamatan_id,
+                                                    ).no_kec,
+                                            )
+                                            .map((kelurahan) => (
+                                                <option
+                                                    key={kelurahan.id}
+                                                    value={kelurahan.id}
+                                                >
+                                                    {kelurahan.nama}
+                                                </option>
+                                            ))}
+                                </Select>
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.kelurahan_id}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="border-t border-gray-200 pt-4">
+                            <div className="mb-4 flex items-center gap-2">
+                                <input
+                                    id="luar_wilayah"
+                                    type="checkbox"
+                                    checked={data.luar_wilayah || false}
+                                    onChange={(e) =>
+                                        setData(
+                                            'luar_wilayah',
+                                            e.target.checked,
+                                        )
+                                    }
+                                    disabled={processing}
+                                    className="h-4 w-4 cursor-pointer rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                                />
+                                <Label
+                                    htmlFor="luar_wilayah"
+                                    className="!m-0 cursor-pointer"
+                                >
+                                    Luar Wilayah
+                                </Label>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div>
+                                    <Label
+                                        htmlFor="kecamatan_luar_wilayah"
+                                        color={
+                                            errors.kecamatan_luar_wilayah
+                                                ? 'failure'
+                                                : 'gray'
+                                        }
+                                    >
+                                        Kecamatan Luar Wilayah
+                                    </Label>
+                                    <TextInput
+                                        id="kecamatan_luar_wilayah"
+                                        className="mt-1"
+                                        value={
+                                            data.kecamatan_luar_wilayah || ''
+                                        }
+                                        onChange={(e) =>
+                                            setData(
+                                                'kecamatan_luar_wilayah',
+                                                e.target.value,
+                                            )
+                                        }
+                                        disabled={
+                                            !data.luar_wilayah || processing
+                                        }
+                                        placeholder="Masukkan nama kecamatan"
+                                        color={
+                                            errors.kecamatan_luar_wilayah
+                                                ? 'failure'
+                                                : 'gray'
+                                        }
+                                    />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.kecamatan_luar_wilayah}
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label
+                                        htmlFor="kelurahan_luar_wilayah"
+                                        color={
+                                            errors.kelurahan_luar_wilayah
+                                                ? 'failure'
+                                                : 'gray'
+                                        }
+                                    >
+                                        Kelurahan Luar Wilayah
+                                    </Label>
+                                    <TextInput
+                                        id="kelurahan_luar_wilayah"
+                                        className="mt-1"
+                                        value={
+                                            data.kelurahan_luar_wilayah || ''
+                                        }
+                                        onChange={(e) =>
+                                            setData(
+                                                'kelurahan_luar_wilayah',
+                                                e.target.value,
+                                            )
+                                        }
+                                        disabled={
+                                            !data.luar_wilayah || processing
+                                        }
+                                        placeholder="Masukkan nama kelurahan"
+                                        color={
+                                            errors.kelurahan_luar_wilayah
+                                                ? 'failure'
+                                                : 'gray'
+                                        }
+                                    />
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.kelurahan_luar_wilayah}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
-              <div className="mb-4 flex items-center gap-2">
-                <input
-                  id="luar_wilayah"
-                  type="checkbox"
-                  checked={data.luar_wilayah || false}
-                  onChange={(e) => setData('luar_wilayah', e.target.checked)}
-                  disabled={processing}
-                  className="h-4 w-4 cursor-pointer rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                />
-                <Label htmlFor="luar_wilayah" className="!m-0 cursor-pointer">
-                  Luar Wilayah
-                </Label>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <Label
-                    htmlFor="kecamatan_luar_wilayah"
-                    color={errors.kecamatan_luar_wilayah ? 'failure' : 'gray'}
-                  >
-                    Kecamatan Luar Wilayah
-                  </Label>
-                  <TextInput
-                    id="kecamatan_luar_wilayah"
-                    className="mt-1"
-                    value={data.kecamatan_luar_wilayah || ''}
-                    onChange={(e) =>
-                      setData('kecamatan_luar_wilayah', e.target.value)
-                    }
-                    disabled={!data.luar_wilayah || processing}
-                    placeholder="Masukkan nama kecamatan"
-                    color={errors.kecamatan_luar_wilayah ? 'failure' : 'gray'}
-                  />
-                  <InputError
-                    className="mt-2"
-                    message={errors.kecamatan_luar_wilayah}
-                  />
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor="kelurahan_luar_wilayah"
-                    color={errors.kelurahan_luar_wilayah ? 'failure' : 'gray'}
-                  >
-                    Kelurahan Luar Wilayah
-                  </Label>
-                  <TextInput
-                    id="kelurahan_luar_wilayah"
-                    className="mt-1"
-                    value={data.kelurahan_luar_wilayah || ''}
-                    onChange={(e) =>
-                      setData('kelurahan_luar_wilayah', e.target.value)
-                    }
-                    disabled={!data.luar_wilayah || processing}
-                    placeholder="Masukkan nama kelurahan"
-                    color={errors.kelurahan_luar_wilayah ? 'failure' : 'gray'}
-                  />
-                  <InputError
-                    className="mt-2"
-                    message={errors.kelurahan_luar_wilayah}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </fieldset>
-      </div>
-
-      {/* <div className="mt-6 flex justify-end">
+            {/* <div className="mt-6 flex justify-end">
                 <button
                     type="button"
                     onClick={onClose}
@@ -325,6 +416,6 @@ export default function CreatePasienForm({
                     <p className="text-sm text-gray-600">Tersimpan.</p>
                 </Transition>
             </div> */}
-    </form>
-  );
+        </form>
+    );
 }

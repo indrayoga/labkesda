@@ -17,6 +17,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "ngekoding/terbilang": "^1.0",
+        "phpoffice/phpspreadsheet": "^5.9",
         "setasign/fpdf": "^1.8",
         "setasign/tfpdf": "^1.33",
         "tightenco/ziggy": "^2.0"
